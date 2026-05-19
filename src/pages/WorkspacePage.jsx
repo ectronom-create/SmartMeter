@@ -107,11 +107,11 @@ export default function WorkspacePage() {
     serialRef.current?.focus();
   };
 
-  const handleSubmitDefect = (e) => {
+  const handleSubmitDefect = async (e) => {
     e.preventDefault();
     if (!serialNumber.trim() || !selectedCode) return;
     
-    const result = addDefectiveMeter({
+    const result = await addDefectiveMeter({
       serial_number: serialNumber.trim().toUpperCase(),
       error_code: selectedCode,
       stage_found: currentStage?.stage_id,

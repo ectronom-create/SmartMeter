@@ -92,14 +92,14 @@ export default function DefectsPage() {
     }
   };
 
-  const handleQuickSubmit = (e) => {
+  const handleQuickSubmit = async (e) => {
     e.preventDefault();
     const fd = new FormData(e.target);
     const sn = fd.get("sn").trim().toUpperCase();
     
     if (!sn || !selectedErrorCode) return;
 
-    const result = addDefectiveMeter({
+    const result = await addDefectiveMeter({
       serial_number: sn,
       error_code: selectedErrorCode.code,
       stage_found: currentStage?.stage_id || "OFFLINE",
