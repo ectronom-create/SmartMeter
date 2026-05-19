@@ -189,7 +189,7 @@ export default function EmployeeDashboard() {
             </div>
 
             {/* Quick Guide Section */}
-            <div style={{ marginTop: 24, display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
+            <div className="quick-guide-grid" style={{ marginTop: 24, display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
               {/* Instructions summary */}
               <div style={{ background: "rgba(0,0,0,0.02)", padding: 16, borderRadius: 12, border: "1px solid var(--border-subtle)" }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12, color: "var(--accent)" }}>

@@ -157,7 +157,7 @@ export default function DefectsPage() {
               <h3 style={{ margin: 0 }}>{isRtl ? "تسجيل بلاغ ععل جديد" : "Report a New Defect"}</h3>
             </div>
             {submitMsg && <div className={`alert alert-${submitMsg.type === "error" ? "danger" : "success"}`} style={{ marginBottom: 12 }}>{submitMsg.text}</div>}
-            <form onSubmit={handleQuickSubmit} style={{ display: "grid", gridTemplateColumns: "1fr 1.5fr 1fr auto", gap: 12, alignItems: "end", position: "relative" }}>
+            <form onSubmit={handleQuickSubmit} className="defect-form-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1.5fr 1fr auto", gap: 12, alignItems: "end", position: "relative" }}>
               <div className="input-group" style={{ textAlign: isRtl ? "right" : "left" }}>
                 <label className="input-label">{isRtl ? "السيريال نمبر *" : "Serial Number *"}</label>
                 <input className="input" name="sn" placeholder={isRtl ? "امسح الباركود..." : "Scan barcode..."} required style={{ background: "white", textAlign: isRtl ? "right" : "left" }} />

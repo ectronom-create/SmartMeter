@@ -429,55 +429,141 @@ tr:hover td { background: var(--bg-elevated); }
   border-radius: var(--radius-sm); font-size: 0.85rem; font-weight: 600; color: var(--text-secondary);
 }
 
-/* Responsive */
+/* =====================================================
+   RESPONSIVE — Mobile First
+   ===================================================== */
+
+/* Tablet: 768px and below */
 @media (max-width: 768px) {
+  /* Layout */
   .page-container { padding: 12px 10px; }
   .grid-2, .grid-3, .grid-4 { grid-template-columns: 1fr; gap: 12px; }
-  h1 { font-size: 1.5rem; }
-  h2 { font-size: 1.25rem; }
-  h3 { font-size: 1.15rem; }
+
+  /* Typography */
+  h1 { font-size: 1.4rem; }
+  h2 { font-size: 1.2rem; }
+  h3 { font-size: 1.05rem; }
+
+  /* Card */
   .card { padding: 16px; border-radius: var(--radius-md); }
+
+  /* Topbar */
+  .topbar { padding: 0 10px; height: 54px; }
+  .topbar-brand { font-size: 0.8rem; }
+  .topbar-sub { display: none; }
+  .shift-pill { font-size: 0.7rem; padding: 3px 8px; }
+
+  /* Workspace header */
   .workspace-header {
     flex-direction: column;
     text-align: center;
     padding: 16px;
     gap: 12px;
-  }
-  .workspace-header .flex-grow-mobile {
-    display: flex;
-    flex-direction: column;
     align-items: center;
-    width: 100%;
   }
-  .workspace-header .mobile-center-row {
-    justify-content: center;
-    width: 100%;
-  }
-  .topbar {
-    padding: 0 12px;
-  }
-  .topbar-brand {
-    font-size: 0.85rem;
-  }
+  .workspace-header-icon { width: 60px !important; height: 60px !important; font-size: 2rem !important; }
+  .flex-grow-mobile { display: flex; flex-direction: column; align-items: center; width: 100%; }
+  .mobile-center-row { justify-content: center !important; width: 100%; }
+
+  /* Buttons */
+  .btn { font-size: 0.85rem; padding: 8px 14px; }
+  .btn-lg { font-size: 0.95rem; padding: 12px 20px; }
+  .btn-sm { font-size: 0.78rem; padding: 6px 11px; }
+
+  /* Inputs */
+  .input { font-size: 0.9rem; }
+  .input-lg { font-size: 0.95rem; padding: 11px 14px; }
+
+  /* Tables */
+  .table-wrapper { font-size: 0.8rem; }
+  th, td { padding: 9px 10px; }
+
+  /* Admin layout */
+  .admin-layout { flex-direction: column; }
   .admin-sidebar { display: none; }
-  .login-card { padding: 26px 18px; }
+  .admin-content { padding: 12px 10px; }
+
+  /* Login card */
+  .login-card { padding: 24px 16px; }
+  .login-logo { width: 52px; height: 52px; font-size: 1.6rem; }
+
+  /* Employee dashboard quick guide grid */
+  .employee-card .quick-guide-grid,
+  .quick-guide-grid { grid-template-columns: 1fr !important; }
+
+  /* Stats cards */
+  .stat-card { padding: 14px; }
+  .stat-icon { width: 42px; height: 42px; font-size: 1.2rem; }
+  .stat-value { font-size: 1.4rem; }
+
+  /* Defects page form */
+  .defect-form-grid { grid-template-columns: 1fr !important; }
+
+  /* Modals */
+  .modal-overlay { padding: 10px; align-items: flex-end; }
+  .modal-content { border-radius: var(--radius-lg) var(--radius-lg) 0 0; max-height: 92vh; }
+
+  /* Supervisor page header buttons */
+  .supervisor-header-btns { flex-direction: column !important; width: 100%; gap: 8px !important; }
+  .supervisor-header-btns .btn { width: 100%; justify-content: center; }
 }
 
+/* Phone: 480px and below */
 @media (max-width: 480px) {
-  .workspace-header {
-    padding: 12px;
-  }
-  .workspace-header-icon {
-    width: 60px !important;
-    height: 60px !important;
-    font-size: 2rem !important;
-  }
-  .instruction-item {
-    padding: 10px;
-    gap: 8px;
-  }
-  .btn {
-    padding: 8px 16px;
-    font-size: 0.88rem;
-  }
+  /* Layout */
+  .page-container { padding: 8px; }
+
+  /* Typography */
+  h1 { font-size: 1.25rem; }
+  h2 { font-size: 1.1rem; }
+
+  /* Topbar — collapse to minimal */
+  .topbar { height: 50px; padding: 0 8px; }
+  .topbar-logo-icon { width: 28px; height: 28px; font-size: 0.85rem; }
+
+  /* Card */
+  .card { padding: 12px; }
+
+  /* Buttons */
+  .btn { font-size: 0.82rem; padding: 7px 12px; gap: 5px; }
+
+  /* Badge */
+  .badge { font-size: 0.68rem; padding: 2px 7px; }
+
+  /* Stat card compact */
+  .stat-card { gap: 10px; padding: 12px; }
+  .stat-value { font-size: 1.25rem; }
+  .stat-label { font-size: 0.68rem; }
+
+  /* Instruction items */
+  .instruction-item { padding: 10px; gap: 8px; }
+  .instruction-num { width: 22px; height: 22px; font-size: 0.7rem; }
+
+  /* Table scrollable with readable text */
+  table { min-width: 480px; }
+  .table-wrapper { -webkit-overflow-scrolling: touch; }
+
+  /* Workspace header icon smaller */
+  .workspace-header { padding: 12px; }
+
+  /* Login page */
+  .login-page { padding: 10px; }
+  .login-card { padding: 20px 12px; max-width: 100%; }
+
+  /* Schedule row */
+  .schedule-row { flex-wrap: wrap; gap: 6px; }
+  .schedule-date-pill { min-width: 60px; font-size: 0.7rem; }
+
+  /* Modal full width */
+  .modal-content { max-height: 95vh; }
+
+  /* Form grid */
+  form[style*="grid-template-columns"] { display: flex !important; flex-direction: column !important; }
 }
+
+/* Safe area insets for notched phones (iPhone X+) */
+@supports (padding-bottom: env(safe-area-inset-bottom)) {
+  body { padding-bottom: env(safe-area-inset-bottom); }
+  .topbar { padding-top: env(safe-area-inset-top); }
+}
+
