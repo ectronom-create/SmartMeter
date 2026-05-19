@@ -400,18 +400,24 @@ export function AppProvider({ children }) {
       };
     }
 
-    const newEntry = {
-      ...entry,
-      id: `DEF-${Date.now()}`,
-      created_at: new Date().toISOString(),
+    const payload = {
+      serial_number: entry.serial_number,
+      error_code: entry.error_code,
+      stage_found: entry.stage_found,
+      custom_description: entry.custom_description || "",
+      reported_by: entry.reported_by,
       status: "reported",
     };
 
     try {
-      const { error } = await supabase.from("defective_meters").insert([newEntry]);
+      const { data, error } = await supabase
+        .from("defective_meters")
+        .insert([payload])
+        .select()
+        .single();
       if (error) throw error;
-      setDefectiveMeters(prev => [newEntry, ...prev]);
-      return { success: true, entry: newEntry };
+      setDefectiveMeters(prev => [data, ...prev]);
+      return { success: true, entry: data };
     } catch (err) {
       console.error("Supabase defect add error:", err);
       return { success: false, message: "Error saving to cloud." };
@@ -433,10 +439,23 @@ export function AppProvider({ children }) {
         return { success: false, message: "جميع العدادات مضافة مسبقاً ولديهم بلاغات نشطة." };
       }
 
-      const { error } = await supabase.from("defective_meters").insert(uniqueNew);
+      // Strip any custom id fields — let Supabase auto-generate UUIDs
+      const payloads = uniqueNew.map(({ id, ...rest }) => ({
+        serial_number: rest.serial_number,
+        error_code: rest.error_code,
+        stage_found: rest.stage_found,
+        custom_description: rest.custom_description || "",
+        reported_by: rest.reported_by,
+        status: rest.status || "reported",
+      }));
+
+      const { data, error } = await supabase
+        .from("defective_meters")
+        .insert(payloads)
+        .select();
       if (error) throw error;
 
-      setDefectiveMeters(prev => [...uniqueNew, ...prev]);
+      setDefectiveMeters(prev => [...(data || payloads), ...prev]);
       return { success: true, count: uniqueNew.length };
     } catch (err) {
       console.error("Supabase defective meters bulk add error:", err);
