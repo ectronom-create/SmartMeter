@@ -114,7 +114,7 @@ export default function WorkspacePage() {
     const result = await addDefectiveMeter({
       serial_number: serialNumber.trim().toUpperCase(),
       error_code: selectedCode,
-      stage_found: currentStage?.stage_id,
+      stage_found: currentStage?.stage_id || null,
       custom_description: customDesc,
       reported_by: currentUser.employee_id,
     });

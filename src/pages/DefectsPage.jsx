@@ -223,7 +223,7 @@ export default function DefectsPage() {
     const result = await addDefectiveMeter({
       serial_number: sn,
       error_code: selectedErrorCode.code,
-      stage_found: currentStage?.stage_id || "OFFLINE",
+      stage_found: currentStage?.stage_id || null,
       custom_description: fd.get("desc").trim(),
       reported_by: currentUser.employee_id
     });

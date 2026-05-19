@@ -401,6 +401,7 @@ export function AppProvider({ children }) {
     }
 
     const payload = {
+      id: `DEF-${Date.now()}-${Math.random().toString(36).substr(2, 6)}`,
       serial_number: entry.serial_number,
       error_code: entry.error_code,
       stage_found: entry.stage_found,
@@ -419,8 +420,8 @@ export function AppProvider({ children }) {
       setDefectiveMeters(prev => [data, ...prev]);
       return { success: true, entry: data };
     } catch (err) {
-      console.error("Supabase defect add error:", err);
-      return { success: false, message: "Error saving to cloud." };
+      console.error("Supabase defect add error:", err.message, err.details, err.hint);
+      return { success: false, message: `خطأ في الحفظ: ${err.message || 'Error saving to cloud.'}` };
     }
   }, [defectiveMeters]);
 
