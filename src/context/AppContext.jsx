@@ -418,6 +418,32 @@ export function AppProvider({ children }) {
     }
   }, [defectiveMeters]);
 
+  const addDefectiveMetersBulk = useCallback(async (entriesArray) => {
+    try {
+      // Filter out duplicate serials that are already open (not resolved)
+      const existingSerials = new Set(
+        defectiveMeters
+          .filter(m => m.status !== "resolved")
+          .map(m => m.serial_number)
+      );
+
+      const uniqueNew = entriesArray.filter(e => !existingSerials.has(e.serial_number));
+      
+      if (uniqueNew.length === 0) {
+        return { success: false, message: "جميع العدادات مضافة مسبقاً ولديهم بلاغات نشطة." };
+      }
+
+      const { error } = await supabase.from("defective_meters").insert(uniqueNew);
+      if (error) throw error;
+
+      setDefectiveMeters(prev => [...uniqueNew, ...prev]);
+      return { success: true, count: uniqueNew.length };
+    } catch (err) {
+      console.error("Supabase defective meters bulk add error:", err);
+      return { success: false, error: err };
+    }
+  }, [defectiveMeters]);
+
   const updateMeterStatus = useCallback(async (id, status) => {
     try {
       const { error } = await supabase.from("defective_meters").update({ status }).eq("id", id);
@@ -662,7 +688,7 @@ export function AppProvider({ children }) {
     productionStages, addStage, updateStage, deleteStage,
     errorCodes, addErrorCode, updateErrorCode, deleteErrorCode, addErrorCodesBulk,
     getStageById, getShiftById, getUserById, getScheduleWithDetails,
-    defectiveMeters, addDefectiveMeter, updateMeterStatus,
+    defectiveMeters, addDefectiveMeter, addDefectiveMetersBulk, updateMeterStatus,
     searchErrorCodes, getErrorByCode,
     equipmentStock, addEquipmentStock, updateEquipmentStock, deleteEquipmentItem, restockEquipment,
     equipmentHandouts, handoutEquipment, returnEquipment, getMyHandouts, getLowStockItems,

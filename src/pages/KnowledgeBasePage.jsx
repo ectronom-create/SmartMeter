@@ -396,18 +396,20 @@ export default function KnowledgeBasePage() {
           
           <div style={{ display: "flex", alignItems: "center", gap: 10, flexDirection: isRtl ? "row" : "row-reverse" }}>
             {/* Excel Import button */}
-            <label 
-              className="btn btn-secondary btn-sm" 
-              style={{ cursor: "pointer", display: "inline-flex", alignItems: "center", gap: 6, background: "rgba(26, 127, 55, 0.08)", border: "1px solid rgba(26, 127, 55, 0.2)", color: "var(--accent)" }}
-            >
-              📥 {isRtl ? "استيراد إكسل" : "Import Excel"}
-              <input 
-                type="file" 
-                accept=".xlsx, .xls" 
-                onChange={handleExcelUpload} 
-                style={{ display: "none" }} 
-              />
-            </label>
+            {currentUser?.role === "admin" && (
+              <label 
+                className="btn btn-secondary btn-sm" 
+                style={{ cursor: "pointer", display: "inline-flex", alignItems: "center", gap: 6, background: "rgba(26, 127, 55, 0.08)", border: "1px solid rgba(26, 127, 55, 0.2)", color: "var(--accent)" }}
+              >
+                📥 {isRtl ? "استيراد إكسل" : "Import Excel"}
+                <input 
+                  type="file" 
+                  accept=".xlsx, .xls" 
+                  onChange={handleExcelUpload} 
+                  style={{ display: "none" }} 
+                />
+              </label>
+            )}
             <div className="badge badge-gray" style={{ fontSize: "0.8rem" }}>
               {productionStages.length} {isRtl ? "مراحل" : "Stages"}
             </div>

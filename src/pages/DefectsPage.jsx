@@ -1,8 +1,9 @@
 import { useState, useMemo, useEffect } from "react";
 import { useApp } from "../context/AppContext";
 import { useNavigate, useLocation } from "react-router-dom";
-import { ArrowRight, CheckCircle, Clock, AlertTriangle, Filter, X, Plus, Search } from "lucide-react";
+import { ArrowRight, CheckCircle, Clock, AlertTriangle, Filter, X, Plus, Search, AlertCircle } from "lucide-react";
 import { translateError } from "./KnowledgeBasePage";
+import * as XLSX from "xlsx";
 
 const getStatusConfig = (isRtl) => ({
   reported: { label: isRtl ? "بلاغ جديد" : "New Report",           class: "badge-blue",   icon: <Plus size={11} /> },
@@ -25,7 +26,7 @@ export default function DefectsPage() {
   const location = useLocation();
   const { 
     defectiveMeters, currentUser, updateMeterStatus, 
-    getErrorByCode, addDefectiveMeter, currentStage, errorCodes, language
+    getErrorByCode, addDefectiveMeter, addDefectiveMetersBulk, currentStage, errorCodes, language
   } = useApp();
 
   const isRtl = language === "ar";
@@ -34,6 +35,7 @@ export default function DefectsPage() {
   
   const [filterStatus, setFilterStatus] = useState("all");
   const [submitMsg, setSubmitMsg] = useState(null);
+  const [importStatus, setImportStatus] = useState(null);
   
   // Searchable Code logic
   const [searchQuery, setSearchQuery] = useState("");
@@ -45,6 +47,125 @@ export default function DefectsPage() {
   const [reviewSearch, setReviewSearch] = useState("");
   const [confirmingId, setConfirmingId] = useState(null);
   const [newStatus, setNewStatus] = useState("");
+
+  const handleExcelUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    setImportStatus({ 
+      type: "info", 
+      text: isRtl ? "جاري قراءة وتحليل ملف الاكسل..." : "Reading and parsing Excel file..." 
+    });
+
+    const reader = new FileReader();
+    reader.onload = async (evt) => {
+      try {
+        const data = evt.target.result;
+        const workbook = XLSX.read(data, { type: "array" });
+        const sheetName = workbook.SheetNames[0];
+        const sheet = workbook.Sheets[sheetName];
+        const rows = XLSX.utils.sheet_to_json(sheet, { header: 1 });
+        
+        if (rows.length < 2) {
+          setImportStatus({ 
+            type: "danger", 
+            text: isRtl ? "ملف الاكسل فارغ أو لا يحتوي على صفوف بيانات!" : "Excel file is empty or has no data rows!" 
+          });
+          return;
+        }
+
+        const headers = rows[0].map(h => (h || "").toString().toLowerCase().trim());
+        
+        const serialIdx = headers.findIndex(h => h.includes("serial") || h.includes("نمبر") || h.includes("سيريال") || h.includes("الرمز التسلسلي") || h.includes("تسلسلي") || h.includes("sn"));
+        const codeIdx = headers.findIndex(h => h.includes("code") || h.includes("كود") || h.includes("رمز العطل") || h.includes("عطل") || h.includes("error"));
+        const stageIdx = headers.findIndex(h => h.includes("stage") || h.includes("المرحلة") || h.includes("مرحلة") || h.includes("stg"));
+        const descIdx = headers.findIndex(h => h.includes("desc") || h.includes("وصف") || h.includes("تفاصيل") || h.includes("ملاحظات") || h.includes("comment"));
+
+        if (serialIdx === -1 || codeIdx === -1) {
+          setImportStatus({ 
+            type: "danger", 
+            text: isRtl 
+              ? "تنسيق الأعمدة غير صحيح. يجب أن يحتوي الملف على عمود السيريال نمبر وعمود رمز العطل على الأقل." 
+              : "Columns format invalid. File must contain Serial Number and Error Code columns."
+          });
+          return;
+        }
+
+        const newMeters = [];
+        const timestamp = Date.now();
+
+        for (let i = 1; i < rows.length; i++) {
+          const row = rows[i];
+          if (!row || row.length === 0) continue;
+
+          const rawSerial = (row[serialIdx] || "").toString().trim().toUpperCase();
+          const rawCode = (row[codeIdx] || "").toString().trim().toUpperCase();
+          
+          if (!rawSerial || !rawCode) continue;
+
+          // Normalize stage_id if provided, otherwise default to "STG-01"
+          let stageId = "STG-01";
+          if (stageIdx !== -1 && row[stageIdx]) {
+            const rawStage = row[stageIdx].toString().trim().toUpperCase();
+            if (rawStage.startsWith("STG-")) {
+              stageId = rawStage;
+            } else {
+              // Convert simple number like "2" or "02" to "STG-02"
+              const num = parseInt(rawStage.replace(/\D/g, ""), 10);
+              if (!isNaN(num) && num >= 1 && num <= 6) {
+                stageId = `STG-0${num}`;
+              }
+            }
+          }
+
+          const desc = descIdx !== -1 && row[descIdx] ? row[descIdx].toString().trim() : "";
+
+          newMeters.push({
+            id: `DEF-${timestamp}-${i}-${Math.random().toString(36).substr(2, 5)}`,
+            serial_number: rawSerial,
+            error_code: rawCode,
+            stage_found: stageId,
+            custom_description: desc,
+            reported_by: currentUser.employee_id,
+            status: "reported",
+            created_at: new Date().toISOString()
+          });
+        }
+
+        if (newMeters.length === 0) {
+          setImportStatus({ 
+            type: "danger", 
+            text: isRtl ? "لم يتم العثور على أسطر بيانات صالحة في الملف!" : "No valid data rows found in the file!" 
+          });
+          return;
+        }
+
+        const res = await addDefectiveMetersBulk(newMeters);
+        if (res.success) {
+          setImportStatus({ 
+            type: "success", 
+            text: isRtl 
+              ? `تم استيراد وتحديث ${res.count} عداد معطوب بنجاح!` 
+              : `Successfully imported ${res.count} defective meters!`
+          });
+          setTimeout(() => setImportStatus(null), 5000);
+        } else {
+          setImportStatus({ 
+            type: "danger", 
+            text: res.message || (isRtl ? "حدث خطأ أثناء الحفظ بالسحابة." : "An error occurred while saving to the cloud.") 
+          });
+        }
+      } catch (err) {
+        console.error("Excel import error for defects:", err);
+        setImportStatus({ 
+          type: "danger", 
+          text: isRtl ? "فشل قراءة ملف الاكسل. تأكد من سلامة التنسيق." : "Failed to read Excel file. Please check format." 
+        });
+      }
+    };
+    reader.readAsArrayBuffer(file);
+    e.target.value = "";
+  };
 
   if (!currentUser) return null;
 
@@ -137,17 +258,41 @@ export default function DefectsPage() {
               </p>
             </div>
           </div>
-          {(currentUser.role === "supervisor" || currentUser.role === "admin") && (
-            <button className="btn btn-primary" onClick={() => setReviewModal(true)} style={{ gap: 8 }}>
-              <Clock size={16} /> {isRtl ? "معاينة العدادات قيد الانتظار" : "Review Pending Quality Gate"}
-              {defectiveMeters.filter(m => m.status === "pending").length > 0 && (
-                <span style={{ background: "white", color: "var(--accent)", padding: "0 6px", borderRadius: "10px", fontSize: "0.7rem", fontWeight: 800 }}>
-                  {defectiveMeters.filter(m => m.status === "pending").length}
-                </span>
-              )}
-            </button>
-          )}
+          <div style={{ display: "flex", alignItems: "center", gap: 10, flexDirection: isRtl ? "row" : "row-reverse" }}>
+            {currentUser.role === "admin" && (
+              <label 
+                className="btn btn-secondary btn-sm" 
+                style={{ cursor: "pointer", display: "inline-flex", alignItems: "center", gap: 6, background: "rgba(26, 127, 55, 0.08)", border: "1px solid rgba(26, 127, 55, 0.2)", color: "var(--accent)" }}
+              >
+                📥 {isRtl ? "استيراد إكسل" : "Import Excel"}
+                <input 
+                  type="file" 
+                  accept=".xlsx, .xls" 
+                  onChange={handleExcelUpload} 
+                  style={{ display: "none" }} 
+                />
+              </label>
+            )}
+            {(currentUser.role === "supervisor" || currentUser.role === "admin") && (
+              <button className="btn btn-primary" onClick={() => setReviewModal(true)} style={{ gap: 8 }}>
+                <Clock size={16} /> {isRtl ? "معاينة العدادات قيد الانتظار" : "Review Pending Quality Gate"}
+                {defectiveMeters.filter(m => m.status === "pending").length > 0 && (
+                  <span style={{ background: "white", color: "var(--accent)", padding: "0 6px", borderRadius: "10px", fontSize: "0.7rem", fontWeight: 800 }}>
+                    {defectiveMeters.filter(m => m.status === "pending").length}
+                  </span>
+                )}
+              </button>
+            )}
+          </div>
         </div>
+
+        {/* Import Status Alert banner */}
+        {importStatus && (
+          <div className={`alert alert-${importStatus.type}`} style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <AlertCircle size={16} />
+            <span>{importStatus.text}</span>
+          </div>
+        )}
 
         {/* Quick Report Form */}
         {currentUser.role !== "admin" && (
