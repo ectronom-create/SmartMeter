@@ -188,238 +188,162 @@ export default function StartOfProductionPage() {
   return (
     <div className="page-container" style={{ direction: isRtl ? "rtl" : "ltr", padding: "20px", fontFamily: isRtl ? "Cairo, sans-serif" : "Inter, system-ui, sans-serif" }}>
        {/* Top Controls */}
-       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20, flexDirection: isRtl ? "row" : "row-reverse" }}>
-          <div>
+       <div style={{ display: "flex", justifyContent: isRtl ? "flex-start" : "flex-end", marginBottom: 20, flexDirection: isRtl ? "row" : "row-reverse" }}>
+          <div style={{ display: "flex", gap: 10, alignItems: "center", flexDirection: isRtl ? "row" : "row-reverse" }}>
             <button className="btn btn-secondary btn-sm" onClick={() => navigate("/supervisor")} style={{ display: "flex", alignItems: "center", gap: 6, fontSize: "0.95rem", padding: "8px 16px" }}>
               <ArrowRight size={16} style={{ transform: isRtl ? "none" : "rotate(180deg)" }} /> {isRtl ? "العودة للوحة المشرف" : "Back to Supervisor Panel"}
             </button>
-          </div>
-          <div style={{ display: "flex", gap: 10 }}>
             <button className="btn btn-primary btn-sm" onClick={startNewReport} style={{ display: "flex", alignItems: "center", gap: 6, fontSize: "0.95rem", padding: "8px 16px" }}>
               <ClipboardList size={16} /> {isRtl ? "تقرير جديد" : "New Report"}
             </button>
           </div>
        </div>
 
-       <div style={{ display: "grid", gridTemplateColumns: isRtl ? "280px 1fr" : "1fr 280px", gap: 20, alignItems: "start" }}>
-         
-          {/* SOP Reports List (Order depends on language flow) */}
-          {isRtl && (
-            <div className="card" style={{ padding: "16px", border: "2px solid #e2e8f0" }}>
-              <h3 style={{ borderBottom: "2px solid #0284c7", paddingBottom: 12, marginBottom: 12, color: "#0369a1", fontWeight: 800 }}>{isRtl ? "تقارير بداية الإنتاج" : "Start of Production Reports"}</h3>
-              {reports.length === 0 ? (
-                <p style={{ color: "#64748b", fontSize: "0.9rem", textAlign: "center", padding: "20px 0" }}>{isRtl ? "لا توجد تقارير محفوظة" : "No saved reports"}</p>
-              ) : (
-                <div style={{ display: "flex", flexDirection: "column", gap: 10, maxHeight: "60vh", overflowY: "auto" }}>
-                  {reports.map(r => (
-                    <div key={r.id} 
-                      onClick={() => loadReport(r)}
-                      style={{ 
-                        padding: 12, borderRadius: 8, background: activeReportId === r.id ? "#e0f2fe" : "#f8fafc", 
-                        border: `2px solid ${activeReportId === r.id ? "#0284c7" : "#e2e8f0"}`, 
-                        cursor: "pointer", transition: "all 0.2s", fontWeight: activeReportId === r.id ? 600 : 400,
-                        textAlign: "right"
-                      }}
-                    >
-                      <div style={{ fontWeight: 700, fontSize: "0.95rem", color: activeReportId === r.id ? "#0369a1" : "#334155" }}>📅 {r.date}</div>
-                      <div style={{ fontSize: "0.8rem", color: "#64748b", display: "flex", justifyContent: "space-between", marginTop: 4 }}>
-                        <span>{r.line}</span>
-                        <button 
-                          onClick={(e) => { e.stopPropagation(); deleteReport(r.id); }} 
-                          style={{ background: "none", border: "none", color: "#ef4444", cursor: "pointer", padding: 0 }}
-                        >
-                          <Trash2 size={14} />
-                        </button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          )}
+       <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+          {/* Matrix & Form */}
+          <div className="card" style={{ padding: "28px", background: "#fff", border: "2px solid #e2e8f0", borderRadius: "12px" }}>
+           
+           {/* Header Banner */}
+           <div style={{ background: "linear-gradient(135deg, #0284c7, #0369a1)", color: "#fff", padding: "24px", borderRadius: "12px", textAlign: "center", marginBottom: 24, boxShadow: "0 4px 12px rgba(2, 132, 199, 0.2)" }}>
+             <h2 style={{ margin: 0, fontWeight: 800, fontSize: "1.8rem" }}>START OF PRODUCTION _ ECTRON</h2>
+             <p style={{ margin: "8px 0 0 0", fontSize: "1rem", opacity: 0.95 }}>{isRtl ? "تحقق متطلبات إعداد وبدء خط الإنتاج وتأكيد جاهزية المحطات" : "Line setup verification and workstation readiness check"}</p>
+           </div>
 
-          {/* Right Side: Matrix & Form */}
-          <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
-            <div className="card" style={{ padding: "28px", background: "#fff", border: "2px solid #e2e8f0", borderRadius: "12px" }}>
-             
-             {/* Header Banner */}
-             <div style={{ background: "linear-gradient(135deg, #0284c7, #0369a1)", color: "#fff", padding: "24px", borderRadius: "12px", textAlign: "center", marginBottom: 24, boxShadow: "0 4px 12px rgba(2, 132, 199, 0.2)" }}>
-               <h2 style={{ margin: 0, fontWeight: 800, fontSize: "1.8rem" }}>START OF PRODUCTION _ ECTRON</h2>
-               <p style={{ margin: "8px 0 0 0", fontSize: "1rem", opacity: 0.95 }}>{isRtl ? "تحقق متطلبات إعداد وبدء خط الإنتاج وتأكيد جاهزية المحطات" : "Line setup verification and workstation readiness check"}</p>
-             </div>
-
-             {/* Date & Line Inputs */}
-              <div className="grid-2" style={{ marginBottom: 24 }}>
-                <div className="input-group">
-                  <label className="input-label" style={{ fontWeight: 700, color: "#0369a1", marginBottom: 6, textAlign: isRtl ? "right" : "left" }}>{isRtl ? "تاريخ الفحص (DATE)" : "Inspection Date (DATE)"}</label>
-                  <input className="input" type="date" value={date} onChange={e => setDate(e.target.value)} style={{ fontSize: "0.95rem" }} />
-                </div>
-                <div className="input-group">
-                  <label className="input-label" style={{ fontWeight: 700, color: "#0369a1", marginBottom: 6, textAlign: isRtl ? "right" : "left" }}>{isRtl ? "خط الإنتاج (Line)" : "Production Line (Line)"}</label>
-                  <select className="input" value={line} onChange={e => setLine(e.target.value)} style={{ fontSize: "0.95rem" }}>
-                    <option value="Single Phase">{isRtl ? "خط أحادي الطور (Single Phase)" : "Single Phase Line"}</option>
-                    <option value="Three Phase">{isRtl ? "خط ثلاثي الطور (Three Phase)" : "Three Phase Line"}</option>
-                    <option value="Water">{isRtl ? "خط المياه (Water)" : "Water Line"}</option>
-                  </select>
-                </div>
+           {/* Date & Line Inputs */}
+            <div className="grid-2" style={{ marginBottom: 24 }}>
+              <div className="input-group">
+                <label className="input-label" style={{ fontWeight: 700, color: "#0369a1", marginBottom: 6, textAlign: isRtl ? "right" : "left" }}>{isRtl ? "تاريخ الفحص (DATE)" : "Inspection Date (DATE)"}</label>
+                <input className="input" type="date" value={date} onChange={e => setDate(e.target.value)} style={{ fontSize: "0.95rem" }} />
               </div>
+              <div className="input-group">
+                <label className="input-label" style={{ fontWeight: 700, color: "#0369a1", marginBottom: 6, textAlign: isRtl ? "right" : "left" }}>{isRtl ? "خط الإنتاج (Line)" : "Production Line (Line)"}</label>
+                <select className="input" value={line} onChange={e => setLine(e.target.value)} style={{ fontSize: "0.95rem" }}>
+                  <option value="Single Phase">{isRtl ? "خط أحادي الطور (Single Phase)" : "Single Phase Line"}</option>
+                  <option value="Three Phase">{isRtl ? "خط ثلاثي الطور (Three Phase)" : "Three Phase Line"}</option>
+                  <option value="Water">{isRtl ? "خط المياه (Water)" : "Water Line"}</option>
+                </select>
+              </div>
+            </div>
 
-             {/* Matrix Form */}
-             <h3 style={{ marginBottom: 16, color: "#0369a1", fontSize: "1.1rem", textAlign: isRtl ? "right" : "left" }}>{isRtl ? "جدول بنود التحقق للمحطات" : "Workstations Verification Checklist Matrix"}</h3>
-             <div style={{ overflowX: "auto", border: "2px solid #0284c7", borderRadius: "10px", marginBottom: 24, background: "#fff" }}>
-               <table style={{ minWidth: "1550px", borderCollapse: "collapse", fontSize: "0.9rem" }}>
-                 <thead>
-                   <tr style={{ background: "#e0f2fe" }}>
-                     <th rowSpan={2} style={{ padding: "14px", border: "1px solid #bae6fd", width: "160px", textAlign: isRtl ? "right" : "left", color: "#0369a1", fontWeight: 800 }}>{isRtl ? "محطة العمل (Workstation)" : "Workstation (Workstation)"}</th>
-                     {categories.map(cat => {
-                       const colCount = COLUMNS.filter(c => c.category === cat).length;
+           {/* Matrix Form */}
+           <h3 style={{ marginBottom: 16, color: "#0369a1", fontSize: "1.1rem", textAlign: isRtl ? "right" : "left" }}>{isRtl ? "جدول بنود التحقق للمحطات" : "Workstations Verification Checklist Matrix"}</h3>
+           <div style={{ overflowX: "auto", border: "2px solid #0284c7", borderRadius: "10px", marginBottom: 24, background: "#fff" }}>
+             <table style={{ minWidth: "1550px", borderCollapse: "collapse", fontSize: "0.9rem" }}>
+               <thead>
+                 <tr style={{ background: "#e0f2fe" }}>
+                   <th rowSpan={2} style={{ padding: "14px", border: "1px solid #bae6fd", width: "160px", textAlign: isRtl ? "right" : "left", color: "#0369a1", fontWeight: 800 }}>{isRtl ? "محطة العمل (Workstation)" : "Workstation (Workstation)"}</th>
+                   {categories.map(cat => {
+                     const colCount = COLUMNS.filter(c => c.category === cat).length;
+                     return (
+                       <th key={cat} colSpan={colCount} style={{ padding: "10px", border: "1px solid #bae6fd", textAlign: "center", fontWeight: 800, color: "#0369a1", fontSize: "0.85rem" }}>
+                         {cat}
+                       </th>
+                     );
+                   })}
+                 </tr>
+                 <tr style={{ background: "#f8fafc" }}>
+                   {COLUMNS.map(col => (
+                     <th key={col.id} title={col.desc} style={{ padding: "10px 8px", border: "1px solid #cbd5e1", textAlign: "center", fontSize: "0.8rem", width: "88px", fontWeight: 700, color: "#0284c7" }}>
+                       <div style={{ fontWeight: 800, marginBottom: 4, color: "#1e3a8a" }}>{col.label}</div>
+                       <div style={{ fontSize: "0.7rem", color: "#0284c7", lineHeight: 1.2 }}>{getColumnDescription(col)}</div>
+                     </th>
+                   ))}
+                 </tr>
+               </thead>
+               <tbody>
+                 {STAGES.map(stage => (
+                   <tr key={stage.id} style={{ borderBottom: "1px solid #e2e8f0", background: stage.id % 2 === 0 ? "#f8fafc" : "#fff" }}>
+                     <td style={{ padding: "14px", border: "1px solid #e2e8f0", fontWeight: 700, color: "#0369a1", background: "#f1f5f9", textAlign: isRtl ? "right" : "left" }}>
+                       {getStageTranslatedName(stage)}
+                     </td>
+                     {COLUMNS.map(col => {
+                       const cellVal = gridData[stage.id]?.[col.id] || "";
                        return (
-                         <th key={cat} colSpan={colCount} style={{ padding: "10px", border: "1px solid #bae6fd", textAlign: "center", fontWeight: 800, color: "#0369a1", fontSize: "0.85rem" }}>
-                           {cat}
-                         </th>
+                         <td key={col.id} style={{ border: "1px solid #e2e8f0", textAlign: "center", padding: "8px" }}>
+                           <div style={{ display: "flex", justifyContent: "center", gap: 8 }}>
+                             <button 
+                               onClick={() => handleCellChange(stage.id, col.id, "OK")}
+                               title={isRtl ? "مطابق (OK)" : "Compliant (OK)"}
+                               style={{ 
+                                 border: "2px solid #22c55e", width: 36, height: 36, borderRadius: 6, cursor: "pointer",
+                                 background: cellVal === "OK" ? "#22c55e" : "#fff",
+                                 color: cellVal === "OK" ? "#fff" : "#22c55e",
+                                 display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 800, fontSize: "1.1rem", transition: "all 0.2s"
+                               }}
+                             >
+                               ✓
+                             </button>
+                             <button 
+                               onClick={() => handleCellChange(stage.id, col.id, "NOK")}
+                               title={isRtl ? "غير مطابق (Not OK)" : "Non-Compliant (Not OK)"}
+                               style={{ 
+                                 border: "2px solid #ef4444", width: 36, height: 36, borderRadius: 6, cursor: "pointer",
+                                 background: cellVal === "NOK" ? "#ef4444" : "#fff",
+                                 color: cellVal === "NOK" ? "#fff" : "#ef4444",
+                                 display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 800, fontSize: "1.1rem", transition: "all 0.2s"
+                               }}
+                             >
+                               ✕
+                             </button>
+                           </div>
+                         </td>
                        );
                      })}
                    </tr>
-                   <tr style={{ background: "#f8fafc" }}>
-                     {COLUMNS.map(col => (
-                       <th key={col.id} title={col.desc} style={{ padding: "10px 8px", border: "1px solid #cbd5e1", textAlign: "center", fontSize: "0.8rem", width: "88px", fontWeight: 700, color: "#0284c7" }}>
-                         <div style={{ fontWeight: 800, marginBottom: 4, color: "#1e3a8a" }}>{col.label}</div>
-                         <div style={{ fontSize: "0.7rem", color: "#0284c7", lineHeight: 1.2 }}>{getColumnDescription(col)}</div>
-                       </th>
-                     ))}
-                   </tr>
-                 </thead>
-                 <tbody>
-                   {STAGES.map(stage => (
-                     <tr key={stage.id} style={{ borderBottom: "1px solid #e2e8f0", background: stage.id % 2 === 0 ? "#f8fafc" : "#fff" }}>
-                       <td style={{ padding: "14px", border: "1px solid #e2e8f0", fontWeight: 700, color: "#0369a1", background: "#f1f5f9", textAlign: isRtl ? "right" : "left" }}>
-                         {getStageTranslatedName(stage)}
-                       </td>
-                       {COLUMNS.map(col => {
-                         const cellVal = gridData[stage.id]?.[col.id] || "";
-                         return (
-                           <td key={col.id} style={{ border: "1px solid #e2e8f0", textAlign: "center", padding: "8px" }}>
-                             <div style={{ display: "flex", justifyContent: "center", gap: 8 }}>
-                               <button 
-                                 onClick={() => handleCellChange(stage.id, col.id, "OK")}
-                                 title={isRtl ? "مطابق (OK)" : "Compliant (OK)"}
-                                 style={{ 
-                                   border: "2px solid #22c55e", width: 36, height: 36, borderRadius: 6, cursor: "pointer",
-                                   background: cellVal === "OK" ? "#22c55e" : "#fff",
-                                   color: cellVal === "OK" ? "#fff" : "#22c55e",
-                                   display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 800, fontSize: "1.1rem", transition: "all 0.2s"
-                                 }}
-                               >
-                                 ✓
-                               </button>
-                               <button 
-                                 onClick={() => handleCellChange(stage.id, col.id, "NOK")}
-                                 title={isRtl ? "غير مطابق (Not OK)" : "Non-Compliant (Not OK)"}
-                                 style={{ 
-                                   border: "2px solid #ef4444", width: 36, height: 36, borderRadius: 6, cursor: "pointer",
-                                   background: cellVal === "NOK" ? "#ef4444" : "#fff",
-                                   color: cellVal === "NOK" ? "#fff" : "#ef4444",
-                                   display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 800, fontSize: "1.1rem", transition: "all 0.2s"
-                                 }}
-                               >
-                                 ✕
-                               </button>
-                             </div>
-                           </td>
-                         );
-                       })}
-                     </tr>
-                   ))}
-                 </tbody>
-               </table>
-             </div>
+                 ))}
+               </tbody>
+             </table>
+           </div>
 
-             {/* Non-conformity Analysis & Responsibles */}
-             <div className="grid-3" style={{ marginBottom: 24 }}>
-               <div className="input-group">
-                 <label className="input-label" style={{ fontWeight: 700, color: "#0369a1", marginBottom: 6, textAlign: isRtl ? "right" : "left" }}>{isRtl ? "تفاصيل عدم المطابقة (Detail of no-conformity)" : "Details of Non-Conformity"}</label>
-                 <textarea className="input" rows={3} value={noConformity} onChange={e => setNoConformity(e.target.value)} placeholder={isRtl ? "اذكر أي ملاحظات أو مشاكل تم رصدها..." : "Describe any noted issues or deviations..."} style={{ resize: "none", fontSize: "0.95rem" }} />
-               </div>
-               <div className="input-group">
-                 <label className="input-label" style={{ fontWeight: 700, color: "#0369a1", marginBottom: 6, textAlign: isRtl ? "right" : "left" }}>{isRtl ? "التحليل والإجراء (Analysis)" : "Analysis & Corrective Action (Analysis)"}</label>
-                 <textarea className="input" rows={3} value={analysis} onChange={e => setAnalysis(e.target.value)} placeholder={isRtl ? "كيف تم التعامل مع عدم المطابقة؟..." : "How was the non-conformity handled?..."} style={{ resize: "none", fontSize: "0.95rem" }} />
-               </div>
-               <div className="input-group">
-                 <label className="input-label" style={{ fontWeight: 700, color: "#0369a1", marginBottom: 6, textAlign: isRtl ? "right" : "left" }}>{isRtl ? "المسؤول (Responsible)" : "Responsible Person (Responsible)"}</label>
-                 <input className="input" type="text" value={responsible} onChange={e => setResponsible(e.target.value)} placeholder={isRtl ? "اسم الشخص المسؤول عن التصحيح..." : "Name of person responsible for resolution..."} style={{ fontSize: "0.95rem" }} />
-               </div>
+           {/* Non-conformity Analysis & Responsibles */}
+           <div className="grid-3" style={{ marginBottom: 24 }}>
+             <div className="input-group">
+               <label className="input-label" style={{ fontWeight: 700, color: "#0369a1", marginBottom: 6, textAlign: isRtl ? "right" : "left" }}>{isRtl ? "تفاصيل عدم المطابقة (Detail of no-conformity)" : "Details of Non-Conformity"}</label>
+               <textarea className="input" rows={3} value={noConformity} onChange={e => setNoConformity(e.target.value)} placeholder={isRtl ? "اذكر أي ملاحظات أو مشاكل تم رصدها..." : "Describe any noted issues or deviations..."} style={{ resize: "none", fontSize: "0.95rem" }} />
              </div>
-
-             {/* Validation & Comment Section */}
-             <div className="grid-3" style={{ marginBottom: 24, borderTop: "2px solid #0284c7", paddingTop: 20 }}>
-               <div className="input-group">
-                 <label className="input-label" style={{ fontWeight: 700, display: "flex", alignItems: "center", gap: 6, color: "#0369a1", marginBottom: 6, justifyContent: isRtl ? "flex-start" : "flex-end" }}>
-                   <Award size={15} style={{ color: "#eab308" }} /> {isRtl ? "توقيع قائد الفريق (Validation Team Leader)" : "Team Leader Signature (Validation TL)"}
-                 </label>
-                 <input className="input" type="text" value={validationTL} onChange={e => setValidationTL(e.target.value)} placeholder={isRtl ? "اسم قائد الفريق المعتمد..." : "Authorized Team Leader name..."} style={{ fontSize: "0.95rem" }} />
-               </div>
-               <div className="input-group">
-                 <label className="input-label" style={{ fontWeight: 700, display: "flex", alignItems: "center", gap: 6, color: "#0369a1", marginBottom: 6, justifyContent: isRtl ? "flex-start" : "flex-end" }}>
-                   <Award size={15} style={{ color: "#22c55e" }} /> {isRtl ? "توقيع قائد الجودة (Validation Quality leader)" : "Quality Leader Signature (Validation QL)"}
-                 </label>
-                 <input className="input" type="text" value={validationQL} onChange={e => setValidationQL(e.target.value)} placeholder={isRtl ? "توقيع مسؤول الجودة..." : "Quality Inspector name..."} style={{ fontSize: "0.95rem" }} />
-               </div>
-               <div className="input-group">
-                 <label className="input-label" style={{ fontWeight: 700, color: "#0369a1", marginBottom: 6, textAlign: isRtl ? "right" : "left" }}>{isRtl ? "ملاحظات عامة (Comment)" : "General Comments (Comment)"}</label>
-                 <textarea className="input" rows={2} value={comment} onChange={e => setComment(e.target.value)} placeholder={isRtl ? "أي تعليق إضافي..." : "Any additional comments..."} style={{ resize: "none", fontSize: "0.95rem" }} />
-               </div>
+             <div className="input-group">
+               <label className="input-label" style={{ fontWeight: 700, color: "#0369a1", marginBottom: 6, textAlign: isRtl ? "right" : "left" }}>{isRtl ? "التحليل والإجراء (Analysis)" : "Analysis & Corrective Action (Analysis)"}</label>
+               <textarea className="input" rows={3} value={analysis} onChange={e => setAnalysis(e.target.value)} placeholder={isRtl ? "كيف تم التعامل مع عدم المطابقة؟..." : "How was the non-conformity handled?..."} style={{ resize: "none", fontSize: "0.95rem" }} />
              </div>
-
-             {/* Save Buttons & Notifications */}
-             <div style={{ display: "flex", justifyContent: "flex-end", alignItems: "center", gap: 15, flexDirection: isRtl ? "row" : "row-reverse" }}>
-               {savedSuccess && (
-                 <div style={{ color: "#22c55e", fontWeight: 700, display: "flex", alignItems: "center", gap: 6, fontSize: "1rem", background: "#f0fdf4", padding: "8px 16px", borderRadius: "8px" }}>
-                   <Check size={20} /> {isRtl ? "تم حفظ وتوقيع التقرير بنجاح!" : "Report saved and signed successfully!"}
-                 </div>
-               )}
-               <button onClick={handleSave} className="btn btn-primary" style={{ padding: "14px 32px", fontSize: "1.05rem", display: "flex", alignItems: "center", gap: 10, fontWeight: 700 }}>
-                 <Save size={18} /> {isRtl ? "حفظ وتوقيع التقرير (Save & Sign)" : "Save & Sign Report"}
-               </button>
+             <div className="input-group">
+               <label className="input-label" style={{ fontWeight: 700, color: "#0369a1", marginBottom: 6, textAlign: isRtl ? "right" : "left" }}>{isRtl ? "المسؤول (Responsible)" : "Responsible Person (Responsible)"}</label>
+               <input className="input" type="text" value={responsible} onChange={e => setResponsible(e.target.value)} placeholder={isRtl ? "اسم الشخص المسؤول عن التصحيح..." : "Name of person responsible for resolution..."} style={{ fontSize: "0.95rem" }} />
              </div>
+           </div>
 
-            </div>
+           {/* Validation & Comment Section */}
+           <div className="grid-3" style={{ marginBottom: 24, borderTop: "2px solid #0284c7", paddingTop: 20 }}>
+             <div className="input-group">
+               <label className="input-label" style={{ fontWeight: 700, display: "flex", alignItems: "center", gap: 6, color: "#0369a1", marginBottom: 6, justifyContent: isRtl ? "flex-start" : "flex-end" }}>
+                 <Award size={15} style={{ color: "#eab308" }} /> {isRtl ? "توقيع قائد الفريق (Validation Team Leader)" : "Team Leader Signature (Validation TL)"}
+               </label>
+               <input className="input" type="text" value={validationTL} onChange={e => setValidationTL(e.target.value)} placeholder={isRtl ? "اسم قائد الفريق المعتمد..." : "Authorized Team Leader name..."} style={{ fontSize: "0.95rem" }} />
+             </div>
+             <div className="input-group">
+               <label className="input-label" style={{ fontWeight: 700, display: "flex", alignItems: "center", gap: 6, color: "#0369a1", marginBottom: 6, justifyContent: isRtl ? "flex-start" : "flex-end" }}>
+                 <Award size={15} style={{ color: "#22c55e" }} /> {isRtl ? "توقيع قائد الجودة (Validation Quality leader)" : "Quality Leader Signature (Validation QL)"}
+               </label>
+               <input className="input" type="text" value={validationQL} onChange={e => setValidationQL(e.target.value)} placeholder={isRtl ? "توقيع مسؤول الجودة..." : "Quality Inspector name..."} style={{ fontSize: "0.95rem" }} />
+             </div>
+             <div className="input-group">
+               <label className="input-label" style={{ fontWeight: 700, color: "#0369a1", marginBottom: 6, textAlign: isRtl ? "right" : "left" }}>{isRtl ? "ملاحظات عامة (Comment)" : "General Comments (Comment)"}</label>
+               <textarea className="input" rows={2} value={comment} onChange={e => setComment(e.target.value)} placeholder={isRtl ? "أي تعليق إضافي..." : "Any additional comments..."} style={{ resize: "none", fontSize: "0.95rem" }} />
+             </div>
+           </div>
+
+           {/* Save Buttons & Notifications */}
+           <div style={{ display: "flex", justifyContent: "flex-end", alignItems: "center", gap: 15, flexDirection: isRtl ? "row" : "row-reverse" }}>
+             {savedSuccess && (
+               <div style={{ color: "#22c55e", fontWeight: 700, display: "flex", alignItems: "center", gap: 6, fontSize: "1rem", background: "#f0fdf4", padding: "8px 16px", borderRadius: "8px" }}>
+                 <Check size={20} /> {isRtl ? "تم حفظ وتوقيع التقرير بنجاح!" : "Report saved and signed successfully!"}
+               </div>
+             )}
+             <button onClick={handleSave} className="btn btn-primary" style={{ padding: "14px 32px", fontSize: "1.05rem", display: "flex", alignItems: "center", gap: 10, fontWeight: 700 }}>
+               <Save size={18} /> {isRtl ? "حفظ وتوقيع التقرير (Save & Sign)" : "Save & Sign Report"}
+             </button>
+           </div>
+
           </div>
-
-          {/* LTR layout places report list on the right */}
-          {!isRtl && (
-            <div className="card" style={{ padding: "16px", border: "2px solid #e2e8f0" }}>
-              <h3 style={{ borderBottom: "2px solid #0284c7", paddingBottom: 12, marginBottom: 12, color: "#0369a1", fontWeight: 800 }}>Start of Production Reports</h3>
-              {reports.length === 0 ? (
-                <p style={{ color: "#64748b", fontSize: "0.9rem", textAlign: "center", padding: "20px 0" }}>No saved reports</p>
-              ) : (
-                <div style={{ display: "flex", flexDirection: "column", gap: 10, maxHeight: "60vh", overflowY: "auto" }}>
-                  {reports.map(r => (
-                    <div key={r.id} 
-                      onClick={() => loadReport(r)}
-                      style={{ 
-                        padding: 12, borderRadius: 8, background: activeReportId === r.id ? "#e0f2fe" : "#f8fafc", 
-                        border: `2px solid ${activeReportId === r.id ? "#0284c7" : "#e2e8f0"}`, 
-                        cursor: "pointer", transition: "all 0.2s", fontWeight: activeReportId === r.id ? 600 : 400,
-                        textAlign: "left"
-                      }}
-                    >
-                      <div style={{ fontWeight: 700, fontSize: "0.95rem", color: activeReportId === r.id ? "#0369a1" : "#334155" }}>📅 {r.date}</div>
-                      <div style={{ fontSize: "0.8rem", color: "#64748b", display: "flex", justifyContent: "space-between", marginTop: 4 }}>
-                        <span>{r.line}</span>
-                        <button 
-                          onClick={(e) => { e.stopPropagation(); deleteReport(r.id); }} 
-                          style={{ background: "none", border: "none", color: "#ef4444", cursor: "pointer", padding: 0 }}
-                        >
-                          <Trash2 size={14} />
-                        </button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          )}
-
        </div>
     </div>
   );
