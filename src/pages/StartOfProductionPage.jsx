@@ -35,7 +35,7 @@ export default function StartOfProductionPage() {
   const isRtl = language === "ar";
 
   const [date, setDate] = useState(getTodayString());
-  const [line, setLine] = useState("Single Phase");
+  const [line, setLine] = useState("Three Phase");
   const [gridData, setGridData] = useState({}); // { stage_id: { col_id: 'OK' | 'NOK' | 'NA' } }
   
   // Bottom fields
@@ -129,6 +129,7 @@ export default function StartOfProductionPage() {
     setValidationQL("");
     setComment("");
     setDate(getTodayString());
+    setLine("Three Phase");
   };
 
   const loadReport = (r) => {
@@ -218,9 +219,7 @@ export default function StartOfProductionPage() {
               <div className="input-group">
                 <label className="input-label" style={{ fontWeight: 700, color: "#0369a1", marginBottom: 6, textAlign: isRtl ? "right" : "left" }}>{isRtl ? "خط الإنتاج (Line)" : "Production Line (Line)"}</label>
                 <select className="input" value={line} onChange={e => setLine(e.target.value)} style={{ fontSize: "0.95rem" }}>
-                  <option value="Single Phase">{isRtl ? "خط أحادي الطور (Single Phase)" : "Single Phase Line"}</option>
                   <option value="Three Phase">{isRtl ? "خط ثلاثي الطور (Three Phase)" : "Three Phase Line"}</option>
-                  <option value="Water">{isRtl ? "خط المياه (Water)" : "Water Line"}</option>
                 </select>
               </div>
             </div>
