@@ -189,14 +189,19 @@ export default function DefectsPage() {
   };
 
   const filteredCodes = useMemo(() => {
-    if (!searchQuery.trim()) return errorCodes;
+    // If operator, only allow searching/selecting error codes for their current stage
+    const baseCodes = currentUser.role === "operator" && currentStage
+      ? errorCodes.filter(e => e.stage_id === currentStage.stage_id)
+      : errorCodes;
+
+    if (!searchQuery.trim()) return baseCodes;
     const q = searchQuery.toLowerCase();
-    return errorCodes.filter(e => 
+    return baseCodes.filter(e => 
       e.code.toLowerCase().includes(q) || 
       e.title.toLowerCase().includes(q) ||
       (stageNames[e.stage_id] || "").toLowerCase().includes(q)
     );
-  }, [searchQuery, errorCodes, stageNames]);
+  }, [searchQuery, errorCodes, stageNames, currentUser.role, currentStage]);
 
   const filtered = defectiveMeters.filter(m =>
     filterStatus === "all" ? true : m.status === filterStatus
@@ -219,6 +224,32 @@ export default function DefectsPage() {
     const sn = fd.get("sn").trim().toUpperCase();
     
     if (!sn || !selectedErrorCode) return;
+
+    // Validate that the operator has an assigned stage
+    if (currentUser.role === "operator" && !currentStage) {
+      setSubmitMsg({
+        type: "error",
+        text: isRtl
+          ? "لم يتم تعيين وردية أو مرحلة عمل لك حالياً. لا يمكنك تسجيل أعطال."
+          : "You do not have an assigned shift or stage. You cannot register defects."
+      });
+      setTimeout(() => setSubmitMsg(null), 5000);
+      return;
+    }
+
+    // Validate that the error code belongs to the operator's current stage (if operator)
+    if (currentUser.role === "operator" && currentStage) {
+      if (selectedErrorCode.stage_id !== currentStage.stage_id) {
+        setSubmitMsg({
+          type: "error",
+          text: isRtl 
+            ? "غير مسموح بتسجيل عطل لمرحلة مختلفة عن مرحلتك الحالية!" 
+            : "Not allowed to register a defect for a stage different from your current stage!"
+        });
+        setTimeout(() => setSubmitMsg(null), 5000);
+        return;
+      }
+    }
 
     const result = await addDefectiveMeter({
       serial_number: sn,

@@ -64,6 +64,7 @@ export default function WorkspacePage() {
     todaySchedule, 
     searchErrorCodes, 
     addDefectiveMeter,
+    errorCodes,
     language,
     t
   } = useApp();
@@ -92,7 +93,7 @@ export default function WorkspacePage() {
 
   useEffect(() => {
     if (errorQuery.trim().length >= 1) {
-      const results = searchErrorCodes(errorQuery);
+      const results = searchErrorCodes(errorQuery, currentStage?.stage_id);
       setErrorResults(results);
     } else {
       setErrorResults([]);
@@ -110,6 +111,22 @@ export default function WorkspacePage() {
   const handleSubmitDefect = async (e) => {
     e.preventDefault();
     if (!serialNumber.trim() || !selectedCode) return;
+
+    // Validate that the error code belongs to the operator's current stage
+    const isValidCode = errorCodes.some(
+      err => err.code === selectedCode && err.stage_id === currentStage?.stage_id
+    );
+
+    if (!isValidCode) {
+      setSubmitMsg({
+        type: "danger",
+        text: isRtl 
+          ? "غير مسموح بتسجيل عطل لمرحلة مختلفة عن مرحلتك الحالية!" 
+          : "Not allowed to register a defect for a stage different from your current stage!"
+      });
+      setTimeout(() => setSubmitMsg(null), 5000);
+      return;
+    }
     
     const result = await addDefectiveMeter({
       serial_number: serialNumber.trim().toUpperCase(),
