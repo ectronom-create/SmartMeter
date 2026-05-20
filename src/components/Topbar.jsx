@@ -20,7 +20,7 @@ export default function Topbar() {
 
   const getDashboardPath = () => {
     if (isAdmin) return "/admin";
-    if (isSupervisor) return "/supervisor";
+    if (isSupervisor) return "/dashboard";
     return "/dashboard";
   };
 
@@ -66,6 +66,11 @@ export default function Topbar() {
         {isSupervisor && location.pathname !== "/supervisor" && (
           <button className="btn btn-secondary btn-sm" onClick={() => navigate("/supervisor")}>
             <LayoutDashboard size={14} /> {t("supervisorPanel")}
+          </button>
+        )}
+        {isSupervisor && location.pathname === "/supervisor" && (
+          <button className="btn btn-secondary btn-sm" onClick={() => navigate("/dashboard")}>
+            <LayoutDashboard size={14} /> {language === "ar" ? "الشاشة الرئيسية" : "Main Dashboard"}
           </button>
         )}
 

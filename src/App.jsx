@@ -26,7 +26,7 @@ function AppRoutes() {
   const defaultRoute = () => {
     if (!currentUser) return "/login";
     if (currentUser.role === "admin") return "/admin";
-    if (currentUser.role === "supervisor") return "/supervisor";
+    if (currentUser.role === "supervisor") return "/dashboard";
     return "/dashboard";
   };
 
