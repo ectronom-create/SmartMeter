@@ -76,12 +76,7 @@ export default function Topbar() {
           </button>
         )}
 
-        {/* Knowledge Base Shortcut */}
-        {!isSupervisor && (
-          <button className="btn btn-ghost btn-sm" onClick={() => navigate("/knowledge")} title={t("faultGuide")}>
-            <BookOpen size={15} /> <span style={{ fontSize: "0.8rem" }}>{t("faultGuide")}</span>
-          </button>
-        )}
+
 
         {/* Language Selection Toggle */}
         <button 

@@ -7,6 +7,8 @@ import StagesPanel from "../components/StagesPanel";
 import FPYDashboard from "../components/FPYDashboard";
 import { translateError } from "./KnowledgeBasePage";
 import { supabase } from "../supabaseClient";
+import * as XLSX from "xlsx";
+
 
 const STAGE_COLORS = { 
   "STG-01": "#f97316", "STG-02": "#4f46e5", 
@@ -211,14 +213,152 @@ function DefectsPanel() {
 }
 
 function ErrorCodesPanel() {
-  const { errorCodes, production_stages, getStageById, addErrorCode, updateErrorCode, deleteErrorCode, language } = useApp();
+  const { errorCodes, production_stages, getStageById, addErrorCode, updateErrorCode, deleteErrorCode, addErrorCodesBulk, language } = useApp();
   const [modal, setModal] = useState({ show: false, editMode: false, data: null });
-  const [formData, setFormData] = useState({ code: "", stage_id: "STG-01", title: "", description: "", troubleshooting: "" });
+  const [formData, setFormData] = useState({
+    code: "",
+    stage_id: "STG-01",
+    title: "",
+    description: "",
+    troubleshooting: ""
+  });
+  const [importStatus, setImportStatus] = useState(null);
 
   const isRtl = language === "ar";
 
+  const mapStageNameOrId = (val, stages) => {
+    if (!val) return "STG-01";
+    const str = val.toString().trim().toUpperCase();
+    if (str.startsWith("STG-")) return str;
+    
+    const digitsOnly = str.replace(/\D/g, "");
+    if (digitsOnly) {
+      const num = parseInt(digitsOnly, 10);
+      if (num >= 1 && num <= 6) return `STG-0${num}`;
+    }
+
+    const normalized = str.toLowerCase();
+    const matched = stages.find(s => 
+      s.stage_id.toLowerCase() === normalized ||
+      s.stage_name.toLowerCase().includes(normalized) ||
+      (s.short_name && s.short_name.toLowerCase().includes(normalized))
+    );
+    return matched ? matched.stage_id : "STG-01";
+  };
+
+  const handleExcelUpload = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    setImportStatus({ 
+      type: "info", 
+      text: isRtl ? "جاري قراءة وتحليل ملف الاكسل..." : "Reading and parsing Excel file..." 
+    });
+
+    const reader = new FileReader();
+    reader.onload = async (evt) => {
+      try {
+        const data = evt.target.result;
+        const workbook = XLSX.read(data, { type: "array" });
+        const sheetName = workbook.SheetNames[0];
+        const sheet = workbook.Sheets[sheetName];
+        const rows = XLSX.utils.sheet_to_json(sheet, { header: 1 });
+
+        if (rows.length < 2) {
+          setImportStatus({ 
+            type: "danger", 
+            text: isRtl ? "ملف الاكسل فارغ أو لا يحتوي على صفوف بيانات!" : "Excel file is empty or has no data rows!" 
+          });
+          return;
+        }
+
+        const headers = rows[0].map(h => (h || "").toString().toLowerCase().trim());
+        
+        const codeIdx = headers.findIndex(h => h.includes("code") || h.includes("الكود") || h.includes("كود") || h.includes("رمز"));
+        const stageIdx = headers.findIndex(h => h.includes("stage") || h.includes("المرحلة") || h.includes("مرحلة"));
+        const titleIdx = headers.findIndex(h => h.includes("title") || h.includes("العنوان"));
+        const descIdx = headers.findIndex(h => h.includes("description") || h.includes("الوصف"));
+        const stepsIdx = headers.findIndex(h => h.includes("steps") || h.includes("troubleshooting") || h.includes("خطوات") || h.includes("الإصلاح") || h.includes("الاصلاح"));
+
+        if (codeIdx === -1 || titleIdx === -1) {
+          setImportStatus({ 
+            type: "danger", 
+            text: isRtl 
+              ? "تنسيق الأعمدة غير صحيح. يجب أن يحتوي الملف على عمودي الكود (code) والعنوان (title) على الأقل." 
+              : "Columns format invalid. File must contain Code and Title columns at least."
+          });
+          return;
+        }
+
+        const newCodes = [];
+        for (let i = 1; i < rows.length; i++) {
+          const row = rows[i];
+          if (!row || row.length === 0) continue;
+
+          const rawCode = (row[codeIdx] !== undefined && row[codeIdx] !== null) ? row[codeIdx].toString().trim() : "";
+          if (!rawCode) continue;
+
+          const rawStageVal = stageIdx !== -1 ? row[stageIdx] : "STG-01";
+          const stageId = mapStageNameOrId(rawStageVal, production_stages);
+
+          const title = row[titleIdx] ? row[titleIdx].toString().trim() : rawCode;
+          const description = descIdx !== -1 && row[descIdx] ? row[descIdx].toString().trim() : null;
+
+          const rawSteps = stepsIdx !== -1 && row[stepsIdx] ? row[stepsIdx].toString() : "";
+          const troubleshooting_steps = rawSteps.split(/[\n|;]+/).map(s => s.trim()).filter(Boolean);
+
+          newCodes.push({
+            code: rawCode,
+            stage_id: stageId,
+            title,
+            description,
+            troubleshooting_steps
+          });
+        }
+
+        if (newCodes.length === 0) {
+          setImportStatus({ 
+            type: "danger", 
+            text: isRtl ? "لم يتم العثور على أسطر صالحة في الملف!" : "No valid data rows found in the file!" 
+          });
+          return;
+        }
+
+        const res = await addErrorCodesBulk(newCodes);
+        if (res.success) {
+          setImportStatus({ 
+            type: "success", 
+            text: isRtl 
+              ? `تم استيراد وتحديث ${newCodes.length} أكواد أعطال بنجاح!` 
+              : `Successfully imported and synchronized ${newCodes.length} error codes!`
+          });
+          setTimeout(() => setImportStatus(null), 5000);
+        } else {
+          setImportStatus({ 
+            type: "danger", 
+            text: res.error?.message || (isRtl ? "حدث خطأ أثناء الحفظ بالسحابة." : "An error occurred while saving to the cloud.") 
+          });
+        }
+      } catch (err) {
+        console.error("Excel import error for error codes:", err);
+        setImportStatus({ 
+          type: "danger", 
+          text: isRtl ? "فشل قراءة ملف الاكسل. تأكد من سلامة التنسيق." : "Failed to read Excel file. Please check format." 
+        });
+      }
+    };
+    reader.readAsArrayBuffer(file);
+    e.target.value = "";
+  };
+
   const openAdd = () => {
-    setFormData({ code: "", stage_id: "STG-01", title: "", description: "", troubleshooting: "" });
+    setFormData({
+      code: "",
+      stage_id: "STG-01",
+      title: "",
+      description: "",
+      troubleshooting: ""
+    });
     setModal({ show: true, editMode: false, data: null });
   };
 
@@ -226,9 +366,9 @@ function ErrorCodesPanel() {
     setFormData({ 
       code: e.code, 
       stage_id: e.stage_id, 
-      title: e.title, 
+      title: e.title || "", 
       description: e.description || "", 
-      troubleshooting: e.troubleshooting_steps.join("\n") 
+      troubleshooting: (e.troubleshooting_steps || []).join("\n") 
     });
     setModal({ show: true, editMode: true, data: e });
   };
@@ -239,8 +379,8 @@ function ErrorCodesPanel() {
       code: formData.code,
       stage_id: formData.stage_id,
       title: formData.title,
-      description: formData.description,
-      troubleshooting_steps: formData.troubleshooting.split("\n").filter(l => l.trim())
+      description: formData.description || null,
+      troubleshooting_steps: formData.troubleshooting.split("\n").map(l => l.trim()).filter(Boolean)
     };
 
     if (modal.editMode) {
@@ -253,23 +393,40 @@ function ErrorCodesPanel() {
 
   return (
     <div style={{display:"flex",flexDirection:"column",gap:16, textAlign: isRtl ? "right" : "left"}}>
-      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center", flexDirection: isRtl ? "row" : "row-reverse"}}>
+      <div style={{display:"flex",justifyContent: "space-between", alignItems:"center", flexDirection: isRtl ? "row" : "row-reverse", flexWrap: "wrap", gap: 10}}>
         <div>
-          <h2 style={{marginBottom:2}}>{isRtl ? "دليل أكواد الأعطال" : "Fault Code Reference Library"}</h2>
+          <h2 style={{marginBottom:2}}>{isRtl ? "دليل أكواد الأعطال الرئيسي" : "Fault Code Primary Reference Library"}</h2>
           <p style={{fontSize:"0.85rem"}}>{errorCodes.length} {isRtl ? "كود مسجل في النظام" : "documented technical fault codes"}</p>
         </div>
-        <button className="btn btn-primary" onClick={openAdd}>{isRtl ? "+ إضافة كود جديد" : "+ Add New Fault Code"}</button>
+        <div style={{display:"flex", gap: 10}}>
+          <label className="btn btn-secondary" style={{ cursor: "pointer", display: "inline-flex", alignItems: "center", gap: 8 }}>
+            📥 {isRtl ? "استيراد إكسل" : "Import Excel"}
+            <input type="file" accept=".xlsx, .xls" onChange={handleExcelUpload} style={{ display: "none" }} />
+          </label>
+          <button className="btn btn-primary" onClick={openAdd}>{isRtl ? "+ إضافة كود جديد" : "+ Add New Fault Code"}</button>
+        </div>
       </div>
 
+      {importStatus && (
+        <div className={`alert alert-${importStatus.type}`} style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <AlertTriangle size={16} />
+          <span>{importStatus.text}</span>
+          {importStatus.type !== "info" && (
+            <button className="btn btn-ghost btn-sm" onClick={() => setImportStatus(null)} style={{ marginLeft: isRtl ? "auto" : 0, marginRight: !isRtl ? "auto" : 0, padding: "2px 6px" }}>✕</button>
+          )}
+        </div>
+      )}
+
       <div className="card" style={{padding:0}}>
-        <div className="table-wrapper" style={{border:"none"}}>
-          <table>
+        <div className="table-wrapper" style={{border:"none", overflowX: "auto"}}>
+          <table style={{ minWidth: "900px" }}>
             <thead>
               <tr>
                 <th style={{width: 140, textAlign: isRtl ? "right" : "left"}}>{isRtl ? "المرحلة" : "Stage"}</th>
                 <th style={{width: 100, textAlign: isRtl ? "right" : "left"}}>{isRtl ? "الكود" : "Code"}</th>
-                <th style={{textAlign: isRtl ? "right" : "left"}}>{isRtl ? "وصف العطل" : "Fault Description"}</th>
-                <th style={{textAlign: isRtl ? "right" : "left"}}>{isRtl ? "خطوات الإصلاح" : "Troubleshooting Steps"}</th>
+                <th style={{width: 200, textAlign: isRtl ? "right" : "left"}}>{isRtl ? "العنوان" : "Title"}</th>
+                <th style={{width: 300, textAlign: isRtl ? "right" : "left"}}>{isRtl ? "الوصف" : "Description"}</th>
+                <th style={{width: 300, textAlign: isRtl ? "right" : "left"}}>{isRtl ? "خطوات الإصلاح" : "Troubleshooting Steps"}</th>
                 <th style={{width: 120, textAlign: isRtl ? "right" : "left"}}>{isRtl ? "إجراءات" : "Actions"}</th>
               </tr>
             </thead>
@@ -277,7 +434,6 @@ function ErrorCodesPanel() {
               {errorCodes.map((e, idx) => {
                 const stage = getStageById(e.stage_id);
                 const color = STAGE_COLORS[e.stage_id] || "var(--accent)";
-                const trans = translateError(e, isRtl);
                 return (
                   <tr key={`${e.stage_id}-${e.code}-${idx}`} className="animate-fade">
                     <td>
@@ -286,14 +442,19 @@ function ErrorCodesPanel() {
                         <span style={{fontSize:"0.85rem"}}>{isRtl ? stage?.short_name : stage?.stage_name.split("(")[0].trim()}</span>
                       </div>
                     </td>
-                    <td><span className="badge badge-gray" style={{fontFamily:"monospace",fontWeight:800}}>{trans.code}</span></td>
+                    <td><span className="badge badge-gray" style={{fontFamily:"monospace",fontWeight:800}}>{e.code}</span></td>
+                    <td style={{fontSize:"0.88rem", fontWeight: 700}}>{e.title || "—"}</td>
                     <td>
-                      <div style={{fontWeight:700,fontSize:"0.88rem",marginBottom:4}}>{trans.title}</div>
-                      <div style={{fontSize:"0.76rem",color:"var(--text-muted)",lineHeight:1.4}}>{trans.description}</div>
+                      <div style={{fontSize:"0.76rem",color:"var(--text-muted)",lineHeight:1.4, maxWidth:280, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap"}} title={e.description}>
+                        {e.description || "—"}
+                      </div>
                     </td>
                     <td>
-                      <div style={{fontSize:"0.75rem",color:"var(--text-secondary)"}}>
-                        {trans.troubleshooting_steps.length} {isRtl ? "خطوات مسجلة" : "steps registered"}
+                      <div style={{fontSize:"0.75rem",color:"var(--text-secondary)", maxWidth:280, maxHeight: "90px", overflowY: "auto", display: "flex", flexDirection: "column", gap: 3}}>
+                        {(e.troubleshooting_steps || []).map((step, sIdx) => (
+                          <div key={sIdx} style={{lineHeight: 1.2}}>• {step}</div>
+                        ))}
+                        {(!e.troubleshooting_steps || e.troubleshooting_steps.length === 0) && "—"}
                       </div>
                     </td>
                     <td>
@@ -315,7 +476,7 @@ function ErrorCodesPanel() {
 
       {modal.show && (
         <div className="modal-overlay">
-          <div className="modal-content animate-scale" style={{maxWidth:500, direction: isRtl ? "rtl" : "ltr"}}>
+          <div className="modal-content animate-scale" style={{maxWidth:600, direction: isRtl ? "rtl" : "ltr"}}>
             <div className="modal-header" style={{ flexDirection: isRtl ? "row" : "row-reverse" }}>
               <h3 style={{margin:0}}>{modal.editMode ? (isRtl ? "تعديل كود الخطأ" : "Edit Fault Code") : (isRtl ? "إضافة كود خطأ جديد" : "Add New Fault Code")}</h3>
               <button className="btn-close" onClick={() => setModal({show:false})}>✕</button>
@@ -333,18 +494,22 @@ function ErrorCodesPanel() {
                   </select>
                 </div>
               </div>
+
               <div className="input-group" style={{ textAlign: isRtl ? "right" : "left" }}>
-                <label className="input-label">{isRtl ? "عنوان العطل" : "Fault Title"}</label>
+                <label className="input-label">{isRtl ? "العنوان" : "Title"}</label>
                 <input className="input" value={formData.title} onChange={e=>setFormData({...formData, title:e.target.value})} required style={{ textAlign: isRtl ? "right" : "left" }} />
               </div>
+
               <div className="input-group" style={{ textAlign: isRtl ? "right" : "left" }}>
-                <label className="input-label">{isRtl ? "وصف تفصيلي" : "Detailed Description"}</label>
+                <label className="input-label">{isRtl ? "الوصف" : "Description"}</label>
                 <textarea className="input" value={formData.description} onChange={e=>setFormData({...formData, description:e.target.value})} rows={2} style={{ textAlign: isRtl ? "right" : "left" }} />
               </div>
+
               <div className="input-group" style={{ textAlign: isRtl ? "right" : "left" }}>
                 <label className="input-label">{isRtl ? "خطوات الإصلاح (خطوة في كل سطر)" : "Troubleshooting Steps (One per line)"}</label>
                 <textarea className="input" value={formData.troubleshooting} onChange={e=>setFormData({...formData, troubleshooting:e.target.value})} rows={4} placeholder={isRtl ? "تحقق من كابل الاتصال\nأعد تشغيل الجهاز" : "Verify interface cable\nPower cycle system"} style={{ textAlign: isRtl ? "right" : "left" }} />
               </div>
+
               <div style={{display:"flex",gap:10,marginTop:10, flexDirection: isRtl ? "row" : "row-reverse"}}>
                 <button type="submit" className="btn btn-primary" style={{flex:1}}>{modal.editMode ? (isRtl ? "حفظ التغييرات" : "Save Changes") : (isRtl ? "إضافة الكود" : "Add Code")}</button>
                 <button type="button" className="btn btn-secondary" onClick={()=>setModal({show:false})}>{isRtl ? "إلغاء" : "Cancel"}</button>
@@ -356,6 +521,7 @@ function ErrorCodesPanel() {
     </div>
   );
 }
+
 
 function SOPReportsPanel() {
   const { production_stages, language } = useApp();
