@@ -223,6 +223,7 @@ function ErrorCodesPanel() {
     troubleshooting: ""
   });
   const [importStatus, setImportStatus] = useState(null);
+  const [previewRows, setPreviewRows] = useState(null);
 
   const isRtl = language === "ar";
 
@@ -244,6 +245,25 @@ function ErrorCodesPanel() {
       (s.short_name && s.short_name.toLowerCase().includes(normalized))
     );
     return matched ? matched.stage_id : "STG-01";
+  };
+
+  const downloadTemplate = () => {
+    const headers = [["Code", "Stage", "Title", "Description", "Troubleshooting Steps"]];
+    const sampleData = [
+      ["-101", "STG-01", "Communication Error", "Failed to communicate with smart meter", "Verify interface cable\nPower cycle system"],
+      ["-102", "Assembly", "Power Supply Failure", "No power detected", "Check fuse\nVerify battery connection"]
+    ];
+    const ws = XLSX.utils.aoa_to_sheet([...headers, ...sampleData]);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Template");
+    const wbout = XLSX.write(wb, { bookType: "xlsx", type: "array" });
+    const blob = new Blob([wbout], { type: "application/octet-stream" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "error_codes_template.xlsx";
+    a.click();
+    URL.revokeObjectURL(url);
   };
 
   const handleExcelUpload = (e) => {
@@ -324,21 +344,8 @@ function ErrorCodesPanel() {
           return;
         }
 
-        const res = await addErrorCodesBulk(newCodes);
-        if (res.success) {
-          setImportStatus({ 
-            type: "success", 
-            text: isRtl 
-              ? `تم استيراد وتحديث ${newCodes.length} أكواد أعطال بنجاح!` 
-              : `Successfully imported and synchronized ${newCodes.length} error codes!`
-          });
-          setTimeout(() => setImportStatus(null), 5000);
-        } else {
-          setImportStatus({ 
-            type: "danger", 
-            text: res.error?.message || (isRtl ? "حدث خطأ أثناء الحفظ بالسحابة." : "An error occurred while saving to the cloud.") 
-          });
-        }
+        setPreviewRows(newCodes);
+        setImportStatus(null);
       } catch (err) {
         console.error("Excel import error for error codes:", err);
         setImportStatus({ 
@@ -349,6 +356,34 @@ function ErrorCodesPanel() {
     };
     reader.readAsArrayBuffer(file);
     e.target.value = "";
+  };
+
+  const confirmImport = async () => {
+    if (!previewRows || previewRows.length === 0) return;
+    
+    setImportStatus({ 
+      type: "info", 
+      text: isRtl ? "جاري حفظ البيانات بالسحابة..." : "Saving data to the cloud..." 
+    });
+
+    const toImport = previewRows;
+    setPreviewRows(null);
+
+    const res = await addErrorCodesBulk(toImport);
+    if (res.success) {
+      setImportStatus({ 
+        type: "success", 
+        text: isRtl 
+          ? `تم استيراد وتحديث ${toImport.length} أكواد أعطال بنجاح!` 
+          : `Successfully imported and synchronized ${toImport.length} error codes!`
+      });
+      setTimeout(() => setImportStatus(null), 5000);
+    } else {
+      setImportStatus({ 
+        type: "danger", 
+        text: res.error?.message || (isRtl ? "حدث خطأ أثناء الحفظ بالسحابة." : "An error occurred while saving to the cloud.") 
+      });
+    }
   };
 
   const openAdd = () => {
@@ -399,6 +434,9 @@ function ErrorCodesPanel() {
           <p style={{fontSize:"0.85rem"}}>{errorCodes.length} {isRtl ? "كود مسجل في النظام" : "documented technical fault codes"}</p>
         </div>
         <div style={{display:"flex", gap: 10}}>
+          <button className="btn btn-secondary" onClick={downloadTemplate} style={{ display: "inline-flex", alignItems: "center", gap: 8 }}>
+            📄 {isRtl ? "تحميل النموذج" : "Download Template"}
+          </button>
           <label className="btn btn-secondary" style={{ cursor: "pointer", display: "inline-flex", alignItems: "center", gap: 8 }}>
             📥 {isRtl ? "استيراد إكسل" : "Import Excel"}
             <input type="file" accept=".xlsx, .xls" onChange={handleExcelUpload} style={{ display: "none" }} />
@@ -518,10 +556,75 @@ function ErrorCodesPanel() {
           </div>
         </div>
       )}
+
+      {previewRows && (
+        <div className="modal-overlay" style={{ zIndex: 1100 }}>
+          <div className="modal-content animate-scale" style={{ maxWidth: 850, direction: isRtl ? "rtl" : "ltr" }}>
+            <div className="modal-header" style={{ flexDirection: isRtl ? "row" : "row-reverse" }}>
+              <h3 style={{ margin: 0 }}>
+                {isRtl ? "معاينة بيانات الاستيراد" : "Import Data Preview"}
+              </h3>
+              <button className="btn-close" onClick={() => setPreviewRows(null)}>✕</button>
+            </div>
+            <div style={{ padding: 20, display: "flex", flexDirection: "column", gap: 14 }}>
+              <div className="alert alert-info" style={{ margin: 0 }}>
+                {isRtl 
+                  ? `تم العثور على ${previewRows.length} كود عطل في الملف. يرجى مراجعة البيانات أدناه قبل إتمام الاستيراد.`
+                  : `Found ${previewRows.length} error codes in the file. Please review the data below before confirming.`}
+              </div>
+
+              <div style={{ maxHeight: "350px", overflowY: "auto", border: "1px solid var(--border)", borderRadius: "8px" }}>
+                <table style={{ width: "100%", borderCollapse: "collapse" }}>
+                  <thead>
+                    <tr style={{ background: "var(--bg-secondary)", borderBottom: "1px solid var(--border)" }}>
+                      <th style={{ padding: "8px 12px", textAlign: isRtl ? "right" : "left", fontSize: "0.8rem" }}>{isRtl ? "المرحلة" : "Stage"}</th>
+                      <th style={{ padding: "8px 12px", textAlign: isRtl ? "right" : "left", fontSize: "0.8rem" }}>{isRtl ? "الكود" : "Code"}</th>
+                      <th style={{ padding: "8px 12px", textAlign: isRtl ? "right" : "left", fontSize: "0.8rem" }}>{isRtl ? "العنوان" : "Title"}</th>
+                      <th style={{ padding: "8px 12px", textAlign: isRtl ? "right" : "left", fontSize: "0.8rem" }}>{isRtl ? "الوصف" : "Description"}</th>
+                      <th style={{ padding: "8px 12px", textAlign: isRtl ? "right" : "left", fontSize: "0.8rem" }}>{isRtl ? "خطوات الإصلاح" : "Troubleshooting"}</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {previewRows.map((r, i) => {
+                      const stage = getStageById(r.stage_id);
+                      const color = STAGE_COLORS[r.stage_id] || "var(--accent)";
+                      return (
+                        <tr key={i} style={{ borderBottom: "1px solid var(--border)" }}>
+                          <td style={{ padding: "8px 12px", fontSize: "0.78rem" }}>
+                            <span style={{ color, fontWeight: 700 }}>{stage?.icon} {isRtl ? stage?.short_name : stage?.stage_name.split("(")[0].trim()}</span>
+                          </td>
+                          <td style={{ padding: "8px 12px", fontSize: "0.78rem" }}>
+                            <span className="badge badge-gray" style={{ fontFamily: "monospace" }}>{r.code}</span>
+                          </td>
+                          <td style={{ padding: "8px 12px", fontSize: "0.78rem", fontWeight: 600 }}>{r.title}</td>
+                          <td style={{ padding: "8px 12px", fontSize: "0.75rem", color: "var(--text-muted)", maxWidth: 200, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }} title={r.description}>
+                            {r.description || "—"}
+                          </td>
+                          <td style={{ padding: "8px 12px", fontSize: "0.75rem", color: "var(--text-secondary)", maxWidth: 200, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }} title={(r.troubleshooting_steps || []).join(" | ")}>
+                            {(r.troubleshooting_steps || []).join(" | ") || "—"}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+
+              <div style={{ display: "flex", gap: 10, marginTop: 10, flexDirection: isRtl ? "row" : "row-reverse" }}>
+                <button className="btn btn-primary" style={{ flex: 1 }} onClick={confirmImport}>
+                  ✅ {isRtl ? "تأكيد واستيراد البيانات" : "Confirm and Import Data"}
+                </button>
+                <button className="btn btn-secondary" onClick={() => setPreviewRows(null)}>
+                  {isRtl ? "إلغاء" : "Cancel"}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
-
 
 function SOPReportsPanel() {
   const { production_stages, language } = useApp();
