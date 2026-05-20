@@ -224,8 +224,22 @@ function ErrorCodesPanel() {
   });
   const [importStatus, setImportStatus] = useState(null);
   const [previewRows, setPreviewRows] = useState(null);
+  const [searchQuery, setSearchQuery] = useState("");
 
   const isRtl = language === "ar";
+
+  const filteredErrorCodes = errorCodes.filter(e => {
+    const stage = getStageById(e.stage_id);
+    const stageName = stage ? (isRtl ? stage.short_name : stage.stage_name) : "";
+    const query = searchQuery.toLowerCase().trim();
+    if (!query) return true;
+    return (
+      (e.code || "").toLowerCase().includes(query) ||
+      (e.title || "").toLowerCase().includes(query) ||
+      (e.description || "").toLowerCase().includes(query) ||
+      stageName.toLowerCase().includes(query)
+    );
+  });
 
   const mapStageNameOrId = (val, stages) => {
     if (!val) return "STG-01";
@@ -455,6 +469,24 @@ function ErrorCodesPanel() {
         </div>
       )}
 
+      <div style={{ display: "flex", justifyContent: isRtl ? "flex-start" : "flex-end", marginBottom: 4 }}>
+        <div style={{ position: "relative", width: "100%", maxWidth: 350 }}>
+          <input 
+            className="input" 
+            value={searchQuery} 
+            onChange={e => setSearchQuery(e.target.value)} 
+            placeholder={isRtl ? "البحث برمز الخطأ، العنوان، أو الوصف..." : "Search by code, title, description..."} 
+            style={{ paddingRight: isRtl ? 35 : 12, paddingLeft: !isRtl ? 35 : 12, textAlign: isRtl ? "right" : "left" }}
+          />
+          <Search size={16} style={{
+            position: "absolute",
+            right: isRtl ? 10 : "auto",
+            left: !isRtl ? 10 : "auto",
+            top: "50%", transform: "translateY(-50%)", color: "var(--text-muted)"
+          }} />
+        </div>
+      </div>
+
       <div className="card" style={{padding:0}}>
         <div className="table-wrapper" style={{border:"none", overflowX: "auto"}}>
           <table style={{ minWidth: "900px" }}>
@@ -469,7 +501,7 @@ function ErrorCodesPanel() {
               </tr>
             </thead>
             <tbody>
-              {errorCodes.map((e, idx) => {
+              {filteredErrorCodes.map((e, idx) => {
                 const stage = getStageById(e.stage_id);
                 const color = STAGE_COLORS[e.stage_id] || "var(--accent)";
                 return (
