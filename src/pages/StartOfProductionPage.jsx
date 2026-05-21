@@ -41,7 +41,6 @@ export default function StartOfProductionPage() {
   // Bottom fields
   const [noConformity, setNoConformity] = useState("");
   const [analysis, setAnalysis] = useState("");
-  const [responsible, setResponsible] = useState("");
   const [validationTL, setValidationTL] = useState("");
   const [validationQL, setValidationQL] = useState("");
   const [comment, setComment] = useState("");
@@ -94,7 +93,6 @@ export default function StartOfProductionPage() {
       grid_data: gridData,
       no_conformity: noConformity,
       analysis,
-      responsible,
       validation_tl: validationTL,
       validation_ql: validationQL,
       comment,
@@ -124,7 +122,6 @@ export default function StartOfProductionPage() {
     setGridData({});
     setNoConformity("");
     setAnalysis("");
-    setResponsible("");
     setValidationTL(currentUser?.full_name || "");
     setValidationQL("");
     setComment("");
@@ -139,7 +136,6 @@ export default function StartOfProductionPage() {
     setGridData(r.grid_data || {});
     setNoConformity(r.no_conformity || "");
     setAnalysis(r.analysis || "");
-    setResponsible(r.responsible || "");
     setValidationTL(r.validation_tl || "");
     setValidationQL(r.validation_ql || "");
     setComment(r.comment || "");
@@ -294,8 +290,8 @@ export default function StartOfProductionPage() {
              </table>
            </div>
 
-           {/* Non-conformity Analysis & Responsibles */}
-           <div className="grid-3" style={{ marginBottom: 24 }}>
+           {/* Non-conformity Analysis */}
+           <div className="grid-2" style={{ marginBottom: 24 }}>
              <div className="input-group">
                <label className="input-label" style={{ fontWeight: 700, color: "#0369a1", marginBottom: 6, textAlign: isRtl ? "right" : "left" }}>{isRtl ? "تفاصيل عدم المطابقة (Detail of no-conformity)" : "Details of Non-Conformity"}</label>
                <textarea className="input" rows={3} value={noConformity} onChange={e => setNoConformity(e.target.value)} placeholder={isRtl ? "اذكر أي ملاحظات أو مشاكل تم رصدها..." : "Describe any noted issues or deviations..."} style={{ resize: "none", fontSize: "0.95rem" }} />
@@ -303,10 +299,6 @@ export default function StartOfProductionPage() {
              <div className="input-group">
                <label className="input-label" style={{ fontWeight: 700, color: "#0369a1", marginBottom: 6, textAlign: isRtl ? "right" : "left" }}>{isRtl ? "التحليل والإجراء (Analysis)" : "Analysis & Corrective Action (Analysis)"}</label>
                <textarea className="input" rows={3} value={analysis} onChange={e => setAnalysis(e.target.value)} placeholder={isRtl ? "كيف تم التعامل مع عدم المطابقة؟..." : "How was the non-conformity handled?..."} style={{ resize: "none", fontSize: "0.95rem" }} />
-             </div>
-             <div className="input-group">
-               <label className="input-label" style={{ fontWeight: 700, color: "#0369a1", marginBottom: 6, textAlign: isRtl ? "right" : "left" }}>{isRtl ? "المسؤول (Responsible)" : "Responsible Person (Responsible)"}</label>
-               <input className="input" type="text" value={responsible} onChange={e => setResponsible(e.target.value)} placeholder={isRtl ? "اسم الشخص المسؤول عن التصحيح..." : "Name of person responsible for resolution..."} style={{ fontSize: "0.95rem" }} />
              </div>
            </div>
 

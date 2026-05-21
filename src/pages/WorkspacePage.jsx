@@ -128,10 +128,11 @@ export default function WorkspacePage() {
       return;
     }
     
+    const selectedErrObj = errorCodes.find(err => err.code === selectedCode);
     const result = await addDefectiveMeter({
       serial_number: serialNumber.trim().toUpperCase(),
       error_code: selectedCode,
-      stage_found: currentStage?.stage_id || null,
+      stage_found: selectedErrObj?.stage_id || currentStage?.stage_id || null,
       custom_description: customDesc,
       reported_by: currentUser.employee_id,
     });

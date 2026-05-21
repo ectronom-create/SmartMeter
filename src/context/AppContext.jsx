@@ -73,7 +73,28 @@ export function AppProvider({ children }) {
         if (stgData) setProductionStages(stgData);
         if (errData) setErrorCodes(errData);
         if (schData) setSchedules(schData);
-        if (defData) setDefectiveMeters(defData);
+        if (defData) {
+          const now = Date.now();
+          const FIVE_MINUTES = 5 * 60 * 1000;
+          const expiredIds = [];
+          const validMeters = defData.filter(m => {
+            if (m.status === "resolved" && m.resolved_at) {
+              const age = now - new Date(m.resolved_at).getTime();
+              if (age >= FIVE_MINUTES) {
+                expiredIds.push(m.id);
+                return false;
+              }
+            }
+            return true;
+          });
+          setDefectiveMeters(validMeters);
+          
+          if (expiredIds.length > 0) {
+            supabase.from("defective_meters").delete().in("id", expiredIds).then(({ error }) => {
+              if (error) console.error("Error cleaning up expired meters on load:", error);
+            });
+          }
+        }
         if (eqData) setEquipmentStock(eqData);
         if (hoData) setEquipmentHandouts(hoData);
         if (shiftData) setShiftTypes(shiftData);
@@ -400,11 +421,17 @@ export function AppProvider({ children }) {
       };
     }
 
+    let finalStage = entry.stage_found;
+    const errCodeObj = errorCodes.find(e => e.code === entry.error_code);
+    if (errCodeObj) {
+      finalStage = errCodeObj.stage_id;
+    }
+
     const payload = {
       id: `DEF-${Date.now()}-${Math.random().toString(36).substr(2, 6)}`,
       serial_number: entry.serial_number,
       error_code: entry.error_code,
-      stage_found: entry.stage_found,
+      stage_found: finalStage,
       custom_description: entry.custom_description || "",
       reported_by: entry.reported_by,
       status: "reported",
@@ -423,7 +450,7 @@ export function AppProvider({ children }) {
       console.error("Supabase defect add error:", err.message, err.details, err.hint);
       return { success: false, message: `خطأ في الحفظ: ${err.message || 'Error saving to cloud.'}` };
     }
-  }, [defectiveMeters]);
+  }, [defectiveMeters, errorCodes]);
 
   const addDefectiveMetersBulk = useCallback(async (entriesArray) => {
     try {
@@ -441,14 +468,21 @@ export function AppProvider({ children }) {
       }
 
       // Strip any custom id fields — let Supabase auto-generate UUIDs
-      const payloads = uniqueNew.map(({ id, ...rest }) => ({
-        serial_number: rest.serial_number,
-        error_code: rest.error_code,
-        stage_found: rest.stage_found,
-        custom_description: rest.custom_description || "",
-        reported_by: rest.reported_by,
-        status: rest.status || "reported",
-      }));
+      const payloads = uniqueNew.map(({ id, ...rest }) => {
+        let finalStage = rest.stage_found;
+        const errCodeObj = errorCodes.find(e => e.code === rest.error_code);
+        if (errCodeObj) {
+          finalStage = errCodeObj.stage_id;
+        }
+        return {
+          serial_number: rest.serial_number,
+          error_code: rest.error_code,
+          stage_found: finalStage,
+          custom_description: rest.custom_description || "",
+          reported_by: rest.reported_by,
+          status: rest.status || "reported",
+        };
+      });
 
       const { data, error } = await supabase
         .from("defective_meters")
@@ -462,13 +496,14 @@ export function AppProvider({ children }) {
       console.error("Supabase defective meters bulk add error:", err);
       return { success: false, error: err };
     }
-  }, [defectiveMeters]);
+  }, [defectiveMeters, errorCodes]);
 
   const updateMeterStatus = useCallback(async (id, status) => {
+    const resolved_at = status === "resolved" ? new Date().toISOString() : null;
     try {
-      const { error } = await supabase.from("defective_meters").update({ status }).eq("id", id);
+      const { error } = await supabase.from("defective_meters").update({ status, resolved_at }).eq("id", id);
       if (error) throw error;
-      setDefectiveMeters(prev => prev.map(m => m.id === id ? { ...m, status } : m));
+      setDefectiveMeters(prev => prev.map(m => m.id === id ? { ...m, status, resolved_at } : m));
     } catch (err) {
       console.error("Supabase defect update error:", err);
     }
@@ -687,6 +722,38 @@ export function AppProvider({ children }) {
     shift:    getShiftById(sch.shift_id),
     employee: getUserById(sch.employee_id),
   }), [getStageById, getShiftById, getUserById]);
+
+  // Polling interval to automatically delete resolved meters after 5 minutes
+  useEffect(() => {
+    const checkAndCleanup = async () => {
+      const now = Date.now();
+      const FIVE_MINUTES = 5 * 60 * 1000;
+      const expiredIds = [];
+
+      defectiveMeters.forEach(m => {
+        if (m.status === "resolved" && m.resolved_at) {
+          const age = now - new Date(m.resolved_at).getTime();
+          if (age >= FIVE_MINUTES) {
+            expiredIds.push(m.id);
+          }
+        }
+      });
+
+      if (expiredIds.length > 0) {
+        // Optimistically update local state first
+        setDefectiveMeters(prev => prev.filter(m => !expiredIds.includes(m.id)));
+        try {
+          const { error } = await supabase.from("defective_meters").delete().in("id", expiredIds);
+          if (error) throw error;
+        } catch (err) {
+          console.error("Supabase timer defect cleanup error:", err);
+        }
+      }
+    };
+
+    const interval = setInterval(checkAndCleanup, 10000); // Check every 10 seconds
+    return () => clearInterval(interval);
+  }, [defectiveMeters]);
 
   // Global loading overlay to prevent interacting with empty tables
   if (isLoading) {

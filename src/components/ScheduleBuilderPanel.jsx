@@ -131,9 +131,10 @@ export default function ScheduleBuilderPanel() {
   }, [preview]);
 
   const getTranslatedStageName = (s, isRtl) => {
+    if (!s) return "";
     if (isRtl) return s.short_name;
-    const parts = s.stage_name.split("(");
-    return parts[0].trim();
+    const match = s.stage_name.match(/\(([^)]+)\)/);
+    return match ? match[1].trim() : s.stage_name;
   };
 
   const getTranslatedShiftName = (shiftId, isRtl) => {

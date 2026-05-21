@@ -190,7 +190,7 @@ function ErrorCard({ err, stage, isOpen, onToggle, isRtl }) {
         </span>
         <span style={{ flex: 1, fontWeight: 600, fontSize: "0.95rem" }}>{translated.title}</span>
         <span className="badge badge-gray" style={{ fontSize: "0.7rem", flexShrink: 0 }}>
-          {isRtl ? (stage?.short_name || err.stage_id) : (stage?.stage_name.split("(")[0].trim() || err.stage_id)}
+          {isRtl ? (stage?.short_name || err.stage_id) : ((stage?.stage_name.match(/\(([^)]+)\)/)?.[1] || stage?.stage_name) || err.stage_id)}
         </span>
         {isOpen
           ? <ChevronUp size={16} style={{ color: "var(--text-muted)", flexShrink: 0 }} />
@@ -517,7 +517,7 @@ export default function KnowledgeBasePage() {
                 </div>
                 <div style={{ textAlign: isRtl ? "right" : "left" }}>
                   <h2 style={{ margin: 0, fontSize: "1rem", color }}>
-                    {isRtl ? stage.stage_name : stage.stage_name.split("(")[0].trim()}
+                    {isRtl ? stage.stage_name : (stage.stage_name.match(/\(([^)]+)\)/)?.[1] || stage.stage_name)}
                   </h2>
                   <span style={{ fontSize: "0.78rem", color: "var(--text-muted)" }}>
                     {codes.length} {isRtl ? "أكواد أعطال" : "fault codes"}

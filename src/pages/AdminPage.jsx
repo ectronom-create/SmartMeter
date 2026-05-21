@@ -8,6 +8,7 @@ import FPYDashboard from "../components/FPYDashboard";
 import { translateError } from "./KnowledgeBasePage";
 import { supabase } from "../supabaseClient";
 import * as XLSX from "xlsx";
+import CountdownTimer from "../components/CountdownTimer";
 
 
 const STAGE_COLORS = { 
@@ -21,13 +22,80 @@ function OverviewPanel() {
 }
 
 function DefectsPanel() {
-  const { defectiveMeters, getErrorByCode, getUserById, updateMeterStatus, language } = useApp();
+  const { defectiveMeters, getErrorByCode, getUserById, getStageById, updateMeterStatus, language } = useApp();
   const [reviewModal, setReviewModal] = useState(false);
   const [reviewSearch, setReviewSearch] = useState("");
   const [confirmingId, setConfirmingId] = useState(null);
   const [newStatus, setNewStatus] = useState("");
 
   const isRtl = language === "ar";
+
+  const handleExportExcel = () => {
+    try {
+      const stageNames = {
+        "STG-01": isRtl ? "التجميع" : "Assembly", 
+        "STG-02": isRtl ? "العزل" : "Insulation",
+        "STG-03": isRtl ? "التردد اللاسلكي" : "Radio Frequency", 
+        "STG-04": isRtl ? "المعايرة" : "Calibration", 
+        "STG-05": isRtl ? "الاختبار المتعدد" : "Multi Test", 
+        "STG-06": isRtl ? "التخصيص" : "Perso"
+      };
+
+      const STATUS_LABELS = {
+        pending:  isRtl ? "قيد الانتظار" : "Pending Review",
+        verified: isRtl ? "تم التحقق (معطوب)" : "Verified Defective",
+        resolved: isRtl ? "يعود لخط الانتاج" : "Returned to Line",
+        reported: isRtl ? "بلاغ جديد" : "New Report"
+      };
+
+      const formatDate = (iso) => {
+        const d = new Date(iso);
+        if (isRtl) {
+          return `${d.toLocaleDateString("ar-SA")} · ${d.toLocaleTimeString("ar-SA", { hour: "2-digit", minute: "2-digit" })}`;
+        } else {
+          return `${d.toLocaleDateString("en-US")} · ${d.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" })}`;
+        }
+      };
+
+      const dataToExport = defectiveMeters.map(m => {
+        const err = m.error_code ? getErrorByCode(m.error_code) : null;
+        const trans = err ? translateError(err, isRtl) : null;
+        const statusText = STATUS_LABELS[m.status] || m.status;
+        const stageText = stageNames[m.stage_found] || m.stage_found;
+        const rep = getUserById(m.reported_by);
+        const reporterName = rep?.full_name || m.reported_by || "—";
+        
+        if (isRtl) {
+          return {
+            "الرقم التسلسلي (سيريال)": m.serial_number,
+            "رمز العطل": m.error_code || "—",
+            "وصف العطل": trans?.title || m.custom_description || "—",
+            "المرحلة": stageText || "—",
+            "المُبلِّغ": reporterName,
+            "الحالة": statusText || "—",
+            "تاريخ البلاغ": formatDate(m.created_at)
+          };
+        } else {
+          return {
+            "Serial Number": m.serial_number,
+            "Error Code": m.error_code || "—",
+            "Error Title": trans?.title || m.custom_description || "—",
+            "Stage Found": stageText || "—",
+            "Reported By": reporterName,
+            "Status": statusText || "—",
+            "Date Reported": formatDate(m.created_at)
+          };
+        }
+      });
+
+      const worksheet = XLSX.utils.json_to_sheet(dataToExport);
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, isRtl ? "العدادات المعطوبة" : "Defective Meters");
+      XLSX.writeFile(workbook, isRtl ? "سجل_العدادات_المعطوبة.xlsx" : "defective_meters_report.xlsx");
+    } catch (error) {
+      console.error("Excel export error for defects:", error);
+    }
+  };
 
   const STATUS = {
     pending:  { label: isRtl ? "قيد الانتظار" : "Pending Review",           cls: "badge-amber", icon: <Clock size={12} /> },
@@ -53,14 +121,23 @@ function DefectsPanel() {
           <h2 style={{marginBottom:2}}>{isRtl ? "إدارة العدادات المعطوبة" : "Defective Meters Management"}</h2>
           <p style={{fontSize:"0.85rem"}}>{defectiveMeters.length} {isRtl ? "سجل — التحكم الكامل في الحالات" : "records — Full quality lifecycle control"}</p>
         </div>
-        <button className="btn btn-primary" onClick={() => setReviewModal(true)} style={{ gap: 8 }}>
-          <Search size={16} /> {isRtl ? "معاينة العدادات قيد الانتظار" : "Review Pending Quality Gate"}
-          {pendingMeters.length > 0 && (
-            <span style={{ background: "white", color: "var(--accent)", padding: "0 6px", borderRadius: "10px", fontSize: "0.7rem", fontWeight: 800 }}>
-              {pendingMeters.length}
-            </span>
-          )}
-        </button>
+        <div style={{ display: "flex", gap: 10, alignItems: "center", flexDirection: isRtl ? "row" : "row-reverse" }}>
+          <button 
+            className="btn btn-secondary" 
+            onClick={handleExportExcel}
+            style={{ display: "inline-flex", alignItems: "center", gap: 6, background: "rgba(9, 105, 218, 0.08)", border: "1px solid rgba(9, 105, 218, 0.2)", color: "var(--blue)" }}
+          >
+            📤 {isRtl ? "تنزيل إكسل" : "Export Excel"}
+          </button>
+          <button className="btn btn-primary" onClick={() => setReviewModal(true)} style={{ gap: 8 }}>
+            <Search size={16} /> {isRtl ? "معاينة العدادات قيد الانتظار" : "Review Pending Quality Gate"}
+            {pendingMeters.length > 0 && (
+              <span style={{ background: "white", color: "var(--accent)", padding: "0 6px", borderRadius: "10px", fontSize: "0.7rem", fontWeight: 800 }}>
+                {pendingMeters.length}
+              </span>
+            )}
+          </button>
+        </div>
       </div>
 
       <div style={{display:"flex",gap:12,flexWrap:"wrap", flexDirection: isRtl ? "row" : "row-reverse"}}>
@@ -89,16 +166,27 @@ function DefectsPanel() {
                 const err=m.error_code?getErrorByCode(m.error_code):null;
                 const rep=getUserById(m.reported_by);
                 const sc=STATUS[m.status]||STATUS.pending;
+                const stage=getStageById(m.stage_found);
+                const stageDisplay = stage ? (isRtl ? stage.short_name : (stage.stage_name.match(/\(([^)]+)\)/)?.[1] || stage.stage_name)) : m.stage_found;
                 return (
                   <tr key={m.id}>
                     <td><code style={{fontFamily:"monospace",fontSize:"0.83rem",color:"var(--blue)"}}>{m.serial_number}</code></td>
                     <td>{m.error_code?<span className="badge badge-amber" style={{fontFamily:"monospace"}}>{m.error_code}</span>:<span className="badge badge-gray">—</span>}</td>
-                    <td><span className="badge badge-gray">{m.stage_found}</span></td>
+                    <td>
+                      <span className="badge badge-gray" style={{ gap: 4, display: "inline-flex", alignItems: "center" }}>
+                        {stage?.icon} {stageDisplay}
+                      </span>
+                    </td>
                     <td style={{fontSize:"0.85rem"}}>{rep?.full_name||m.reported_by}</td>
                     <td style={{fontSize:"0.78rem",color:"var(--text-muted)"}}>
                       {isRtl ? new Date(m.created_at).toLocaleDateString("ar-SA") : new Date(m.created_at).toLocaleDateString("en-US")}
                     </td>
-                    <td><span className={`badge ${sc.cls}`}>{sc.label}</span></td>
+                    <td>
+                      <span className={`badge ${sc.cls}`}>{sc.label}</span>
+                      {m.status === "resolved" && (
+                        <CountdownTimer resolvedAt={m.resolved_at} isRtl={isRtl} />
+                      )}
+                    </td>
                     <td>
                       <select className="input" style={{padding:"4px 8px",fontSize:"0.8rem",width:"auto"}} value={m.status} onChange={e=>updateMeterStatus(m.id,e.target.value)}>
                         <option value="pending">{isRtl ? "قيد الانتظار" : "Pending Review"}</option>
@@ -158,6 +246,8 @@ function DefectsPanel() {
                 <div style={{ display: "grid", gap: 10 }}>
                   {filteredPending.map(m => {
                     const isConfirming = confirmingId === m.id;
+                    const stage = getStageById(m.stage_found);
+                    const stageDisplay = stage ? (isRtl ? stage.short_name : (stage.stage_name.match(/\(([^)]+)\)/)?.[1] || stage.stage_name)) : m.stage_found;
                     return (
                       <div key={m.id} className="card" style={{ 
                         padding: 12, 
@@ -167,7 +257,9 @@ function DefectsPanel() {
                       }}>
                         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexDirection: isRtl ? "row" : "row-reverse" }}>
                           <code style={{ fontSize: "0.95rem", fontWeight: 800, color: "var(--blue)" }}>{m.serial_number}</code>
-                          <span className="badge badge-gray">{m.stage_found}</span>
+                          <span className="badge badge-gray" style={{ gap: 4, display: "inline-flex", alignItems: "center" }}>
+                            {stage?.icon} {stageDisplay}
+                          </span>
                         </div>
                         <div style={{ fontSize: "0.8rem", color: "var(--text-secondary)", marginTop: 4 }}>
                           <span style={{ fontWeight: 700 }}>{isRtl ? "العطل:" : "Fault Code:"}</span> {m.error_code}
@@ -509,7 +601,7 @@ function ErrorCodesPanel() {
                     <td>
                       <div style={{display:"flex",alignItems:"center",gap:8,fontWeight:700,color, flexDirection: isRtl ? "row" : "row-reverse"}}>
                         <span>{stage?.icon}</span>
-                        <span style={{fontSize:"0.85rem"}}>{isRtl ? stage?.short_name : stage?.stage_name.split("(")[0].trim()}</span>
+                        <span style={{fontSize:"0.85rem"}}>{isRtl ? stage?.short_name : (stage?.stage_name.match(/\(([^)]+)\)/)?.[1] || stage?.stage_name)}</span>
                       </div>
                     </td>
                     <td><span className="badge badge-gray" style={{fontFamily:"monospace",fontWeight:800}}>{e.code}</span></td>
@@ -560,7 +652,7 @@ function ErrorCodesPanel() {
                 <div className="input-group" style={{ textAlign: isRtl ? "right" : "left" }}>
                   <label className="input-label">{isRtl ? "المرحلة المرتبطة" : "Associated Stage"}</label>
                   <select className="input" value={formData.stage_id} onChange={e=>setFormData({...formData, stage_id:e.target.value})}>
-                    {production_stages.map(s => <option key={s.stage_id} value={s.stage_id}>{s.icon} {isRtl ? s.stage_name : s.stage_name.split("(")[0].trim()}</option>)}
+                    {production_stages.map(s => <option key={s.stage_id} value={s.stage_id}>{s.icon} {isRtl ? s.stage_name : (s.stage_name.match(/\(([^)]+)\)/)?.[1] || s.stage_name)}</option>)}
                   </select>
                 </div>
               </div>
@@ -623,7 +715,7 @@ function ErrorCodesPanel() {
                       return (
                         <tr key={i} style={{ borderBottom: "1px solid var(--border)" }}>
                           <td style={{ padding: "8px 12px", fontSize: "0.78rem" }}>
-                            <span style={{ color, fontWeight: 700 }}>{stage?.icon} {isRtl ? stage?.short_name : stage?.stage_name.split("(")[0].trim()}</span>
+                            <span style={{ color, fontWeight: 700 }}>{stage?.icon} {isRtl ? stage?.short_name : (stage?.stage_name.match(/\(([^)]+)\)/)?.[1] || stage?.stage_name)}</span>
                           </td>
                           <td style={{ padding: "8px 12px", fontSize: "0.78rem" }}>
                             <span className="badge badge-gray" style={{ fontFamily: "monospace" }}>{r.code}</span>
@@ -659,7 +751,7 @@ function ErrorCodesPanel() {
 }
 
 function SOPReportsPanel() {
-  const { production_stages, language } = useApp();
+  const { production_stages, language, currentUser } = useApp();
 
   const isRtl = language === "ar";
 
@@ -822,6 +914,22 @@ function SOPReportsPanel() {
       if (selectedReport?.id === id) setSelectedReport(null);
     } catch (err) {
       console.error("Error deleting SOP report:", err);
+    }
+  };
+
+  const handleSignReport = async (reportId) => {
+    const qlName = currentUser?.full_name || "Admin/Quality Leader";
+    try {
+      const { error } = await supabase
+        .from("sop_reports")
+        .update({ validation_ql: qlName })
+        .eq("id", reportId);
+      if (error) throw error;
+      
+      setReports(prev => prev.map(r => r.id === reportId ? { ...r, validation_ql: qlName } : r));
+      setSelectedReport(prev => prev ? { ...prev, validation_ql: qlName } : null);
+    } catch (err) {
+      console.error("Error signing SOP report:", err);
     }
   };
 
@@ -995,11 +1103,7 @@ function SOPReportsPanel() {
                   </div>
                 </div>
 
-                <div className="grid-3" style={{ fontSize: "0.85rem" }}>
-                  <div className="box" style={{ textAlign: isRtl ? "right" : "left" }}>
-                    <div className="title">{isRtl ? "المسؤول (Responsible)" : "Responsible Party"}</div>
-                    <div>{selectedReport.responsible || "—"}</div>
-                  </div>
+                <div className="grid-2" style={{ fontSize: "0.85rem" }}>
                   <div className="box" style={{ textAlign: isRtl ? "right" : "left" }}>
                     <div className="title">{isRtl ? "توقيع قائد الفريق (Validation Team Leader)" : "Team Leader Verification"}</div>
                     <div style={{ fontWeight: 700, color: "#eab308" }}>✍️ {selectedReport.validation_tl || selectedReport.supervisor_name}</div>
@@ -1021,6 +1125,11 @@ function SOPReportsPanel() {
             </div>
 
             <div style={{ padding: "14px 24px", borderTop: "1px solid var(--border-subtle)", display: "flex", justifyContent: "flex-end", gap: 12, background: "var(--bg-elevated)", flexShrink: 0, flexDirection: isRtl ? "row" : "row-reverse" }}>
+              {currentUser?.role === "admin" && !selectedReport.validation_ql && (
+                <button className="btn btn-primary" style={{ background: "#22c55e", borderColor: "#22c55e", color: "#fff" }} onClick={() => handleSignReport(selectedReport.id)}>
+                  ✍️ {isRtl ? "توقيع قائد الجودة (Sign as Quality Leader)" : "Sign as Quality Leader"}
+                </button>
+              )}
               <button className="btn btn-primary" onClick={handlePrint}>🖨️ {isRtl ? "طباعة التقرير (Print)" : "Print Inspection Report"}</button>
               <button className="btn btn-secondary" onClick={() => setSelectedReport(null)}>{isRtl ? "إغلاق" : "Close"}</button>
             </div>

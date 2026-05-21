@@ -1,9 +1,10 @@
 import { useState, useMemo, useEffect } from "react";
 import { useApp } from "../context/AppContext";
 import { useNavigate, useLocation } from "react-router-dom";
-import { ArrowRight, CheckCircle, Clock, AlertTriangle, Filter, X, Plus, Search, AlertCircle } from "lucide-react";
+import { ArrowRight, CheckCircle, Clock, AlertTriangle, X, Plus, AlertCircle } from "lucide-react";
 import { translateError } from "./KnowledgeBasePage";
 import * as XLSX from "xlsx";
+import CountdownTimer from "../components/CountdownTimer";
 
 const getStatusConfig = (isRtl) => ({
   reported: { label: isRtl ? "بلاغ جديد" : "New Report",           class: "badge-blue",   icon: <Plus size={11} /> },
@@ -167,7 +168,45 @@ export default function DefectsPage() {
     e.target.value = "";
   };
 
-  if (!currentUser) return null;
+  const handleExportExcel = () => {
+    try {
+      const dataToExport = defectiveMeters.map(m => {
+        const err = m.error_code ? getErrorByCode(m.error_code) : null;
+        const trans = err ? translateError(err, isRtl) : null;
+        const statusText = STATUS_CONFIG[m.status]?.label || m.status;
+        const stageText = stageNames[m.stage_found] || m.stage_found;
+        
+        if (isRtl) {
+          return {
+            "الرقم التسلسلي (سيريال)": m.serial_number,
+            "رمز العطل": m.error_code || "—",
+            "وصف العطل": trans?.title || m.custom_description || "—",
+            "المرحلة": stageText || "—",
+            "المُبلِّغ": m.reported_by || "—",
+            "الحالة": statusText || "—",
+            "تاريخ البلاغ": formatDate(m.created_at)
+          };
+        } else {
+          return {
+            "Serial Number": m.serial_number,
+            "Error Code": m.error_code || "—",
+            "Error Title": trans?.title || m.custom_description || "—",
+            "Stage Found": stageText || "—",
+            "Reported By": m.reported_by || "—",
+            "Status": statusText || "—",
+            "Date Reported": formatDate(m.created_at)
+          };
+        }
+      });
+
+      const worksheet = XLSX.utils.json_to_sheet(dataToExport);
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, isRtl ? "العدادات المعطوبة" : "Defective Meters");
+      XLSX.writeFile(workbook, isRtl ? "سجل_العدادات_المعطوبة.xlsx" : "defective_meters_report.xlsx");
+    } catch (error) {
+      console.error("Excel export error for defects:", error);
+    }
+  };
 
   useEffect(() => {
     if (location.state?.openReview) {
@@ -190,7 +229,7 @@ export default function DefectsPage() {
 
   const filteredCodes = useMemo(() => {
     // If operator, only allow searching/selecting error codes for their current stage
-    const baseCodes = currentUser.role === "operator" && currentStage
+    const baseCodes = currentUser?.role === "operator" && currentStage
       ? errorCodes.filter(e => e.stage_id === currentStage.stage_id)
       : errorCodes;
 
@@ -201,7 +240,7 @@ export default function DefectsPage() {
       e.title.toLowerCase().includes(q) ||
       (stageNames[e.stage_id] || "").toLowerCase().includes(q)
     );
-  }, [searchQuery, errorCodes, stageNames, currentUser.role, currentStage]);
+  }, [searchQuery, errorCodes, stageNames, currentUser?.role, currentStage]);
 
   const filtered = defectiveMeters.filter(m =>
     filterStatus === "all" ? true : m.status === filterStatus
@@ -254,7 +293,7 @@ export default function DefectsPage() {
     const result = await addDefectiveMeter({
       serial_number: sn,
       error_code: selectedErrorCode.code,
-      stage_found: currentStage?.stage_id || null,
+      stage_found: selectedErrorCode.stage_id,
       custom_description: fd.get("desc").trim(),
       reported_by: currentUser.employee_id
     });
@@ -271,6 +310,8 @@ export default function DefectsPage() {
     setSelectedErrorCode(null);
     setTimeout(() => setSubmitMsg(null), 3000);
   };
+
+  if (!currentUser) return null;
 
   return (
     <div className="page-container" style={{ direction: isRtl ? "rtl" : "ltr" }}>
@@ -290,6 +331,15 @@ export default function DefectsPage() {
             </div>
           </div>
           <div style={{ display: "flex", alignItems: "center", gap: 10, flexDirection: isRtl ? "row" : "row-reverse" }}>
+            {currentUser?.role === "admin" && (
+              <button 
+                className="btn btn-secondary btn-sm" 
+                onClick={handleExportExcel}
+                style={{ display: "inline-flex", alignItems: "center", gap: 6, background: "rgba(9, 105, 218, 0.08)", border: "1px solid rgba(9, 105, 218, 0.2)", color: "var(--blue)" }}
+              >
+                📤 {isRtl ? "تنزيل إكسل" : "Export Excel"}
+              </button>
+            )}
             {currentUser.role === "admin" && (
               <label 
                 className="btn btn-secondary btn-sm" 
@@ -496,6 +546,9 @@ export default function DefectsPage() {
                       </td>
                       <td>
                         <span className={`badge ${sc.class}`}>{sc.icon} {sc.label}</span>
+                        {m.status === "resolved" && (
+                          <CountdownTimer resolvedAt={m.resolved_at} isRtl={isRtl} />
+                        )}
                       </td>
                       {currentUser.role === "supervisor" && (
                         <td>
