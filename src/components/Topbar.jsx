@@ -36,56 +36,54 @@ export default function Topbar() {
       </div>
 
       {/* Right */}
-      <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+      <div className="topbar-right-actions" style={{ display: "flex", alignItems: "center", gap: 10 }}>
 
         {/* Shift pill (non-admin) */}
         {currentUser && !isAdmin && currentShift && (
-          <div className="shift-pill" style={shiftStyles[currentShift.shift_id] || {}}>
+          <div className="shift-pill topbar-shift-pill" style={shiftStyles[currentShift.shift_id] || {}}>
             {language === "ar" ? "شفت" : "Shift"} {currentShift.name} · {currentShift.start_time}–{currentShift.end_time}
           </div>
         )}
 
         {/* Roles badges */}
         {isAdmin && (
-          <div style={{ display: "flex", alignItems: "center", gap: 6, padding: "4px 12px", borderRadius: "100px", background: "#fff3e0", color: "#e65100", border: "1px solid #ffcc8066", fontSize: "0.8rem", fontWeight: 700 }}>
+          <div className="topbar-role-badge badge-admin-role" style={{ display: "flex", alignItems: "center", gap: 6, padding: "4px 12px", borderRadius: "100px", background: "#fff3e0", color: "#e65100", border: "1px solid #ffcc8066", fontSize: "0.8rem", fontWeight: 700 }}>
             <Shield size={13} /> {t("adminPanel")}
           </div>
         )}
         {isSupervisor && (
-          <div style={{ display: "flex", alignItems: "center", gap: 6, padding: "4px 12px", borderRadius: "100px", background: "#e8f5e9", color: "#2e7d32", border: "1px solid #a5d6a766", fontSize: "0.8rem", fontWeight: 700 }}>
+          <div className="topbar-role-badge badge-supervisor-role" style={{ display: "flex", alignItems: "center", gap: 6, padding: "4px 12px", borderRadius: "100px", background: "#e8f5e9", color: "#2e7d32", border: "1px solid #a5d6a766", fontSize: "0.8rem", fontWeight: 700 }}>
             <Shield size={13} /> {t("lineSupervisor")}
           </div>
         )}
 
         {/* Nav toggle buttons */}
         {isAdmin && location.pathname !== "/admin" && (
-          <button className="btn btn-secondary btn-sm" onClick={() => navigate("/admin")}>
-            <LayoutDashboard size={14} /> {t("adminPanel")}
+          <button className="btn btn-secondary btn-sm topbar-nav-btn" onClick={() => navigate("/admin")}>
+            <LayoutDashboard size={14} /> <span className="btn-text">{t("adminPanel")}</span>
           </button>
         )}
         {isSupervisor && location.pathname !== "/supervisor" && (
-          <button className="btn btn-secondary btn-sm" onClick={() => navigate("/supervisor")}>
-            <LayoutDashboard size={14} /> {t("supervisorPanel")}
+          <button className="btn btn-secondary btn-sm topbar-nav-btn" onClick={() => navigate("/supervisor")}>
+            <LayoutDashboard size={14} /> <span className="btn-text">{t("supervisorPanel")}</span>
           </button>
         )}
         {isSupervisor && location.pathname === "/supervisor" && (
-          <button className="btn btn-secondary btn-sm" onClick={() => navigate("/dashboard")}>
-            <LayoutDashboard size={14} /> {language === "ar" ? "الشاشة الرئيسية" : "Main Dashboard"}
+          <button className="btn btn-secondary btn-sm topbar-nav-btn" onClick={() => navigate("/dashboard")}>
+            <LayoutDashboard size={14} /> <span className="btn-text">{language === "ar" ? "الشاشة الرئيسية" : "Main Dashboard"}</span>
           </button>
         )}
 
         {/* Assets / Inventory Shortcut (Admin Only) */}
         {isAdmin && (
-          <button className="btn btn-ghost btn-sm" onClick={() => navigate("/assets")} title={t("equipmentManagement")}>
-            <Package size={15} /> <span style={{ fontSize: "0.8rem" }}>{t("equipmentManagement")}</span>
+          <button className="btn btn-ghost btn-sm topbar-nav-btn" onClick={() => navigate("/assets")} title={t("equipmentManagement")}>
+            <Package size={15} /> <span className="btn-text" style={{ fontSize: "0.8rem" }}>{t("equipmentManagement")}</span>
           </button>
         )}
 
-
-
         {/* Language Selection Toggle */}
         <button 
-          className="btn btn-ghost btn-sm" 
+          className="btn btn-ghost btn-sm topbar-lang-btn" 
           onClick={toggleLanguage} 
           style={{ 
             display: "flex", 
@@ -102,13 +100,15 @@ export default function Topbar() {
             transition: "all 0.2s"
           }}
         >
-          🌐 {language === "ar" ? "English" : "العربية"}
+          <span>🌐</span>
+          <span className="lang-text">{language === "ar" ? "English" : "العربية"}</span>
+          <span className="lang-text-mobile" style={{ display: "none" }}>{language === "ar" ? "EN" : "AR"}</span>
         </button>
 
         {/* User name */}
         {currentUser && (
-          <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: "0.85rem", color: "var(--text-secondary)", fontWeight: 600 }}>
-            <div style={{
+          <div className="topbar-user" style={{ display: "flex", alignItems: "center", gap: 8, fontSize: "0.85rem", color: "var(--text-secondary)", fontWeight: 600 }}>
+            <div className="topbar-avatar" style={{
               width: 30, height: 30, borderRadius: "50%",
               background: isAdmin ? "linear-gradient(135deg,#e65100,#ff8f00)" : "linear-gradient(135deg,#1a7f37,#0550ae)",
               display: "flex", alignItems: "center", justifyContent: "center",
@@ -116,13 +116,13 @@ export default function Topbar() {
             }}>
               {currentUser.full_name.split(" ").slice(0,2).map(w=>w[0]).join("")}
             </div>
-            {currentUser.full_name.split(" ")[0]}
+            <span className="topbar-username">{currentUser.full_name.split(" ")[0]}</span>
           </div>
         )}
 
         {/* Logout */}
         {currentUser && (
-          <button className="btn btn-ghost btn-sm btn-icon" onClick={logout} title={t("logOut")}>
+          <button className="btn btn-ghost btn-sm btn-icon topbar-logout-btn" onClick={logout} title={t("logOut")}>
             <LogOut size={15} />
           </button>
         )}

@@ -675,6 +675,56 @@ tr:hover td { background: var(--bg-elevated); }
     margin-top: 2px !important;
     text-align: center !important;
   }
+
+  /* Responsive Topbar modifications */
+  .topbar {
+    padding: 0 12px !important;
+    gap: 8px !important;
+  }
+
+  .topbar-right-actions {
+    gap: 6px !important;
+  }
+
+  .topbar-shift-pill, 
+  .topbar-role-badge {
+    display: none !important;
+  }
+
+  .topbar-user .topbar-username {
+    display: none !important;
+  }
+
+  .topbar-nav-btn {
+    padding: 8px !important;
+    min-width: 34px !important;
+    height: 34px !important;
+  }
+
+  .topbar-nav-btn .btn-text {
+    display: none !important;
+  }
+
+  .topbar-lang-btn {
+    padding: 6px 8px !important;
+    font-size: 0.75rem !important;
+    gap: 4px !important;
+    border-radius: 6px !important;
+  }
+
+  .topbar-lang-btn .lang-text {
+    display: none !important;
+  }
+
+  .topbar-lang-btn .lang-text-mobile {
+    display: inline !important;
+  }
+
+  .topbar-logout-btn {
+    padding: 8px !important;
+    min-width: 34px !important;
+    height: 34px !important;
+  }
 }
 
 /* Phone: 480px and below */
