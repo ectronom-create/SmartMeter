@@ -511,6 +511,128 @@ tr:hover td { background: var(--bg-elevated); }
   margin-top: 4px;
 }
 
+/* Helper classes for conditional rendering based on viewport */
+.mobile-only {
+  display: none !important;
+}
+.desktop-only {
+  display: block !important;
+}
+
+/* Defects Page Responsive Layout */
+.defects-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  width: 100%;
+}
+
+.defects-title-section {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.defects-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* Scrollable Horizontal Track for Filters */
+.defects-filters-track {
+  display: flex;
+  gap: 8px;
+  width: 100%;
+}
+
+/* Defects Mobile Cards List */
+.defects-mobile-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+}
+
+.defect-mobile-card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 16px;
+  box-shadow: var(--shadow-sm);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  transition: var(--transition);
+}
+
+.defect-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.defect-card-serial {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.95rem;
+  font-weight: 800;
+  color: var(--cyan);
+}
+
+.defect-card-body {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-size: 0.88rem;
+}
+
+.defect-card-field {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--text-secondary);
+}
+
+.defect-card-field strong {
+  color: var(--text-primary);
+}
+
+.defect-card-desc {
+  background: var(--bg-elevated);
+  border-radius: var(--radius-sm);
+  padding: 8px 10px;
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  border: 1px solid var(--border-subtle);
+  margin-top: 4px;
+}
+
+.defect-card-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 6px;
+  border-top: 1px solid var(--border-subtle);
+  padding-top: 12px;
+}
+
+.defect-card-actions label {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  margin-bottom: 2px;
+}
+
+/* Defects Page Quick Report Form */
+.defect-form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1.5fr 1fr auto;
+  gap: 12px;
+  align-items: end;
+  position: relative;
+}
+
 /* =====================================================
    RESPONSIVE — Mobile First
    ===================================================== */
@@ -579,7 +701,13 @@ tr:hover td { background: var(--bg-elevated); }
   .stat-value { font-size: 1.4rem; }
 
   /* Defects page form */
-  .defect-form-grid { grid-template-columns: 1fr !important; }
+  .defect-form-grid {
+    grid-template-columns: 1fr !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 12px !important;
+  }
 
   /* Modals */
   .modal-overlay { padding: 10px; align-items: flex-end; }
@@ -724,6 +852,58 @@ tr:hover td { background: var(--bg-elevated); }
     padding: 8px !important;
     min-width: 34px !important;
     height: 34px !important;
+  }
+
+  /* Defects Page mobile responsive overrides */
+  .mobile-only {
+    display: block !important;
+  }
+  .desktop-only {
+    display: none !important;
+  }
+
+  .defects-header {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 12px !important;
+  }
+
+  .defects-title-section {
+    flex-direction: column !important;
+    align-items: center !important;
+    text-align: center !important;
+  }
+  
+  .defects-title-section h1 {
+    font-size: 1.25rem !important;
+  }
+
+  .defects-actions {
+    flex-direction: column !important;
+    width: 100% !important;
+    gap: 8px !important;
+  }
+
+  .defects-actions .btn {
+    width: 100% !important;
+    justify-content: center !important;
+  }
+
+  .defects-filters-track {
+    display: flex !important;
+    gap: 8px !important;
+    overflow-x: auto !important;
+    padding: 4px 0 8px !important;
+    -webkit-overflow-scrolling: touch !important;
+    width: 100% !important;
+  }
+
+  .defects-filters-track::-webkit-scrollbar {
+    display: none !important;
+  }
+
+  .defects-filters-track .btn {
+    flex-shrink: 0 !important;
   }
 }
 

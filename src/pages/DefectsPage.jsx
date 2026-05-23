@@ -318,19 +318,19 @@ export default function DefectsPage() {
       <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
 
         {/* Topbar Navigation & Actions */}
-        <div style={{ display: "flex", alignItems: "center", gap: 12, justifyContent: "space-between", flexDirection: isRtl ? "row" : "row-reverse" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 12, flexDirection: isRtl ? "row" : "row-reverse" }}>
+        <div className="defects-header">
+          <div className="defects-title-section">
             <button className="btn btn-ghost btn-sm" onClick={() => navigate("/dashboard")}>
               <ArrowRight size={15} style={{ transform: isRtl ? "none" : "rotate(180deg)" }} /> {isRtl ? "العودة للرئيسية" : "Back to Home"}
             </button>
-            <div style={{ textAlign: isRtl ? "right" : "left" }}>
-              <h1 style={{ fontSize: "1.4rem" }}>{isRtl ? "إدارة بلاغات الأعطال" : "Defect Management Panel"}</h1>
+            <div>
+              <h1>{isRtl ? "إدارة بلاغات الأعطال" : "Defect Management Panel"}</h1>
               <p style={{ fontSize: "0.85rem", color: "var(--text-muted)" }}>
                 {isRtl ? "تتبع وحل المشاكل التقنية في خط الإنتاج" : "Track and resolve technical issues on the production floor"}
               </p>
             </div>
           </div>
-          <div style={{ display: "flex", alignItems: "center", gap: 10, flexDirection: isRtl ? "row" : "row-reverse" }}>
+          <div className="defects-actions">
             {currentUser?.role === "admin" && (
               <button 
                 className="btn btn-secondary btn-sm" 
@@ -355,8 +355,8 @@ export default function DefectsPage() {
               </label>
             )}
             {(currentUser.role === "supervisor" || currentUser.role === "admin") && (
-              <button className="btn btn-primary" onClick={() => setReviewModal(true)} style={{ gap: 8 }}>
-                <Clock size={16} /> {isRtl ? "معاينة العدادات قيد الانتظار" : "Review Pending Quality Gate"}
+              <button className="btn btn-primary btn-sm" onClick={() => setReviewModal(true)} style={{ gap: 8 }}>
+                <Clock size={15} /> {isRtl ? "معاينة العدادات قيد الانتظار" : "Review Pending Quality Gate"}
                 {defectiveMeters.filter(m => m.status === "pending").length > 0 && (
                   <span style={{ background: "white", color: "var(--accent)", padding: "0 6px", borderRadius: "10px", fontSize: "0.7rem", fontWeight: 800 }}>
                     {defectiveMeters.filter(m => m.status === "pending").length}
@@ -378,18 +378,18 @@ export default function DefectsPage() {
         {/* Quick Report Form */}
         {currentUser.role !== "admin" && (
           <div className="card animate-fade" style={{ background: "#fff5f5", border: "1px solid #feb2b2", overflow: "visible" }}>
-            <div className="card-header" style={{ paddingBottom: 12, flexDirection: isRtl ? "row" : "row-reverse" }}>
+            <div className="card-header" style={{ paddingBottom: 12 }}>
               <AlertTriangle size={18} style={{ color: "var(--red)" }} />
-              <h3 style={{ margin: 0 }}>{isRtl ? "تسجيل بلاغ ععل جديد" : "Report a New Defect"}</h3>
+              <h3 style={{ margin: 0 }}>{isRtl ? "تسجيل بلاغ عطل جديد" : "Report a New Defect"}</h3>
             </div>
             {submitMsg && <div className={`alert alert-${submitMsg.type === "error" ? "danger" : "success"}`} style={{ marginBottom: 12 }}>{submitMsg.text}</div>}
-            <form onSubmit={handleQuickSubmit} className="defect-form-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1.5fr 1fr auto", gap: 12, alignItems: "end", position: "relative" }}>
-              <div className="input-group" style={{ textAlign: isRtl ? "right" : "left" }}>
+            <form onSubmit={handleQuickSubmit} className="defect-form-grid">
+              <div className="input-group">
                 <label className="input-label">{isRtl ? "السيريال نمبر *" : "Serial Number *"}</label>
-                <input className="input" name="sn" placeholder={isRtl ? "امسح الباركود..." : "Scan barcode..."} required style={{ background: "white", textAlign: isRtl ? "right" : "left" }} />
+                <input className="input" name="sn" placeholder={isRtl ? "امسح الباركود..." : "Scan barcode..."} required style={{ background: "white" }} />
               </div>
               
-              <div className="input-group" style={{ position: "relative", textAlign: isRtl ? "right" : "left" }}>
+              <div className="input-group" style={{ position: "relative" }}>
                 <label className="input-label">{isRtl ? "بحث واختيار الكود *" : "Search & Select Code *"}</label>
                 <div style={{ position: "relative" }}>
                   <input 
@@ -409,8 +409,7 @@ export default function DefectsPage() {
                       background: selectedErrorCode ? "#f0fff4" : "white",
                       fontWeight: selectedErrorCode ? 700 : "normal",
                       paddingRight: isRtl ? 14 : 32,
-                      paddingLeft: !isRtl ? 14 : 32,
-                      textAlign: isRtl ? "right" : "left"
+                      paddingLeft: !isRtl ? 14 : 32
                     }}
                   />
                   {selectedErrorCode && (
@@ -429,8 +428,7 @@ export default function DefectsPage() {
                   <div className="animate-scale" style={{ 
                     position: "absolute", top: "100%", left: 0, right: 0, zIndex: 100,
                     background: "white", borderRadius: 8, border: "1px solid var(--border)",
-                    boxShadow: "0 10px 15px rgba(0,0,0,0.1)", maxHeight: 250, overflowY: "auto", marginTop: 4,
-                    textAlign: isRtl ? "right" : "left"
+                    boxShadow: "0 10px 15px rgba(0,0,0,0.1)", maxHeight: 250, overflowY: "auto", marginTop: 4
                   }}>
                     {filteredCodes.length === 0 ? (
                       <div style={{ padding: 12, fontSize: "0.85rem", color: "var(--text-muted)" }}>
@@ -448,8 +446,7 @@ export default function DefectsPage() {
                             }}
                             style={{ 
                               padding: "10px 12px", cursor: "pointer", borderBottom: "1px solid var(--border-subtle)",
-                              fontSize: "0.85rem", display: "flex", justifyContent: "space-between", alignItems: "center",
-                              flexDirection: isRtl ? "row" : "row-reverse"
+                              fontSize: "0.85rem", display: "flex", justifyContent: "space-between", alignItems: "center"
                             }}
                             className="hover-bg"
                           >
@@ -467,9 +464,9 @@ export default function DefectsPage() {
                 )}
               </div>
 
-              <div className="input-group" style={{ textAlign: isRtl ? "right" : "left" }}>
+              <div className="input-group">
                 <label className="input-label">{isRtl ? "ملاحظات إضافية" : "Optional Comments"}</label>
-                <input className="input" name="desc" placeholder={isRtl ? "ملاحظات اختيارية..." : "Add details..."} style={{ background: "white", textAlign: isRtl ? "right" : "left" }} />
+                <input className="input" name="desc" placeholder={isRtl ? "ملاحظات اختيارية..." : "Add details..."} style={{ background: "white" }} />
               </div>
               <button type="submit" className="btn btn-danger" style={{ height: 42 }}>
                 <Plus size={16} /> {isRtl ? "تسجيل العطل" : "Register Defect"}
@@ -482,8 +479,8 @@ export default function DefectsPage() {
         )}
 
         {/* Filter & Summary */}
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 12, flexDirection: isRtl ? "row" : "row-reverse" }}>
-          <div style={{ display: "flex", gap: 8, flexDirection: isRtl ? "row" : "row-reverse" }}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 12 }}>
+          <div className="defects-filters-track">
             {["all","reported","pending","verified","resolved"].map(s => (
               <button
                 key={s}
@@ -494,11 +491,11 @@ export default function DefectsPage() {
               </button>
             ))}
           </div>
-          <div className="badge badge-gray">{isRtl ? "إجمالي السجلات:" : "Total Logs:"} {allMeters.length}</div>
+          <div className="badge badge-gray" style={{ flexShrink: 0 }}>{isRtl ? "إجمالي السجلات:" : "Total Logs:"} {allMeters.length}</div>
         </div>
 
         {/* Defects List */}
-        <div className="card" style={{ padding: 0 }}>
+        <div className="card desktop-only" style={{ padding: 0 }}>
           <div className="table-wrapper">
             <table>
               <thead>
@@ -573,14 +570,82 @@ export default function DefectsPage() {
           </div>
         </div>
 
+        {/* Defects Mobile Card List */}
+        <div className="defects-mobile-list mobile-only">
+          {allMeters.length === 0 ? (
+            <div className="card" style={{ textAlign: "center", padding: "40px", color: "var(--text-muted)" }}>
+              {isRtl ? "لا توجد سجلات مطابقة" : "No matching records found"}
+            </div>
+          ) : allMeters.map(m => {
+            const err = m.error_code ? getErrorByCode(m.error_code) : null;
+            const trans = err ? translateError(err, isRtl) : null;
+            const sc = STATUS_CONFIG[m.status] || STATUS_CONFIG.pending;
+            
+            return (
+              <div key={m.id} className="defect-mobile-card animate-fade">
+                <div className="defect-card-header">
+                  <span className="defect-card-serial">{m.serial_number}</span>
+                  <span className={`badge ${sc.class}`}>{sc.icon} {sc.label}</span>
+                </div>
+                
+                <div className="defect-card-body">
+                  <div className="defect-card-field">
+                    <span>{isRtl ? "رمز العطل:" : "Fault Code:"}</span>
+                    {m.error_code ? (
+                      <span className="badge badge-amber" style={{ fontFamily: "monospace" }}>{m.error_code}</span>
+                    ) : <span className="badge badge-gray">—</span>}
+                  </div>
+                  
+                  <div className="defect-card-field">
+                    <span>{isRtl ? "المرحلة:" : "Stage:"}</span>
+                    <span className="badge badge-gray">{stageNames[m.stage_found] || m.stage_found}</span>
+                  </div>
+                  
+                  <div className="defect-card-field" style={{ fontSize: "0.8rem", color: "var(--text-muted)" }}>
+                    <span>{isRtl ? "الوقت:" : "Time:"}</span>
+                    <span>{formatDate(m.created_at)}</span>
+                  </div>
+
+                  <div className="defect-card-desc">
+                    {trans?.title || m.custom_description || "—"}
+                  </div>
+                  
+                  {m.status === "resolved" && (
+                    <div style={{ marginTop: 4 }}>
+                      <CountdownTimer resolvedAt={m.resolved_at} isRtl={isRtl} />
+                    </div>
+                  )}
+                </div>
+                
+                {currentUser.role === "supervisor" && (
+                  <div className="defect-card-actions">
+                    <label>{isRtl ? "تعديل حالة العداد" : "Change Status"}</label>
+                    <select
+                      className="input"
+                      value={m.status}
+                      onChange={e => updateMeterStatus(m.id, e.target.value)}
+                      style={{ padding: "8px 10px", fontSize: "0.85rem" }}
+                    >
+                      <option value="reported">{isRtl ? "بلاغ جديد" : "New Report"}</option>
+                      <option value="pending">{isRtl ? "قيد الانتظار" : "Pending Review"}</option>
+                      <option value="verified">{isRtl ? "تم التحقق (معطوب)" : "Verified Defective"}</option>
+                      <option value="resolved">{isRtl ? "يعود لخط الانتاج" : "Returned to Line"}</option>
+                    </select>
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+
       </div>
 
       {/* Review Modal */}
       {reviewModal && (
         <div className="modal-overlay">
-          <div className="modal-content animate-scale" style={{ maxWidth: 700, maxHeight: "90vh", display: "flex", flexDirection: "column", direction: isRtl ? "rtl" : "ltr" }}>
-            <div className="modal-header" style={{ flexDirection: isRtl ? "row" : "row-reverse" }}>
-              <div style={{ display: "flex", alignItems: "center", gap: 10, flexDirection: isRtl ? "row" : "row-reverse" }}>
+          <div className="modal-content animate-scale" style={{ maxWidth: 700, maxHeight: "90vh", display: "flex", flexDirection: "column" }}>
+            <div className="modal-header">
+              <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
                 <Clock size={20} style={{ color: "var(--amber)" }} />
                 <h3 style={{ margin: 0 }}>{isRtl ? "مراجعة العدادات قيد الانتظار" : "Review Pending Quality Gate Meters"}</h3>
               </div>
@@ -588,14 +653,13 @@ export default function DefectsPage() {
             </div>
             
             <div style={{ padding: 20, background: "var(--bg-elevated)", borderBottom: "1px solid var(--border-subtle)" }}>
-              <div className="input-group" style={{ textAlign: isRtl ? "right" : "left" }}>
+              <div className="input-group">
                 <label className="input-label">{isRtl ? "بحث سريع بالسيريال نمبر" : "Quick Search by Serial Number"}</label>
                 <input 
                   className="input" 
                   value={reviewSearch} 
                   onChange={e => setReviewSearch(e.target.value)} 
                   placeholder={isRtl ? "اكتب السيريال للبحث..." : "Enter serial code..."}
-                  style={{ textAlign: isRtl ? "right" : "left" }}
                   autoFocus
                 />
               </div>
@@ -617,12 +681,11 @@ export default function DefectsPage() {
                     return (
                       <div key={m.id} className="card" style={{ 
                         padding: 16, 
-                        border: isConfirming ? "2px solid var(--blue)" : "1px solid var(--border)",
-                        textAlign: isRtl ? "right" : "left"
+                        border: isConfirming ? "2px solid var(--blue)" : "1px solid var(--border)"
                       }}>
-                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexDirection: isRtl ? "row" : "row-reverse" }}>
+                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
                           <div>
-                            <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 6, flexDirection: isRtl ? "row" : "row-reverse" }}>
+                            <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 6 }}>
                               <code style={{ fontSize: "1rem", fontWeight: 800, color: "var(--blue)" }}>{m.serial_number}</code>
                               <span className="badge badge-gray">{stageNames[m.stage_found] || m.stage_found}</span>
                             </div>
@@ -630,7 +693,7 @@ export default function DefectsPage() {
                               <span style={{ fontWeight: 700 }}>{isRtl ? "العطل:" : "Fault:"}</span> {m.error_code} — {trans?.title || "No Title"}
                             </div>
                           </div>
-                          <div style={{ textAlign: isRtl ? "left" : "right", fontSize: "0.75rem", color: "var(--text-muted)" }}>
+                          <div style={{ fontSize: "0.75rem", color: "var(--text-muted)", whiteSpace: "nowrap" }}>
                             {formatDate(m.created_at)}
                           </div>
                         </div>
@@ -638,7 +701,7 @@ export default function DefectsPage() {
                         <div className="divider" style={{ margin: "12px 0" }} />
 
                         {isConfirming ? (
-                          <div className="animate-fade" style={{ display: "flex", alignItems: "center", justifyContent: "space-between", background: "var(--bg-elevated)", padding: 10, borderRadius: 8, flexDirection: isRtl ? "row" : "row-reverse" }}>
+                          <div className="animate-fade" style={{ display: "flex", alignItems: "center", justifyContent: "space-between", background: "var(--bg-elevated)", padding: 10, borderRadius: 8, flexWrap: "wrap", gap: 8 }}>
                             <span style={{ fontSize: "0.85rem", fontWeight: 700 }}>
                               {isRtl ? "تغيير الحالة إلى:" : "Change state to:"} <span className={`badge ${STATUS_CONFIG[newStatus].class}`}>{STATUS_CONFIG[newStatus].label}</span>?
                             </span>
@@ -648,17 +711,17 @@ export default function DefectsPage() {
                             </div>
                           </div>
                         ) : (
-                          <div style={{ display: "flex", gap: 10, flexDirection: isRtl ? "row" : "row-reverse" }}>
+                          <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
                             <button 
                               className="btn btn-danger btn-sm" 
-                              style={{ flex: 1 }}
+                              style={{ flex: 1, minWidth: 120 }}
                               onClick={() => { setConfirmingId(m.id); setNewStatus("verified"); }}
                             >
                               <AlertTriangle size={14} /> {isRtl ? "تأكيد العطل" : "Confirm Defect"}
                             </button>
                             <button 
                               className="btn btn-primary btn-sm" 
-                              style={{ flex: 1, background: "var(--accent)" }}
+                              style={{ flex: 1, minWidth: 120, background: "var(--accent)" }}
                               onClick={() => { setConfirmingId(m.id); setNewStatus("resolved"); }}
                             >
                               <CheckCircle size={14} /> {isRtl ? "يعود للإنتاج" : "Return to Line"}
