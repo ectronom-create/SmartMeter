@@ -1,7 +1,7 @@
 import { useApp } from "../context/AppContext";
 import { 
   Users, AlertTriangle, CheckCircle, Clock, 
-  ArrowRight, Layers, ExternalLink, Info, BookOpen, Search, ClipboardList
+  ArrowRight, Layers, ExternalLink, Info, BookOpen, ClipboardList
 } from "lucide-react";
 
 import { useNavigate } from "react-router-dom";
@@ -36,24 +36,28 @@ export default function SupervisorPage() {
       <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
         
         {/* Header */}
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexDirection: isRtl ? "row" : "row-reverse" }}>
-          <div style={{ textAlign: isRtl ? "right" : "left" }}>
-            <h1 style={{ marginBottom: 4 }}>{isRtl ? "لوحة إشراف الإنتاج" : "Production Supervision Panel"}</h1>
-            <p style={{ color: "var(--text-muted)", fontSize: "0.9rem" }}>
-              {isRtl ? "شفت" : "Shift"} {currentShift?.name} · {today} · {isRtl ? "إشراف مباشر على خط الإنتاج" : "Direct line supervision"}
-            </p>
+        <div className="supervisor-header">
+          <div className="supervisor-title-section">
+            <h1 className="supervisor-title">{isRtl ? "لوحة إشراف الإنتاج" : "Production Supervision Panel"}</h1>
+            <div className="supervisor-meta-pill">
+              <span>{isRtl ? "شفت" : "Shift"} {currentShift?.name}</span>
+              <span className="supervisor-meta-divider">·</span>
+              <span>{today}</span>
+              <span className="supervisor-meta-divider">·</span>
+              <span>{isRtl ? "إشراف مباشر على خط الإنتاج" : "Direct line supervision"}</span>
+            </div>
           </div>
-          <div style={{ display: "flex", gap: 10, flexDirection: isRtl ? "row" : "row-reverse" }}>
-            <button className="btn btn-primary btn-sm" onClick={() => navigate("/start-production")} style={{ display: "flex", alignItems: "center", gap: 6, background: "linear-gradient(135deg, #0284c7, #0369a1)", border: "none" }}>
-              <ClipboardList size={15} /> {isRtl ? "تحقق بداية الإنتاج (SOP)" : "Start of Production Check (SOP)"}
+          <div className="supervisor-actions-grid">
+            <button className="btn btn-primary" onClick={() => navigate("/start-production")} style={{ background: "linear-gradient(135deg, #0284c7, #0369a1)", border: "none" }}>
+              <ClipboardList size={16} /> {isRtl ? "تحقق بداية الإنتاج (SOP)" : "Start of Production (SOP)"}
             </button>
-            <button className="btn btn-secondary btn-sm" onClick={() => navigate("/knowledge")}>
-              <BookOpen size={15} /> {t("faultGuide")}
+            <button className="btn btn-secondary" onClick={() => navigate("/defects")}>
+              <ExternalLink size={16} /> {isRtl ? "إدارة العدادات المعطوبة" : "Defect Management"}
             </button>
-            <button className="btn btn-secondary btn-sm" onClick={() => navigate("/defects")}>
-              <ExternalLink size={15} /> {isRtl ? "إدارة العدادات المعطوبة" : "Defective Meters Management"}
+            <button className="btn btn-secondary" onClick={() => navigate("/knowledge")}>
+              <BookOpen size={16} /> {t("faultGuide")}
             </button>
-            <button className="btn btn-ghost" onClick={() => navigate("/dashboard")} style={{ display: "flex", alignItems: "center", gap: 6 }}>
+            <button className="btn btn-ghost" onClick={() => navigate("/dashboard")}>
               <ArrowRight size={16} style={{ transform: isRtl ? "none" : "rotate(180deg)" }} /> {isRtl ? "العودة للرئيسية" : "Back to Home"}
             </button>
           </div>
@@ -103,15 +107,11 @@ export default function SupervisorPage() {
               {production_stages.map(stage => {
                 const workers = activeAssignments.filter(a => a.stage_id === stage.stage_id);
                 return (
-                  <div key={stage.stage_id} style={{ 
-                    display: "flex", alignItems: "center", gap: 12, padding: "12px 16px", 
-                    background: "var(--bg-elevated)", borderRadius: 12, border: "1px solid var(--border-subtle)",
-                    flexDirection: isRtl ? "row" : "row-reverse"
-                  }}>
-                    <div style={{ fontSize: "1.5rem" }}>{stage.icon}</div>
-                    <div style={{ flex: 1, textAlign: isRtl ? "right" : "left" }}>
-                      <div style={{ fontWeight: 700, fontSize: "0.9rem" }}>{stage.stage_name}</div>
-                      <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: 4, justifyContent: isRtl ? "flex-start" : "flex-end" }}>
+                  <div key={stage.stage_id} className="stage-assignment-row">
+                    <div className="stage-assignment-icon">{stage.icon}</div>
+                    <div className="stage-assignment-info">
+                      <div className="stage-assignment-name">{stage.stage_name}</div>
+                      <div className="stage-assignment-workers">
                         {workers.map(w => (
                           <span key={w.employee_id} className={`badge ${w.is_team_leader ? "badge-amber" : "badge-gray"}`} style={{ fontSize: "0.7rem" }}>
                             {w.is_team_leader && "⭐ "}{w.employee?.full_name.split(" ")[0]}
@@ -161,13 +161,13 @@ export default function SupervisorPage() {
                     padding: 14, background: "var(--bg-elevated)", borderRadius: 12, 
                     border: "1px solid var(--border-subtle)"
                   }}>
-                    <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 6, flexDirection: isRtl ? "row" : "row-reverse" }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 6 }}>
                       <code style={{ color: "var(--blue)", fontWeight: 700, fontSize: "0.9rem" }}>{m.serial_number}</code>
                       <span className="badge badge-gray" style={{ fontSize: "0.7rem" }}>{stageNames[m.stage_found] || m.stage_found}</span>
                     </div>
-                    <div style={{ fontSize: "0.82rem", color: "var(--text-secondary)", marginBottom: 12, textAlign: isRtl ? "right" : "left" }}>
+                    <div style={{ fontSize: "0.82rem", color: "var(--text-secondary)", marginBottom: 12 }}>
                       <span style={{ fontWeight: 600 }}>{isRtl ? "كود العطل:" : "Fault Code:"}</span> {m.error_code || (isRtl ? "غير محدد" : "Not specified")}
-                      <span style={{ marginRight: 12, marginLeft: 12, color: "var(--text-muted)" }}>
+                      <span style={{ margin: "0 8px", color: "var(--text-muted)" }}>
                         · {new Date(m.created_at).toLocaleTimeString(isRtl ? "ar-SA" : "en-US", { hour: "2-digit", minute: "2-digit" })}
                       </span>
                     </div>
@@ -183,7 +183,7 @@ export default function SupervisorPage() {
                       {/* Bypass: resolve immediately if not a real defect */}
                       <button 
                         className="btn btn-ghost btn-sm" 
-                        style={{ fontSize: "0.73rem", border: "1px dashed var(--border)", color: "var(--accent)" }}
+                        style={{ fontSize: "0.73rem", border: "1px dashed var(--border)", color: "var(--accent)", whiteSpace: "normal", textAlign: "center", lineHeight: "1.3", padding: "6px 8px" }}
                         onClick={() => updateMeterStatus(m.id, "resolved")}
                       >
                         ✓ {isRtl ? "إعادته للإنتاج فوراً (البلاغ غير صحيح)" : "Return to production line immediately (Incorrect report)"}

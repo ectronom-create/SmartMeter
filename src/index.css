@@ -430,6 +430,88 @@ tr:hover td { background: var(--bg-elevated); }
 }
 
 /* =====================================================
+   SUPERVISOR PAGE DESIGN SYSTEM
+   ===================================================== */
+.supervisor-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 20px;
+  width: 100%;
+}
+
+.supervisor-title-section {
+  flex: 1;
+}
+
+.supervisor-title {
+  margin-bottom: 4px !important;
+}
+
+.supervisor-meta-pill {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+}
+
+.supervisor-meta-divider {
+  color: var(--text-muted);
+}
+
+.supervisor-actions-grid {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* Active Line Monitoring & Rows */
+.stage-assignment-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  background: var(--bg-elevated);
+  border-radius: 12px;
+  border: 1px solid var(--border-subtle);
+  transition: var(--transition);
+}
+
+.stage-assignment-row:hover {
+  border-color: var(--border);
+  background: var(--bg-hover);
+}
+
+.stage-assignment-icon {
+  font-size: 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  flex-shrink: 0;
+}
+
+.stage-assignment-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.stage-assignment-name {
+  font-weight: 700;
+  font-size: 0.9rem;
+}
+
+.stage-assignment-workers {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 4px;
+}
+
+/* =====================================================
    RESPONSIVE — Mobile First
    ===================================================== */
 
@@ -503,9 +585,96 @@ tr:hover td { background: var(--bg-elevated); }
   .modal-overlay { padding: 10px; align-items: flex-end; }
   .modal-content { border-radius: var(--radius-lg) var(--radius-lg) 0 0; max-height: 92vh; }
 
-  /* Supervisor page header buttons */
-  .supervisor-header-btns { flex-direction: column !important; width: 100%; gap: 8px !important; }
-  .supervisor-header-btns .btn { width: 100%; justify-content: center; }
+  /* Supervisor page responsive overrides */
+  .supervisor-header {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 16px !important;
+  }
+  
+  .supervisor-title {
+    font-size: 1.4rem !important;
+    text-align: center !important;
+  }
+  
+  .supervisor-meta-pill {
+    justify-content: center !important;
+    font-size: 0.82rem !important;
+  }
+
+  .supervisor-actions-grid {
+    display: grid !important;
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 10px !important;
+    width: 100% !important;
+  }
+
+  .supervisor-actions-grid .btn {
+    width: 100% !important;
+    justify-content: center !important;
+    padding: 12px 8px !important;
+    font-size: 0.8rem !important;
+    min-height: 52px !important;
+    white-space: normal !important;
+    text-align: center !important;
+  }
+  
+  .stage-assignment-row {
+    padding: 10px 12px !important;
+    gap: 10px !important;
+  }
+  
+  .stage-assignment-icon {
+    font-size: 1.3rem !important;
+  }
+  
+  .stage-assignment-name {
+    font-size: 0.85rem !important;
+  }
+  
+  .stage-assignment-workers .badge {
+    font-size: 0.65rem !important;
+    padding: 2px 6px !important;
+  }
+
+  /* Stats cards in 2x2 grid */
+  .grid-4 {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 10px !important;
+  }
+
+  .stat-card {
+    flex-direction: column !important;
+    align-items: center !important;
+    text-align: center !important;
+    padding: 12px 8px !important;
+    gap: 6px !important;
+  }
+
+  .stat-card > div {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+  }
+
+  .stat-icon {
+    width: 40px !important;
+    height: 40px !important;
+    font-size: 1.1rem !important;
+    margin-bottom: 2px !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+  }
+
+  .stat-value {
+    font-size: 1.35rem !important;
+  }
+
+  .stat-label {
+    font-size: 0.72rem !important;
+    margin-top: 2px !important;
+    text-align: center !important;
+  }
 }
 
 /* Phone: 480px and below */
