@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useRef } from "react";
 import { useApp } from "../context/AppContext";
 import { useNavigate, useLocation } from "react-router-dom";
 import { ArrowRight, CheckCircle, Clock, AlertTriangle, X, Plus, AlertCircle } from "lucide-react";
