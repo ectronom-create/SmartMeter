@@ -1,14 +1,24 @@
+import { useState, useMemo } from "react";
 import { useApp } from "../context/AppContext";
 import { 
   Users, AlertTriangle, CheckCircle, Clock, 
-  ArrowRight, Layers, ExternalLink, Info, BookOpen, ClipboardList
+  ArrowRight, Layers, ExternalLink, Info, BookOpen, ClipboardList, Search
 } from "lucide-react";
 
 import { useNavigate } from "react-router-dom";
 
-const stageNames = {
-  "STG-01": "Assembly", "STG-02": "Insulation",
-  "STG-03": "Radio Frequency", "STG-04": "Calibration", "STG-05": "Multi Test", "STG-06": "Perso"
+const getStageNameTranslated = (stageId, isRtl) => {
+  const namesAr = {
+    "STG-01": "التجميع", "STG-02": "العزل",
+    "STG-03": "التردد اللاسلكي", "STG-04": "المعايرة", "STG-05": "الاختبار المتعدد", "STG-06": "التخصيص",
+    "GLOBAL": "عام"
+  };
+  const namesEn = {
+    "STG-01": "Assembly", "STG-02": "Insulation",
+    "STG-03": "Radio Frequency", "STG-04": "Calibration", "STG-05": "Multi Test", "STG-06": "Perso",
+    "GLOBAL": "General"
+  };
+  return isRtl ? (namesAr[stageId] || stageId) : (namesEn[stageId] || stageId);
 };
 
 export default function SupervisorPage() {
@@ -19,6 +29,7 @@ export default function SupervisorPage() {
     language, t
   } = useApp();
 
+  const [searchQuery, setSearchQuery] = useState("");
   const isRtl = language === "ar";
   const today = getTodayString();
 
@@ -30,6 +41,15 @@ export default function SupervisorPage() {
   // Defects summary
   const pendingDefects = defectiveMeters.filter(m => m.status === "reported");
   const verifiedDefects = defectiveMeters.filter(m => m.status === "verified");
+
+  const filteredPendingDefects = useMemo(() => {
+    if (!searchQuery.trim()) return pendingDefects;
+    const q = searchQuery.toLowerCase().trim();
+    return pendingDefects.filter(m => 
+      m.serial_number.toLowerCase().includes(q) ||
+      (m.error_code && m.error_code.toLowerCase().includes(q))
+    );
+  }, [pendingDefects, searchQuery]);
 
   return (
     <div className="page-container" style={{ direction: isRtl ? "rtl" : "ltr" }}>
@@ -156,41 +176,75 @@ export default function SupervisorPage() {
               </div>
             ) : (
               <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-                {pendingDefects.map(m => (
-                  <div key={m.id} style={{ 
-                    padding: 14, background: "var(--bg-elevated)", borderRadius: 12, 
-                    border: "1px solid var(--border-subtle)"
-                  }}>
-                    <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 6 }}>
-                      <code style={{ color: "var(--blue)", fontWeight: 700, fontSize: "0.9rem" }}>{m.serial_number}</code>
-                      <span className="badge badge-gray" style={{ fontSize: "0.7rem" }}>{stageNames[m.stage_found] || m.stage_found}</span>
-                    </div>
-                    <div style={{ fontSize: "0.82rem", color: "var(--text-secondary)", marginBottom: 12 }}>
-                      <span style={{ fontWeight: 600 }}>{isRtl ? "كود العطل:" : "Fault Code:"}</span> {m.error_code || (isRtl ? "غير محدد" : "Not specified")}
-                      <span style={{ margin: "0 8px", color: "var(--text-muted)" }}>
-                        · {new Date(m.created_at).toLocaleTimeString(isRtl ? "ar-SA" : "en-US", { hour: "2-digit", minute: "2-digit" })}
-                      </span>
-                    </div>
-                    <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-                      {/* Primary: refer to pending (stays on page) */}
-                      <button 
-                        className="btn btn-primary btn-sm" 
-                        style={{ width: "100%", justifyContent: "center" }}
-                        onClick={() => updateMeterStatus(m.id, "pending")}
-                      >
-                        <CheckCircle size={14} /> {isRtl ? "إحالة للمراجعة النهائية" : "Refer to Final Review"}
-                      </button>
-                      {/* Bypass: resolve immediately if not a real defect */}
-                      <button 
-                        className="btn btn-ghost btn-sm" 
-                        style={{ fontSize: "0.73rem", border: "1px dashed var(--border)", color: "var(--accent)", whiteSpace: "normal", textAlign: "center", lineHeight: "1.3", padding: "6px 8px" }}
-                        onClick={() => updateMeterStatus(m.id, "resolved")}
-                      >
-                        ✓ {isRtl ? "إعادته للإنتاج فوراً (البلاغ غير صحيح)" : "Return to production line immediately (Incorrect report)"}
-                      </button>
-                    </div>
+                {/* Search bar */}
+                <div style={{ position: "relative", marginBottom: 6 }}>
+                  <Search size={16} style={{
+                    position: "absolute",
+                    right: isRtl ? 12 : "auto",
+                    left: !isRtl ? 12 : "auto",
+                    top: "50%",
+                    transform: "translateY(-50%)",
+                    color: "var(--text-muted)"
+                  }} />
+                  <input
+                    type="text"
+                    className="input"
+                    style={{
+                      paddingRight: isRtl ? 36 : 12,
+                      paddingLeft: !isRtl ? 36 : 12,
+                      fontSize: "0.85rem",
+                      height: 36,
+                      width: "100%",
+                      boxSizing: "border-box"
+                    }}
+                    placeholder={isRtl ? "ابحث برقم العداد أو كود العطل..." : "Search by serial number or fault code..."}
+                    value={searchQuery}
+                    onChange={e => setSearchQuery(e.target.value)}
+                  />
+                </div>
+
+                {filteredPendingDefects.length === 0 ? (
+                  <div style={{ textAlign: "center", padding: "30px 0", color: "var(--text-muted)" }}>
+                    <Search size={24} style={{ marginBottom: 8, opacity: 0.3 }} />
+                    <p style={{ fontSize: "0.85rem" }}>{isRtl ? "لا توجد بلاغات مطابقة لبحثك" : "No matching reports found"}</p>
                   </div>
-                ))}
+                ) : (
+                  filteredPendingDefects.map(m => (
+                    <div key={m.id} style={{ 
+                      padding: 14, background: "var(--bg-elevated)", borderRadius: 12, 
+                      border: "1px solid var(--border-subtle)"
+                    }}>
+                      <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 6 }}>
+                        <code style={{ color: "var(--blue)", fontWeight: 700, fontSize: "0.9rem" }}>{m.serial_number}</code>
+                        <span className="badge badge-gray" style={{ fontSize: "0.7rem" }}>{getStageNameTranslated(m.stage_found, isRtl)}</span>
+                      </div>
+                      <div style={{ fontSize: "0.82rem", color: "var(--text-secondary)", marginBottom: 12 }}>
+                        <span style={{ fontWeight: 600 }}>{isRtl ? "كود العطل:" : "Fault Code:"}</span> {m.error_code || (isRtl ? "غير محدد" : "Not specified")}
+                        <span style={{ margin: "0 8px", color: "var(--text-muted)" }}>
+                          · {new Date(m.created_at).toLocaleTimeString(isRtl ? "ar-SA" : "en-US", { hour: "2-digit", minute: "2-digit" })}
+                        </span>
+                      </div>
+                      <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                        {/* Primary: refer to pending (stays on page) */}
+                        <button 
+                          className="btn btn-primary btn-sm" 
+                          style={{ width: "100%", justifyContent: "center" }}
+                          onClick={() => updateMeterStatus(m.id, "pending")}
+                        >
+                          <CheckCircle size={14} /> {isRtl ? "إحالة للمراجعة النهائية" : "Refer to Final Review"}
+                        </button>
+                        {/* Bypass: resolve immediately if not a real defect */}
+                        <button 
+                          className="btn btn-ghost btn-sm" 
+                          style={{ fontSize: "0.73rem", border: "1px dashed var(--border)", color: "var(--accent)", whiteSpace: "normal", textAlign: "center", lineHeight: "1.3", padding: "6px 8px" }}
+                          onClick={() => updateMeterStatus(m.id, "resolved")}
+                        >
+                          ✓ {isRtl ? "إعادته للإنتاج فوراً (البلاغ غير صحيح)" : "Return to production line immediately (Incorrect report)"}
+                        </button>
+                      </div>
+                    </div>
+                  ))
+                )}
 
                 {/* Shortcut to defects page */}
                 <button 
