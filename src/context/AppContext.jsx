@@ -547,9 +547,12 @@ export function AppProvider({ children }) {
   // ── Error code management ────────────────────────────
   const addErrorCode = useCallback(async (errorData) => {
     try {
-      const { error } = await supabase.from("error_codes").insert([errorData]);
+      const { error } = await supabase.from("error_codes").upsert([errorData]);
       if (error) throw error;
-      setErrorCodes(prev => [...prev, errorData]);
+      setErrorCodes(prev => {
+        const filtered = prev.filter(e => !(e.code === errorData.code && e.stage_id === errorData.stage_id));
+        return [...filtered, errorData];
+      });
     } catch (err) {
       console.error("Supabase error code add error:", err);
     }
@@ -557,12 +560,12 @@ export function AppProvider({ children }) {
 
   const addErrorCodesBulk = useCallback(async (errorDataArray) => {
     try {
-      const { error } = await supabase.from("error_codes").insert(errorDataArray);
+      const { error } = await supabase.from("error_codes").upsert(errorDataArray);
       if (error) throw error;
       setErrorCodes(prev => {
-        const existingKeys = new Set(prev.map(e => `${e.code}_${e.stage_id}`));
-        const newUnique = errorDataArray.filter(e => !existingKeys.has(`${e.code}_${e.stage_id}`));
-        return [...prev, ...newUnique];
+        const incomingMap = new Map(errorDataArray.map(e => [`${e.code}_${e.stage_id}`, e]));
+        const filtered = prev.filter(e => !incomingMap.has(`${e.code}_${e.stage_id}`));
+        return [...filtered, ...errorDataArray];
       });
       return { success: true };
     } catch (err) {
