@@ -220,7 +220,10 @@ INSERT INTO production_stages (stage_id, stage_name, short_name, icon, color, in
  '[{"problem": "فشل الاختبار الوظيفي", "solution": "راجع سجل الأخطاء التقني (Log file)."}]'::jsonb),
 ('STG-06', 'التخصيص (Perso)', 'تخصيص', '🏷️', '#ec4899', 
  ARRAY['كتابة بيانات العميل والتعريفات الخاصة.', 'طباعة الملصق النهائي وتثبيته.'],
- '[{"problem": "خطأ في البيانات المكتوبة", "solution": "تأكد من ملف التخصيص (Perso file) الصحيح."}]'::jsonb);
+ '[{"problem": "خطأ في البيانات المكتوبة", "solution": "تأكد من ملف التخصيص (Perso file) الصحيح."}]'::jsonb),
+('GLOBAL', 'عام (General)', 'عام', '🌐', '#6366f1', 
+ ARRAY[]::TEXT[], 
+ '[]'::jsonb);
 
 -- Seed Error Codes
 INSERT INTO error_codes (code, stage_id, title, description, troubleshooting_steps) VALUES

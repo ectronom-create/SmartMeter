@@ -14,7 +14,8 @@ import CountdownTimer from "../components/CountdownTimer";
 const STAGE_COLORS = { 
   "STG-01": "#f97316", "STG-02": "#4f46e5", 
   "STG-03": "#06b6d4", "STG-04": "#10b981", 
-  "STG-05": "#8b5cf6", "STG-06": "#ec4899" 
+  "STG-05": "#8b5cf6", "STG-06": "#ec4899",
+  "GLOBAL": "#0550ae"
 };
 
 function OverviewPanel() {

@@ -172,7 +172,7 @@ export default function StagesPanel() {
       </div>
 
       <div className="grid-2 stagger">
-        {productionStages.map((s) => (
+        {productionStages.filter(s => s.stage_id !== "GLOBAL").map((s) => (
           <div key={s.stage_id} className="card animate-fade" style={{ 
             borderRight: isRtl ? `4px solid ${s.color}` : "none", 
             borderLeft: !isRtl ? `4px solid ${s.color}` : "none", 

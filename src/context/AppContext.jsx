@@ -598,7 +598,7 @@ export function AppProvider({ children }) {
     if (!query.trim()) return [];
     const q = query.toLowerCase();
     return errorCodes.filter(e => {
-      const matchStage = stageId ? e.stage_id === stageId : true;
+      const matchStage = stageId ? (e.stage_id === stageId || e.stage_id === "GLOBAL") : true;
       return matchStage && (
         e.code.toLowerCase().includes(q) || 
         e.title.toLowerCase().includes(q) || 

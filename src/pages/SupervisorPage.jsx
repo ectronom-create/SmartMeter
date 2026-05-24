@@ -104,7 +104,7 @@ export default function SupervisorPage() {
               <h3 style={{ margin: 0 }}>{isRtl ? "توزيع الموظفين الحالي (Live)" : "Current Operator Distribution (Live)"}</h3>
             </div>
             <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-              {production_stages.map(stage => {
+              {production_stages.filter(s => s.stage_id !== "GLOBAL").map(stage => {
                 const workers = activeAssignments.filter(a => a.stage_id === stage.stage_id);
                 return (
                   <div key={stage.stage_id} className="stage-assignment-row">

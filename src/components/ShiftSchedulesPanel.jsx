@@ -218,7 +218,7 @@ export default function ShiftSchedulesPanel() {
                             </tr>
                           </thead>
                           <tbody>
-                            {productionStages.filter(s => s.stage_id !== "SUPERVISION").map(stage => {
+                            {productionStages.filter(s => s.stage_id !== "SUPERVISION" && s.stage_id !== "GLOBAL").map(stage => {
                               const stageAssignments = list.filter(a => a.stage_id === stage.stage_id);
                               return stageAssignments.map((assign, idx) => (
                                 <tr key={assign.id}>

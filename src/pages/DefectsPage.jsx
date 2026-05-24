@@ -19,7 +19,8 @@ const getStageNames = (isRtl) => ({
   "STG-03": isRtl ? "التردد اللاسلكي" : "Radio Frequency", 
   "STG-04": isRtl ? "المعايرة" : "Calibration", 
   "STG-05": isRtl ? "الاختبار المتعدد" : "Multi Test", 
-  "STG-06": isRtl ? "التخصيص" : "Perso"
+  "STG-06": isRtl ? "التخصيص" : "Perso",
+  "GLOBAL": isRtl ? "عام" : "General"
 });
 
 export default function DefectsPage() {
@@ -283,9 +284,9 @@ export default function DefectsPage() {
   };
 
   const filteredCodes = useMemo(() => {
-    // If operator, only allow searching/selecting error codes for their current stage
+    // If operator, only allow searching/selecting error codes for their current stage or global/general codes
     const baseCodes = currentUser?.role === "operator" && currentStage
-      ? errorCodes.filter(e => e.stage_id === currentStage.stage_id)
+      ? errorCodes.filter(e => e.stage_id === currentStage.stage_id || e.stage_id === "GLOBAL")
       : errorCodes;
 
     if (!searchQuery.trim()) return baseCodes;
@@ -331,9 +332,9 @@ export default function DefectsPage() {
       return;
     }
 
-    // Validate that the error code belongs to the operator's current stage (if operator)
+    // Validate that the error code belongs to the operator's current stage or is global (if operator)
     if (currentUser.role === "operator" && currentStage) {
-      if (selectedErrorCode.stage_id !== currentStage.stage_id) {
+      if (selectedErrorCode.stage_id !== currentStage.stage_id && selectedErrorCode.stage_id !== "GLOBAL") {
         setSubmitMsg({
           type: "error",
           text: isRtl 

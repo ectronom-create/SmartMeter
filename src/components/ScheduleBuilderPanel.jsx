@@ -209,7 +209,7 @@ export default function ScheduleBuilderPanel() {
                   <label className="input-label" style={{ textAlign: isRtl ? "right" : "left" }}>{isRtl ? "محطة عمل المشرف على الخط" : "Supervisor Active Station"}</label>
                   <select className="input" value={supervisorStage} onChange={e => setSupervisorStage(e.target.value)}>
                     <option value="">-- {isRtl ? "اختر محطة لتعيين المشرف فيها" : "Select station for supervisor"} --</option>
-                    {production_stages.map(stg => (
+                    {production_stages.filter(stg => stg.stage_id !== "GLOBAL").map(stg => (
                       <option key={stg.stage_id} value={stg.stage_id}>{getTranslatedStageName(stg, isRtl)}</option>
                     ))}
                   </select>
@@ -262,7 +262,7 @@ export default function ScheduleBuilderPanel() {
               </div>
             )}
 
-            {production_stages.map(stage => {
+            {production_stages.filter(stage => stage.stage_id !== "GLOBAL").map(stage => {
               const color = STAGE_COLORS[stage.stage_id] || "var(--accent)";
               const stageEmps = (assignments[stage.stage_id] || []);
               return (
@@ -368,7 +368,7 @@ export default function ScheduleBuilderPanel() {
                 <thead>
                   <tr>
                     <th style={{ width: 140, textAlign: isRtl ? "right" : "left" }}>{isRtl ? "التاريخ" : "Date"}</th>
-                    {production_stages.map(s => (
+                    {production_stages.filter(s => s.stage_id !== "GLOBAL").map(s => (
                       <th key={s.stage_id} style={{ textAlign: "center", minWidth: 120 }}>
                         <div style={{ fontSize: "1.1rem" }}>{s.icon}</div>
                         <div style={{ fontSize: "0.7rem", color: "var(--text-muted)" }}>{getTranslatedStageName(s, isRtl)}</div>
@@ -389,7 +389,7 @@ export default function ScheduleBuilderPanel() {
                           <div style={{ color: "var(--accent)" }}>{getDayLabel(d, isRtl)}</div>
                           <div style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>{date}</div>
                         </td>
-                        {production_stages.map(stage => {
+                        {production_stages.filter(stage => stage.stage_id !== "GLOBAL").map(stage => {
                           const stageAssignments = entries.filter(e => e.stage_id === stage.stage_id);
                           return (
                             <td key={stage.stage_id} style={{ verticalAlign: "top", padding: "8px 4px" }}>

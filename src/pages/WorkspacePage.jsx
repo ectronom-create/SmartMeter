@@ -23,7 +23,8 @@ function InstructionStep({ num, text, stageColor }) {
 function ErrorResultCard({ result, stepsOpen, onToggle }) {
   const stageColors = {
     "STG-01": "#f97316", "STG-02": "#4f46e5",
-    "STG-03": "#06b6d4", "STG-04": "#10b981", "STG-05": "#8b5cf6", "STG-06": "#ec4899"
+    "STG-03": "#06b6d4", "STG-04": "#10b981", "STG-05": "#8b5cf6", "STG-06": "#ec4899",
+    "GLOBAL": "#0550ae"
   };
   const c = stageColors[result.stage_id] || "var(--amber)";
 
@@ -140,7 +141,8 @@ export default function WorkspacePage() {
 
   const stageColors = {
     "STG-01": "#f97316", "STG-02": "#4f46e5",
-    "STG-03": "#06b6d4", "STG-04": "#10b981", "STG-05": "#8b5cf6", "STG-06": "#ec4899"
+    "STG-03": "#06b6d4", "STG-04": "#10b981", "STG-05": "#8b5cf6", "STG-06": "#ec4899",
+    "GLOBAL": "#0550ae"
   };
 
   const stageColor = currentStage ? (stageColors[currentStage.stage_id] || "var(--accent)") : "var(--accent)";
@@ -166,9 +168,9 @@ export default function WorkspacePage() {
     e.preventDefault();
     if (!serialNumber.trim() || !selectedCode) return;
 
-    // Validate that the error code belongs to the operator's current stage
+    // Validate that the error code belongs to the operator's current stage or is a global/general error
     const isValidCode = errorCodes.some(
-      err => err.code === selectedCode && err.stage_id === currentStage?.stage_id
+      err => err.code === selectedCode && (err.stage_id === currentStage?.stage_id || err.stage_id === "GLOBAL")
     );
 
     if (!isValidCode) {
