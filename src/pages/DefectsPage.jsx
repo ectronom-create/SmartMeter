@@ -49,6 +49,61 @@ export default function DefectsPage() {
   const [confirmingId, setConfirmingId] = useState(null);
   const [newStatus, setNewStatus] = useState("");
 
+  // Barcode scanner enforcement state
+  const [serialNumber, setSerialNumber] = useState("");
+  const [showScanWarning, setShowScanWarning] = useState(false);
+  const lastKeyTimeRef = useRef(0);
+  const isManualRef = useRef(false);
+
+  const handleSerialKeyDown = (e) => {
+    if (["Enter", "Tab", "Shift", "Control", "Alt", "Meta", "ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown", "Backspace"].includes(e.key)) {
+      return;
+    }
+    const now = Date.now();
+    if (lastKeyTimeRef.current !== 0) {
+      const diff = now - lastKeyTimeRef.current;
+      if (diff > 60) {
+        isManualRef.current = true;
+        setShowScanWarning(true);
+      }
+    }
+    lastKeyTimeRef.current = now;
+  };
+
+  const handleSerialChange = (e) => {
+    const val = e.target.value;
+    if (val === "") {
+      isManualRef.current = false;
+      lastKeyTimeRef.current = 0;
+      setShowScanWarning(false);
+      setSerialNumber("");
+      return;
+    }
+
+    if (isManualRef.current) {
+      setSerialNumber("");
+      setTimeout(() => {
+        setShowScanWarning(false);
+        isManualRef.current = false;
+        lastKeyTimeRef.current = 0;
+      }, 3000);
+    } else {
+      setSerialNumber(val);
+    }
+  };
+
+  const handleSerialPaste = (e) => {
+    e.preventDefault();
+    isManualRef.current = true;
+    setShowScanWarning(true);
+    setSerialNumber("");
+    setTimeout(() => {
+      setShowScanWarning(false);
+      isManualRef.current = false;
+      lastKeyTimeRef.current = 0;
+    }, 3000);
+  };
+
   const handleExcelUpload = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
@@ -260,7 +315,7 @@ export default function DefectsPage() {
   const handleQuickSubmit = async (e) => {
     e.preventDefault();
     const fd = new FormData(e.target);
-    const sn = fd.get("sn").trim().toUpperCase();
+    const sn = serialNumber.trim().toUpperCase();
     
     if (!sn || !selectedErrorCode) return;
 
@@ -306,6 +361,7 @@ export default function DefectsPage() {
 
     setSubmitMsg({ type: "success", text: isRtl ? "تم تسجيل البلاغ بنجاح!" : "Defect reported successfully!" });
     e.target.reset();
+    setSerialNumber("");
     setSearchQuery("");
     setSelectedErrorCode(null);
     setTimeout(() => setSubmitMsg(null), 3000);
@@ -386,7 +442,27 @@ export default function DefectsPage() {
             <form onSubmit={handleQuickSubmit} className="defect-form-grid">
               <div className="input-group">
                 <label className="input-label">{isRtl ? "السيريال نمبر *" : "Serial Number *"}</label>
-                <input className="input" name="sn" placeholder={isRtl ? "امسح الباركود..." : "Scan barcode..."} required style={{ background: "white" }} />
+                <input 
+                  className="input" 
+                  name="sn" 
+                  placeholder={isRtl ? "امسح الباركود فقط..." : "Scan barcode only..."} 
+                  required 
+                  value={serialNumber}
+                  onChange={handleSerialChange}
+                  onKeyDown={handleSerialKeyDown}
+                  onPaste={handleSerialPaste}
+                  style={{ 
+                    background: showScanWarning ? "#fff5f5" : "white",
+                    borderColor: showScanWarning ? "var(--red)" : "var(--border)",
+                    fontFamily: "'IBM Plex Mono', monospace",
+                    letterSpacing: "0.05em"
+                  }} 
+                />
+                {showScanWarning && (
+                  <span style={{ color: "var(--red)", fontSize: "0.75rem", fontWeight: 700, marginTop: 4, display: "block" }}>
+                    ⚠️ {isRtl ? "يجب استخدام قارئ الباركود فقط! الكتابة اليدوية معطلة لتفادي الأخطاء." : "Must use barcode reader only! Manual typing is disabled to avoid errors."}
+                  </span>
+                )}
               </div>
               
               <div className="input-group" style={{ position: "relative" }}>

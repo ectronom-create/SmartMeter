@@ -10,6 +10,7 @@ import SupervisorPage from "./pages/SupervisorPage";
 import KnowledgeBasePage from "./pages/KnowledgeBasePage";
 import AssetsPage from "./pages/AssetsPage";
 import StartOfProductionPage from "./pages/StartOfProductionPage";
+import ForceChangePassword from "./pages/ForceChangePassword";
 
 
 function ProtectedRoute({ children, adminOnly = false, supervisorOnly = false }) {
@@ -29,6 +30,14 @@ function AppRoutes() {
     if (currentUser.role === "supervisor") return "/dashboard";
     return "/dashboard";
   };
+
+  if (currentUser && currentUser.must_change_password) {
+    return (
+      <main style={{ flex: 1 }}>
+        <ForceChangePassword />
+      </main>
+    );
+  }
 
   return (
     <>

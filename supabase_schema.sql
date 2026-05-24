@@ -23,6 +23,7 @@ CREATE TABLE users (
     full_name VARCHAR(150) NOT NULL,
     role VARCHAR(50) NOT NULL DEFAULT 'operator', -- 'admin', 'supervisor', 'operator'
     password_hash VARCHAR(150) NOT NULL,
+    must_change_password BOOLEAN NOT NULL DEFAULT TRUE,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 

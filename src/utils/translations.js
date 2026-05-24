@@ -16,6 +16,15 @@ export const translations = {
     welcomeUser: "مرحباً، ",
     lineSupervisor: "مشرف خط الإنتاج",
     lineOperator: "مشغّل خط الإنتاج",
+    forcePasswordChangeTitle: "تغيير كلمة المرور الإجباري",
+    forcePasswordChangeDesc: "لحماية حسابك، يرجى تعيين كلمة مرور جديدة تتكون من 4 أرقام على الأقل وبدون تعقيد.",
+    newPasswordLabel: "كلمة المرور الجديدة (أرقام فقط)",
+    confirmPasswordLabel: "تأكيد كلمة المرور الجديدة",
+    passwordLengthError: "يجب أن تتكون كلمة المرور من 4 أرقام على الأقل.",
+    passwordMatchError: "كلمتا المرور غير متطابقتين.",
+    passwordDigitsOnlyError: "يجب أن تحتوي كلمة المرور على أرقام فقط (0-9).",
+    passwordChangedSuccess: "تم تغيير كلمة المرور بنجاح! جارٍ تحويلك...",
+    saveNewPasswordBtn: "حفظ كلمة المرور الجديدة",
     
     // Stats & Widgets
     metersCompletedToday: "عدادات أُنجزت اليوم",
@@ -102,6 +111,15 @@ export const translations = {
     welcomeUser: "Welcome, ",
     lineSupervisor: "Production Line Supervisor",
     lineOperator: "Production Line Operator",
+    forcePasswordChangeTitle: "Force Password Change",
+    forcePasswordChangeDesc: "For security reasons, please set a new password of at least 4 digits (numbers only).",
+    newPasswordLabel: "New Password (digits only)",
+    confirmPasswordLabel: "Confirm New Password",
+    passwordLengthError: "Password must be at least 4 digits long.",
+    passwordMatchError: "Passwords do not match.",
+    passwordDigitsOnlyError: "Password must contain only numbers (0-9).",
+    passwordChangedSuccess: "Password changed successfully! Redirecting...",
+    saveNewPasswordBtn: "Save New Password",
     
     // Stats & Widgets
     metersCompletedToday: "Meters Completed Today",

@@ -175,6 +175,40 @@ export function AppProvider({ children }) {
     localStorage.removeItem("SmartMeter_UserSession");
   }, []);
 
+  const changePassword = useCallback(async (employee_id, newPassword) => {
+    try {
+      const { error } = await supabase
+        .from("users")
+        .update({ password_hash: newPassword, must_change_password: false })
+        .eq("employee_id", employee_id);
+      if (error) throw error;
+      
+      // Update local state 'users'
+      setUsers(prev => prev.map(u => u.employee_id === employee_id ? { ...u, password_hash: newPassword, must_change_password: false } : u));
+      
+      // Update local state 'currentUser'
+      setCurrentUser(prev => {
+        if (prev?.employee_id === employee_id) {
+          const updated = { ...prev, password_hash: newPassword, must_change_password: false };
+          const saved = localStorage.getItem("SmartMeter_UserSession");
+          if (saved) {
+            try {
+              const parsed = JSON.parse(saved);
+              parsed.user = updated;
+              localStorage.setItem("SmartMeter_UserSession", JSON.stringify(parsed));
+            } catch (e) {}
+          }
+          return updated;
+        }
+        return prev;
+      });
+      return { success: true };
+    } catch (err) {
+      console.error("Supabase change password error:", err);
+      return { success: false, message: err.message || "Error changing password." };
+    }
+  }, []);
+
   // ── Users management ──────────────────────────────────
   const addUser = useCallback(async (userData) => {
     const newUser = {
@@ -182,6 +216,7 @@ export function AppProvider({ children }) {
       full_name:   userData.full_name.trim(),
       role:        userData.role,
       password_hash: userData.password,
+      must_change_password: true,
     };
 
     try {
@@ -767,7 +802,7 @@ export function AppProvider({ children }) {
   }
 
   const value = {
-    currentUser, login, logout, loginError,
+    currentUser, login, logout, loginError, changePassword,
     users, addUser, updateUserRole, deleteUser,
     schedules, todaySchedule, upcomingSchedule, currentStage, currentShift,
     generateRotationSchedule, saveGeneratedSchedule,
