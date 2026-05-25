@@ -2,7 +2,7 @@ import { useState, useMemo, useEffect, useRef } from "react";
 import { useApp } from "../context/AppContext";
 import { useNavigate, useLocation } from "react-router-dom";
 import { ArrowRight, CheckCircle, Clock, AlertTriangle, X, Plus, AlertCircle } from "lucide-react";
-import { translateError } from "./KnowledgeBasePage";
+import { translateError, TranslateText } from "./KnowledgeBasePage";
 import * as XLSX from "xlsx";
 import CountdownTimer from "../components/CountdownTimer";
 
@@ -614,7 +614,7 @@ export default function DefectsPage() {
                         <span className="badge badge-gray">{stageNames[m.stage_found] || m.stage_found}</span>
                       </td>
                       <td style={{ maxWidth: 220, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                        {trans?.title || m.custom_description || "—"}
+                        {trans?.title ? trans.title : (m.custom_description ? <TranslateText text={m.custom_description} targetLang={isRtl ? "ar" : "en"} /> : "—")}
                       </td>
                       <td style={{ fontSize: "0.8rem", color: "var(--text-muted)", whiteSpace: "nowrap" }}>
                         {formatDate(m.created_at)}
@@ -685,7 +685,7 @@ export default function DefectsPage() {
                   </div>
 
                   <div className="defect-card-desc">
-                    {trans?.title || m.custom_description || "—"}
+                    {trans?.title ? trans.title : (m.custom_description ? <TranslateText text={m.custom_description} targetLang={isRtl ? "ar" : "en"} /> : "—")}
                   </div>
                   
                   {m.status === "resolved" && (

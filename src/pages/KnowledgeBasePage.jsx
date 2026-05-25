@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useApp } from "../context/AppContext";
 import { useNavigate } from "react-router-dom";
 import {
@@ -213,7 +213,7 @@ function ErrorCard({ err, stage, isOpen, onToggle, isRtl }) {
         }}>
           {translated.description && (
             <p style={{ fontSize: "0.85rem", color: "var(--text-secondary)", margin: "12px 0 14px" }}>
-              {translated.description}
+              <TranslateText text={translated.description} targetLang={isRtl ? "ar" : "en"} />
             </p>
           )}
           <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12, justifyContent: isRtl ? "flex-start" : "flex-end", flexDirection: isRtl ? "row" : "row-reverse" }}>
@@ -223,20 +223,24 @@ function ErrorCard({ err, stage, isOpen, onToggle, isRtl }) {
             </span>
           </div>
           <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-            {(translated.troubleshooting_steps || []).map((step, i) => (
-              <div key={i} style={{ display: "flex", gap: 12, alignItems: "flex-start", flexDirection: isRtl ? "row" : "row-reverse" }}>
-                <div style={{
-                  width: 26, height: 26, borderRadius: "50%",
-                  background: color + "22", color,
-                  display: "flex", alignItems: "center", justifyContent: "center",
-                  fontSize: "0.78rem", fontWeight: 800, flexShrink: 0,
-                  border: `1px solid ${color}44`
-                }}>
-                  {i + 1}
+            <TranslateSteps
+              steps={translated.troubleshooting_steps || []}
+              targetLang={isRtl ? "ar" : "en"}
+              renderStep={(step, i) => (
+                <div key={i} style={{ display: "flex", gap: 12, alignItems: "flex-start", flexDirection: isRtl ? "row" : "row-reverse" }}>
+                  <div style={{
+                    width: 26, height: 26, borderRadius: "50%",
+                    background: color + "22", color,
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                    fontSize: "0.78rem", fontWeight: 800, flexShrink: 0,
+                    border: `1px solid ${color}44`
+                  }}>
+                    {i + 1}
+                  </div>
+                  <p style={{ margin: 0, fontSize: "0.9rem", lineHeight: 1.6, paddingTop: 2, flex: 1 }}>{step}</p>
                 </div>
-                <p style={{ margin: 0, fontSize: "0.9rem", lineHeight: 1.6, paddingTop: 2, flex: 1 }}>{step}</p>
-              </div>
-            ))}
+              )}
+            />
           </div>
         </div>
       )}
@@ -558,5 +562,105 @@ export default function KnowledgeBasePage() {
 
       </div>
     </div>
+  );
+}
+
+export function TranslateText({ text, targetLang, fallback = "" }) {
+  const [translated, setTranslated] = useState(text || fallback);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (!text) {
+      setTranslated(fallback);
+      return;
+    }
+
+    const isArabic = /[\u0600-\u06FF]/.test(text);
+    const textLang = isArabic ? "ar" : "en";
+
+    if (textLang === targetLang) {
+      setTranslated(text);
+      return;
+    }
+
+    let active = true;
+    const translate = async () => {
+      setLoading(true);
+      try {
+        const langpair = `${textLang}|${targetLang}`;
+        const res = await fetch(`https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=${langpair}`);
+        const data = await res.json();
+        if (active && data?.responseData?.translatedText) {
+          setTranslated(data.responseData.translatedText);
+        }
+      } catch (err) {
+        console.error("Translation error:", err);
+      } finally {
+        if (active) setLoading(false);
+      }
+    };
+
+    translate();
+    return () => { active = false; };
+  }, [text, targetLang, fallback]);
+
+  return <span>{translated}</span>;
+}
+
+export function TranslateSteps({ steps, targetLang, renderStep }) {
+  const [translatedSteps, setTranslatedSteps] = useState(steps || []);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (!steps || steps.length === 0) {
+      setTranslatedSteps([]);
+      return;
+    }
+
+    const needsTranslation = steps.some(step => {
+      const isArabic = /[\u0600-\u06FF]/.test(step);
+      const stepLang = isArabic ? "ar" : "en";
+      return stepLang !== targetLang;
+    });
+
+    if (!needsTranslation) {
+      setTranslatedSteps(steps);
+      return;
+    }
+
+    let active = true;
+    const translateAll = async () => {
+      setLoading(true);
+      try {
+        const promises = steps.map(async (step) => {
+          const isArabic = /[\u0600-\u06FF]/.test(step);
+          const stepLang = isArabic ? "ar" : "en";
+          if (stepLang === targetLang) return step;
+
+          const langpair = `${stepLang}|${targetLang}`;
+          const res = await fetch(`https://api.mymemory.translated.net/get?q=${encodeURIComponent(step)}&langpair=${langpair}`);
+          const data = await res.json();
+          return data?.responseData?.translatedText || step;
+        });
+
+        const results = await Promise.all(promises);
+        if (active) {
+          setTranslatedSteps(results);
+        }
+      } catch (err) {
+        console.error("Steps translation error:", err);
+      } finally {
+        if (active) setLoading(false);
+      }
+    };
+
+    translateAll();
+    return () => { active = false; };
+  }, [steps, targetLang]);
+
+  return (
+    <>
+      {translatedSteps.map((step, idx) => renderStep(step, idx, loading))}
+    </>
   );
 }

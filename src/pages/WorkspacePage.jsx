@@ -49,12 +49,16 @@ function ErrorResultCard({ result, stepsOpen, onToggle }) {
           <p style={{ fontSize: "0.78rem", color: "var(--text-muted)", marginBottom: 8, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em" }}>
             {isRtl ? "خطوات التعامل" : "Troubleshooting Steps"}
           </p>
-          {(translated.troubleshooting_steps || []).map((step, i) => (
-            <div key={i} className="troubleshoot-step">
-              <span style={{ color: "var(--amber)", fontWeight: 700, flexShrink: 0 }}>{i + 1}.</span>
-              <span style={{ color: "var(--text-primary)", fontSize: "0.9rem" }}>{step}</span>
-            </div>
-          ))}
+          <TranslateSteps
+            steps={translated.troubleshooting_steps || []}
+            targetLang={isRtl ? "ar" : "en"}
+            renderStep={(step, i) => (
+              <div key={i} className="troubleshoot-step">
+                <span style={{ color: "var(--amber)", fontWeight: 700, flexShrink: 0 }}>{i + 1}.</span>
+                <span style={{ color: "var(--text-primary)", fontSize: "0.9rem" }}>{step}</span>
+              </div>
+            )}
+          />
         </div>
       )}
     </div>

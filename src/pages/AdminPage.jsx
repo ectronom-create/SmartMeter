@@ -5,7 +5,7 @@ import UsersPanel from "../components/UsersPanel";
 import ShiftSchedulesPanel from "../components/ShiftSchedulesPanel";
 import StagesPanel from "../components/StagesPanel";
 import FPYDashboard from "../components/FPYDashboard";
-import { translateError } from "./KnowledgeBasePage";
+import { translateError, TranslateText, TranslateSteps } from "./KnowledgeBasePage";
 import { supabase } from "../supabaseClient";
 import * as XLSX from "xlsx";
 import CountdownTimer from "../components/CountdownTimer";
@@ -625,14 +625,18 @@ function ErrorCodesPanel() {
                     <td style={{fontSize:"0.88rem", fontWeight: 700}}>{isRtl ? (e.title_ar || "—") : (e.title_en || "—")}</td>
                     <td>
                       <div style={{fontSize:"0.76rem",color:"var(--text-muted)",lineHeight:1.4, maxWidth:280, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap"}} title={e.description}>
-                        {e.description || "—"}
+                        <TranslateText text={e.description} targetLang={isRtl ? "ar" : "en"} fallback="—" />
                       </div>
                     </td>
                     <td>
                       <div style={{fontSize:"0.75rem",color:"var(--text-secondary)", maxWidth:280, maxHeight: "90px", overflowY: "auto", display: "flex", flexDirection: "column", gap: 3}}>
-                        {(e.troubleshooting_steps || []).map((step, sIdx) => (
-                          <div key={sIdx} style={{lineHeight: 1.2}}>• {step}</div>
-                        ))}
+                        <TranslateSteps
+                          steps={e.troubleshooting_steps || []}
+                          targetLang={isRtl ? "ar" : "en"}
+                          renderStep={(step, sIdx) => (
+                            <div key={sIdx} style={{lineHeight: 1.2}}>• {step}</div>
+                          )}
+                        />
                         {(!e.troubleshooting_steps || e.troubleshooting_steps.length === 0) && "—"}
                       </div>
                     </td>
