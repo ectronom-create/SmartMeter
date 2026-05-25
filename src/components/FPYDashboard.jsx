@@ -612,11 +612,7 @@ export default function FPYDashboard() {
                     </div>
                   </div>
                   
-                  <div style={{ display: "flex", gap: 30, flexDirection: isRtl ? "row-reverse" : "row" }}>
-                    <div style={{ borderRight: isRtl ? "none" : "1px solid rgba(255,255,255,0.1)", borderLeft: isRtl ? "1px solid rgba(255,255,255,0.1)" : "none", paddingRight: isRtl ? 0 : 30, paddingLeft: isRtl ? 30 : 0, textAlign: isRtl ? "right" : "left" }}>
-                      <div style={{ fontSize: "0.75rem", color: "#94a3b8", marginBottom: 2 }}>{isRtl ? "إجمالي المحاولات" : "Total Attempts"}</div>
-                      <div style={{ fontSize: "1.3rem", fontWeight: 700, color: "#38bdf8" }}>{persoTotals.total.toLocaleString()}</div>
-                    </div>
+                  <div style={{ display: "flex", flexDirection: isRtl ? "row-reverse" : "row" }}>
                     <div style={{ textAlign: isRtl ? "right" : "left" }}>
                       <div style={{ fontSize: "0.75rem", color: "#94a3b8", marginBottom: 2 }}>{isRtl ? "أيام التقارير المدرجة" : "Days of Reports"}</div>
                       <div style={{ fontSize: "1.3rem", fontWeight: 700, color: "#f59e0b" }}>{persoTotals.reportsCount} {isRtl ? "أيام" : "days"}</div>
