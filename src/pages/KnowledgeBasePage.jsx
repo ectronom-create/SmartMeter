@@ -16,7 +16,12 @@ const STAGE_COLORS = {
 
 // Perfect Bilingual Error Translator helper
 export const translateError = (err, isRtl) => {
-  if (isRtl) return err;
+  if (!err) return err;
+  const dbTitle = isRtl
+    ? (err.title_ar || err.title_en || err.title)
+    : (err.title_en || err.title_ar || err.title);
+  const baseErr = { ...err, title: dbTitle };
+  if (isRtl) return baseErr;
   const translations = {
     "-101": {
       title: "SFC Error - Data Retrieval Failed",
@@ -156,7 +161,7 @@ export const translateError = (err, isRtl) => {
       ]
     }
   };
-  return translations[err.code] ? { ...err, ...translations[err.code] } : err;
+  return translations[err.code] ? { ...baseErr, ...translations[err.code] } : baseErr;
 };
 
 function ErrorCard({ err, stage, isOpen, onToggle, isRtl }) {
@@ -256,7 +261,8 @@ export default function KnowledgeBasePage() {
     const q = searchQuery.toLowerCase();
     return errorCodes.filter(e =>
       e.code.toLowerCase().includes(q) ||
-      e.title.toLowerCase().includes(q) ||
+      (e.title_ar && e.title_ar.toLowerCase().includes(q)) ||
+      (e.title_en && e.title_en.toLowerCase().includes(q)) ||
       (e.description || "").toLowerCase().includes(q)
     );
   }, [searchQuery, errorCodes, isSearching]);

@@ -328,7 +328,8 @@ function ErrorCodesPanel() {
     if (!query) return true;
     return (
       (e.code || "").toLowerCase().includes(query) ||
-      (e.title || "").toLowerCase().includes(query) ||
+      (e.title_ar || "").toLowerCase().includes(query) ||
+      (e.title_en || "").toLowerCase().includes(query) ||
       (e.description || "").toLowerCase().includes(query) ||
       stageName.toLowerCase().includes(query)
     );
@@ -355,10 +356,10 @@ function ErrorCodesPanel() {
   };
 
   const downloadTemplate = () => {
-    const headers = [["Code", "Stage", "Title", "Description", "Troubleshooting Steps"]];
+    const headers = [["Code", "Stage", "Title Arabic", "Title English", "Description", "Troubleshooting Steps"]];
     const sampleData = [
-      ["-101", "STG-01", "Communication Error", "Failed to communicate with smart meter", "Verify interface cable\nPower cycle system"],
-      ["-102", "Assembly", "Power Supply Failure", "No power detected", "Check fuse\nVerify battery connection"]
+      ["-101", "STG-01", "خطأ SFC - فشل استرداد البيانات", "SFC Error - Data Retrieval Failed", "فشل استرداد بيانات التصنيع من نظام SFC.", "Check network connection to the server.\nScan the barcode again."],
+      ["-576", "Assembly", "خطأ اتصال - تعذّر التواصل مع العداد", "Connection Error - Failed to Communicate", "فشل التواصل المادي مع العداد عبر المنفذ.", "Verify interface cable\nPower cycle system"]
     ];
     const ws = XLSX.utils.aoa_to_sheet([...headers, ...sampleData]);
     const wb = XLSX.utils.book_new();
@@ -403,16 +404,26 @@ function ErrorCodesPanel() {
         
         const codeIdx = headers.findIndex(h => h.includes("code") || h.includes("الكود") || h.includes("كود") || h.includes("رمز"));
         const stageIdx = headers.findIndex(h => h.includes("stage") || h.includes("المرحلة") || h.includes("مرحلة"));
-        const titleIdx = headers.findIndex(h => h.includes("title") || h.includes("العنوان"));
+        const titleArIdx = headers.findIndex(h => h.includes("arabic") || h.includes("ar") || h.includes("العربية") || h.includes("العربي") || h === "title");
+        const titleEnIdx = headers.findIndex(h => h.includes("english") || h.includes("en") || h.includes("الإنجليزية") || h.includes("الانجليزية") || h.includes("الانجليزي"));
         const descIdx = headers.findIndex(h => h.includes("description") || h.includes("الوصف"));
         const stepsIdx = headers.findIndex(h => h.includes("steps") || h.includes("troubleshooting") || h.includes("خطوات") || h.includes("الإصلاح") || h.includes("الاصلاح"));
 
-        if (codeIdx === -1 || titleIdx === -1) {
+        // Support fallback if only one title column is provided
+        let finalTitleArIdx = titleArIdx;
+        let finalTitleEnIdx = titleEnIdx;
+        if (finalTitleArIdx === -1 && finalTitleEnIdx !== -1) {
+          finalTitleArIdx = finalTitleEnIdx;
+        } else if (finalTitleArIdx !== -1 && finalTitleEnIdx === -1) {
+          finalTitleEnIdx = finalTitleArIdx;
+        }
+
+        if (codeIdx === -1 || finalTitleArIdx === -1) {
           setImportStatus({ 
             type: "danger", 
             text: isRtl 
-              ? "تنسيق الأعمدة غير صحيح. يجب أن يحتوي الملف على عمودي الكود (code) والعنوان (title) على الأقل." 
-              : "Columns format invalid. File must contain Code and Title columns at least."
+              ? "تنسيق الأعمدة غير صحيح. يجب أن يحتوي الملف على عمود الكود وعمود العنوان (بالعربية أو الإنجليزية) على الأقل." 
+              : "Columns format invalid. File must contain Code and Title (Arabic or English) columns at least."
           });
           return;
         }
@@ -428,7 +439,8 @@ function ErrorCodesPanel() {
           const rawStageVal = stageIdx !== -1 ? row[stageIdx] : "STG-01";
           const stageId = mapStageNameOrId(rawStageVal, production_stages);
 
-          const title = row[titleIdx] ? row[titleIdx].toString().trim() : rawCode;
+          const titleAr = row[finalTitleArIdx] ? row[finalTitleArIdx].toString().trim() : rawCode;
+          const titleEn = row[finalTitleEnIdx] ? row[finalTitleEnIdx].toString().trim() : titleAr;
           const description = descIdx !== -1 && row[descIdx] ? row[descIdx].toString().trim() : null;
 
           const rawSteps = stepsIdx !== -1 && row[stepsIdx] ? row[stepsIdx].toString() : "";
@@ -437,7 +449,8 @@ function ErrorCodesPanel() {
           newCodes.push({
             code: rawCode,
             stage_id: stageId,
-            title,
+            title_ar: titleAr,
+            title_en: titleEn,
             description,
             troubleshooting_steps
           });
@@ -497,7 +510,8 @@ function ErrorCodesPanel() {
     setFormData({
       code: "",
       stage_id: "STG-01",
-      title: "",
+      title_ar: "",
+      title_en: "",
       description: "",
       troubleshooting: ""
     });
@@ -508,7 +522,8 @@ function ErrorCodesPanel() {
     setFormData({ 
       code: e.code, 
       stage_id: e.stage_id, 
-      title: e.title || "", 
+      title_ar: e.title_ar || "", 
+      title_en: e.title_en || "", 
       description: e.description || "", 
       troubleshooting: (e.troubleshooting_steps || []).join("\n") 
     });
@@ -520,7 +535,8 @@ function ErrorCodesPanel() {
     const data = {
       code: formData.code,
       stage_id: formData.stage_id,
-      title: formData.title,
+      title_ar: formData.title_ar,
+      title_en: formData.title_en,
       description: formData.description || null,
       troubleshooting_steps: formData.troubleshooting.split("\n").map(l => l.trim()).filter(Boolean)
     };
@@ -606,7 +622,7 @@ function ErrorCodesPanel() {
                       </div>
                     </td>
                     <td><span className="badge badge-gray" style={{fontFamily:"monospace",fontWeight:800}}>{e.code}</span></td>
-                    <td style={{fontSize:"0.88rem", fontWeight: 700}}>{e.title || "—"}</td>
+                    <td style={{fontSize:"0.88rem", fontWeight: 700}}>{isRtl ? (e.title_ar || "—") : (e.title_en || "—")}</td>
                     <td>
                       <div style={{fontSize:"0.76rem",color:"var(--text-muted)",lineHeight:1.4, maxWidth:280, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap"}} title={e.description}>
                         {e.description || "—"}
@@ -658,9 +674,15 @@ function ErrorCodesPanel() {
                 </div>
               </div>
 
-              <div className="input-group" style={{ textAlign: isRtl ? "right" : "left" }}>
-                <label className="input-label">{isRtl ? "العنوان" : "Title"}</label>
-                <input className="input" value={formData.title} onChange={e=>setFormData({...formData, title:e.target.value})} required style={{ textAlign: isRtl ? "right" : "left" }} />
+              <div className="grid-2">
+                <div className="input-group" style={{ textAlign: isRtl ? "right" : "left" }}>
+                  <label className="input-label">{isRtl ? "العنوان بالعربية *" : "Title (Arabic) *"}</label>
+                  <input className="input" value={formData.title_ar} onChange={e=>setFormData({...formData, title_ar:e.target.value})} required style={{ textAlign: "right" }} dir="rtl" />
+                </div>
+                <div className="input-group" style={{ textAlign: isRtl ? "right" : "left" }}>
+                  <label className="input-label">{isRtl ? "العنوان بالإنجليزية *" : "Title (English) *"}</label>
+                  <input className="input" value={formData.title_en} onChange={e=>setFormData({...formData, title_en:e.target.value})} required style={{ textAlign: "left" }} dir="ltr" />
+                </div>
               </div>
 
               <div className="input-group" style={{ textAlign: isRtl ? "right" : "left" }}>
@@ -704,7 +726,8 @@ function ErrorCodesPanel() {
                     <tr style={{ background: "var(--bg-secondary)", borderBottom: "1px solid var(--border)" }}>
                       <th style={{ padding: "8px 12px", textAlign: isRtl ? "right" : "left", fontSize: "0.8rem" }}>{isRtl ? "المرحلة" : "Stage"}</th>
                       <th style={{ padding: "8px 12px", textAlign: isRtl ? "right" : "left", fontSize: "0.8rem" }}>{isRtl ? "الكود" : "Code"}</th>
-                      <th style={{ padding: "8px 12px", textAlign: isRtl ? "right" : "left", fontSize: "0.8rem" }}>{isRtl ? "العنوان" : "Title"}</th>
+                      <th style={{ padding: "8px 12px", textAlign: isRtl ? "right" : "left", fontSize: "0.8rem" }}>{isRtl ? "العنوان بالعربية" : "Title (Arabic)"}</th>
+                      <th style={{ padding: "8px 12px", textAlign: isRtl ? "right" : "left", fontSize: "0.8rem" }}>{isRtl ? "العنوان بالإنجليزية" : "Title (English)"}</th>
                       <th style={{ padding: "8px 12px", textAlign: isRtl ? "right" : "left", fontSize: "0.8rem" }}>{isRtl ? "الوصف" : "Description"}</th>
                       <th style={{ padding: "8px 12px", textAlign: isRtl ? "right" : "left", fontSize: "0.8rem" }}>{isRtl ? "خطوات الإصلاح" : "Troubleshooting"}</th>
                     </tr>
@@ -721,7 +744,8 @@ function ErrorCodesPanel() {
                           <td style={{ padding: "8px 12px", fontSize: "0.78rem" }}>
                             <span className="badge badge-gray" style={{ fontFamily: "monospace" }}>{r.code}</span>
                           </td>
-                          <td style={{ padding: "8px 12px", fontSize: "0.78rem", fontWeight: 600 }}>{r.title}</td>
+                          <td style={{ padding: "8px 12px", fontSize: "0.78rem", fontWeight: 600 }}>{r.title_ar}</td>
+                          <td style={{ padding: "8px 12px", fontSize: "0.78rem", fontWeight: 600 }}>{r.title_en}</td>
                           <td style={{ padding: "8px 12px", fontSize: "0.75rem", color: "var(--text-muted)", maxWidth: 200, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }} title={r.description}>
                             {r.description || "—"}
                           </td>

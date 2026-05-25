@@ -293,7 +293,8 @@ export default function DefectsPage() {
     const q = searchQuery.toLowerCase();
     return baseCodes.filter(e => 
       e.code.toLowerCase().includes(q) || 
-      e.title.toLowerCase().includes(q) ||
+      (e.title_ar && e.title_ar.toLowerCase().includes(q)) ||
+      (e.title_en && e.title_en.toLowerCase().includes(q)) ||
       (stageNames[e.stage_id] || "").toLowerCase().includes(q)
     );
   }, [searchQuery, errorCodes, stageNames, currentUser?.role, currentStage]);

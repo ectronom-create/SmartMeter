@@ -601,7 +601,8 @@ export function AppProvider({ children }) {
       const matchStage = stageId ? (e.stage_id === stageId || e.stage_id === "GLOBAL") : true;
       return matchStage && (
         e.code.toLowerCase().includes(q) || 
-        e.title.toLowerCase().includes(q) || 
+        (e.title_ar && e.title_ar.toLowerCase().includes(q)) || 
+        (e.title_en && e.title_en.toLowerCase().includes(q)) || 
         (e.description && e.description.toLowerCase().includes(q))
       );
     });

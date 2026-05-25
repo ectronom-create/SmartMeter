@@ -6,6 +6,8 @@ import {
   Plus, Book, ChevronDown, ChevronUp, Zap, AlertCircle
 } from "lucide-react";
 
+import { translateError } from "./KnowledgeBasePage";
+
 function InstructionStep({ num, text, stageColor }) {
   return (
     <div className="instruction-item">
@@ -21,20 +23,23 @@ function InstructionStep({ num, text, stageColor }) {
 }
 
 function ErrorResultCard({ result, stepsOpen, onToggle }) {
+  const { language } = useApp();
+  const isRtl = language === "ar";
+  const translated = translateError(result, isRtl);
   const stageColors = {
     "STG-01": "#f97316", "STG-02": "#4f46e5",
     "STG-03": "#06b6d4", "STG-04": "#10b981", "STG-05": "#8b5cf6", "STG-06": "#ec4899",
     "GLOBAL": "#0550ae"
   };
-  const c = stageColors[result.stage_id] || "var(--amber)";
+  const c = stageColors[translated.stage_id] || "var(--amber)";
 
   return (
     <div className="error-result-card" style={{ borderColor: c + "66" }}>
       <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: stepsOpen ? 12 : 0 }}>
         <span className="badge" style={{ background: c + "22", color: c, border: `1px solid ${c}44`, fontFamily: "monospace" }}>
-          {result.code}
+          {translated.code}
         </span>
-        <span style={{ fontWeight: 700, flex: 1 }}>{result.title}</span>
+        <span style={{ fontWeight: 700, flex: 1 }}>{translated.title}</span>
         <button className="btn btn-ghost btn-icon btn-sm" onClick={onToggle}>
           {stepsOpen ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
         </button>
@@ -42,9 +47,9 @@ function ErrorResultCard({ result, stepsOpen, onToggle }) {
       {stepsOpen && (
         <div style={{ paddingTop: 4 }}>
           <p style={{ fontSize: "0.78rem", color: "var(--text-muted)", marginBottom: 8, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em" }}>
-            خطوات التعامل
+            {isRtl ? "خطوات التعامل" : "Troubleshooting Steps"}
           </p>
-          {result.troubleshooting_steps.map((step, i) => (
+          {(translated.troubleshooting_steps || []).map((step, i) => (
             <div key={i} className="troubleshoot-step">
               <span style={{ color: "var(--amber)", fontWeight: 700, flexShrink: 0 }}>{i + 1}.</span>
               <span style={{ color: "var(--text-primary)", fontSize: "0.9rem" }}>{step}</span>
