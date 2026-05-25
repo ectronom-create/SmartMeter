@@ -218,27 +218,39 @@ export default function FPYDashboard() {
     }
   }, [productionFilter, reports]);
 
-  // Compute Perso Totals
-  const persoTotals = useMemo(() => {
-    let ok = 0;
-    let total = 0;
+  // Compute Perso and Assembly Totals
+  const productionTotals = useMemo(() => {
+    let ok = 0; // Perso Final OK
+    let assemblyOk = 0; // Assembly OK
     let reportsCount = 0;
     
     reports.forEach(r => {
       const matchDate = productionFilter === "all" || (r.date >= prodStartDate && r.date <= prodEndDate);
       if (matchDate) {
+        let hasData = false;
         const persoStation = (r.stations || []).find(s => 
           s.stationName && s.stationName.toLowerCase().includes("perso")
         );
         if (persoStation) {
           ok += parseInt(persoStation.nbBoardsOK) || 0;
-          total += parseInt(persoStation.nbBoards) || 0;
+          hasData = true;
+        }
+        
+        const assemblyStation = (r.stations || []).find(s => 
+          s.stationName && s.stationName.toLowerCase().includes("assembly")
+        );
+        if (assemblyStation) {
+          assemblyOk += parseInt(assemblyStation.nbBoardsOK) || 0;
+          hasData = true;
+        }
+        
+        if (hasData) {
           reportsCount++;
         }
       }
     });
     
-    return { ok, total, reportsCount };
+    return { ok, assemblyOk, reportsCount };
   }, [reports, prodStartDate, prodEndDate, productionFilter]);
   
   // Upload states
@@ -603,19 +615,30 @@ export default function FPYDashboard() {
 
                 {/* Production Count Display */}
                 <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", background: "rgba(255,255,255,0.03)", padding: "16px 20px", borderRadius: 12, border: "1px solid rgba(255,255,255,0.05)", flexWrap: "wrap", gap: 16, flexDirection: isRtl ? "row-reverse" : "row" }}>
-                  <div style={{ textAlign: isRtl ? "right" : "left" }}>
-                    <div style={{ fontSize: "0.8rem", color: "#94a3b8", marginBottom: 4 }}>
-                      {isRtl ? "الإنتاج الفعلي الناجح (Final OK)" : "Successful Production (Final OK)"}
+                  <div style={{ display: "flex", gap: 40, flexWrap: "wrap", flexDirection: isRtl ? "row-reverse" : "row" }}>
+                    <div style={{ textAlign: isRtl ? "right" : "left" }}>
+                      <div style={{ fontSize: "0.8rem", color: "#94a3b8", marginBottom: 4 }}>
+                        {isRtl ? "إنتاج التجميع (Assembly OK)" : "Assembly Production (Assembly OK)"}
+                      </div>
+                      <div style={{ fontSize: "2.2rem", fontWeight: 800, color: "#38bdf8", lineHeight: 1 }}>
+                        {productionTotals.assemblyOk.toLocaleString()} <span style={{ fontSize: "0.95rem", fontWeight: 500, color: "#94a3b8" }}>{isRtl ? "لوحة" : "boards"}</span>
+                      </div>
                     </div>
-                    <div style={{ fontSize: "2.2rem", fontWeight: 800, color: "#10b981", lineHeight: 1 }}>
-                      {persoTotals.ok.toLocaleString()} <span style={{ fontSize: "0.95rem", fontWeight: 500, color: "#94a3b8" }}>{isRtl ? "عداد ذكي" : "smart meters"}</span>
+                    
+                    <div style={{ borderRight: isRtl ? "none" : "1px solid rgba(255,255,255,0.1)", borderLeft: isRtl ? "1px solid rgba(255,255,255,0.1)" : "none", paddingRight: isRtl ? 0 : 40, paddingLeft: isRtl ? 40 : 0, textAlign: isRtl ? "right" : "left" }}>
+                      <div style={{ fontSize: "0.8rem", color: "#94a3b8", marginBottom: 4 }}>
+                        {isRtl ? "الإنتاج النهائي الناجح (Final OK)" : "Successful Production (Final OK)"}
+                      </div>
+                      <div style={{ fontSize: "2.2rem", fontWeight: 800, color: "#10b981", lineHeight: 1 }}>
+                        {productionTotals.ok.toLocaleString()} <span style={{ fontSize: "0.95rem", fontWeight: 500, color: "#94a3b8" }}>{isRtl ? "عداد ذكي" : "smart meters"}</span>
+                      </div>
                     </div>
                   </div>
                   
                   <div style={{ display: "flex", flexDirection: isRtl ? "row-reverse" : "row" }}>
                     <div style={{ textAlign: isRtl ? "right" : "left" }}>
                       <div style={{ fontSize: "0.75rem", color: "#94a3b8", marginBottom: 2 }}>{isRtl ? "أيام التقارير المدرجة" : "Days of Reports"}</div>
-                      <div style={{ fontSize: "1.3rem", fontWeight: 700, color: "#f59e0b" }}>{persoTotals.reportsCount} {isRtl ? "أيام" : "days"}</div>
+                      <div style={{ fontSize: "1.3rem", fontWeight: 700, color: "#f59e0b" }}>{productionTotals.reportsCount} {isRtl ? "أيام" : "days"}</div>
                     </div>
                   </div>
                 </div>
