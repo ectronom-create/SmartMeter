@@ -3,6 +3,7 @@ import * as XLSX from "xlsx";
 import { Chart, registerables } from "chart.js";
 import { Upload, BarChart2, History, TrendingUp, Trash2 } from "lucide-react";
 import { supabase } from "../supabaseClient";
+import { useApp } from "../context/AppContext";
 
 Chart.register(...registerables);
 
@@ -169,10 +170,65 @@ function parseFPYExcel(arrayBuffer) {
 // ===================== STYLES =====================
 
 export default function FPYDashboard() {
+  const { language } = useApp();
+  const isRtl = language === "ar";
+
   const [activeTab, setActiveTab] = useState("dashboard");
   const [reports, setReports] = useState([]);
   const [currentReport, setCurrentReport] = useState(null);
   const [target, setTarget] = useState(320);
+
+  // Perso Production Filter States
+  const [productionFilter, setProductionFilter] = useState("week"); // "today", "week", "month", "custom"
+  const [prodStartDate, setProdStartDate] = useState(() => {
+    const d = new Date();
+    d.setDate(d.getDate() - 6);
+    return d.toISOString().slice(0, 10);
+  });
+  const [prodEndDate, setProdEndDate] = useState(() => new Date().toISOString().slice(0, 10));
+
+  // Handle production filter date changes
+  useEffect(() => {
+    const today = new Date();
+    const todayStr = today.toISOString().slice(0, 10);
+    
+    if (productionFilter === "today") {
+      setProdStartDate(todayStr);
+      setProdEndDate(todayStr);
+    } else if (productionFilter === "week") {
+      const d = new Date();
+      d.setDate(d.getDate() - 6);
+      setProdStartDate(d.toISOString().slice(0, 10));
+      setProdEndDate(todayStr);
+    } else if (productionFilter === "month") {
+      const d = new Date();
+      d.setDate(d.getDate() - 29);
+      setProdStartDate(d.toISOString().slice(0, 10));
+      setProdEndDate(todayStr);
+    }
+  }, [productionFilter]);
+
+  // Compute Perso Totals
+  const persoTotals = useMemo(() => {
+    let ok = 0;
+    let total = 0;
+    let reportsCount = 0;
+    
+    reports.forEach(r => {
+      if (r.date >= prodStartDate && r.date <= prodEndDate) {
+        const persoStation = (r.stations || []).find(s => 
+          s.stationName && s.stationName.toLowerCase().includes("perso")
+        );
+        if (persoStation) {
+          ok += parseInt(persoStation.nbBoardsOK) || 0;
+          total += parseInt(persoStation.nbBoards) || 0;
+          reportsCount++;
+        }
+      }
+    });
+    
+    return { ok, total, reportsCount };
+  }, [reports, prodStartDate, prodEndDate]);
   
   // Upload states
   const [isParsing, setIsParsing] = useState(false);
@@ -427,8 +483,129 @@ export default function FPYDashboard() {
             </div>
           ) : (
             <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+              
+              {/* Perso Total Production Widget */}
+              <div className="card animate-fade" style={{ 
+                background: "linear-gradient(135deg, #1e293b, #0f172a)", 
+                color: "#f8fafc", 
+                border: "1px solid rgba(255,255,255,0.05)",
+                boxShadow: "0 10px 25px -5px rgba(0, 0, 0, 0.3)",
+                padding: "20px 24px"
+              }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 14, marginBottom: 18 }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                    <div style={{ width: 36, height: 36, borderRadius: 10, background: "rgba(236,72,153,0.15)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                      <span style={{ fontSize: "1.2rem" }}>🌐</span>
+                    </div>
+                    <div>
+                      <h3 style={{ margin: 0, fontSize: "1.05rem", fontWeight: 700, color: "#f8fafc" }}>
+                        {isRtl ? "إجمالي إنتاج مرحلة التخصيص (Perso)" : "Total Perso Stage Production"}
+                      </h3>
+                      <p style={{ margin: 0, fontSize: "0.78rem", color: "#94a3b8" }}>
+                        {isRtl ? "احتساب العدادات التي مرت بنجاح من محطة البيرسو للتاريخ المحدد" : "Smart meters successfully customized for the selected range"}
+                      </p>
+                    </div>
+                  </div>
+                  
+                  {/* Filter controls */}
+                  <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+                    <div className="btn-group" style={{ display: "flex", background: "rgba(255,255,255,0.05)", padding: 3, borderRadius: 8, border: "1px solid rgba(255,255,255,0.08)" }}>
+                      <button 
+                        type="button"
+                        style={{
+                          background: productionFilter === "today" ? "rgba(255,255,255,0.15)" : "none",
+                          border: "none", color: "#f8fafc", padding: "5px 12px", borderRadius: 6, cursor: "pointer", fontSize: "0.78rem", fontWeight: 600
+                        }}
+                        onClick={() => setProductionFilter("today")}
+                      >
+                        {isRtl ? "اليوم" : "Today"}
+                      </button>
+                      <button 
+                        type="button"
+                        style={{
+                          background: productionFilter === "week" ? "rgba(255,255,255,0.15)" : "none",
+                          border: "none", color: "#f8fafc", padding: "5px 12px", borderRadius: 6, cursor: "pointer", fontSize: "0.78rem", fontWeight: 600
+                        }}
+                        onClick={() => setProductionFilter("week")}
+                      >
+                        {isRtl ? "آخر 7 أيام" : "Last 7 Days"}
+                      </button>
+                      <button 
+                        type="button"
+                        style={{
+                          background: productionFilter === "month" ? "rgba(255,255,255,0.15)" : "none",
+                          border: "none", color: "#f8fafc", padding: "5px 12px", borderRadius: 6, cursor: "pointer", fontSize: "0.78rem", fontWeight: 600
+                        }}
+                        onClick={() => setProductionFilter("month")}
+                      >
+                        {isRtl ? "آخر 30 يوم" : "Last 30 Days"}
+                      </button>
+                      <button 
+                        type="button"
+                        style={{
+                          background: productionFilter === "custom" ? "rgba(255,255,255,0.15)" : "none",
+                          border: "none", color: "#f8fafc", padding: "5px 12px", borderRadius: 6, cursor: "pointer", fontSize: "0.78rem", fontWeight: 600
+                        }}
+                        onClick={() => setProductionFilter("custom")}
+                      >
+                        {isRtl ? "تاريخ مخصص" : "Custom Range"}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Custom Date Picker Inputs */}
+                {productionFilter === "custom" && (
+                  <div className="animate-fade" style={{ display: "flex", gap: 12, marginBottom: 18, background: "rgba(255,255,255,0.03)", padding: 12, borderRadius: 8, border: "1px solid rgba(255,255,255,0.05)", flexWrap: "wrap", flexDirection: isRtl ? "row-reverse" : "row" }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 8, flexDirection: isRtl ? "row-reverse" : "row" }}>
+                      <span style={{ fontSize: "0.78rem", color: "#94a3b8" }}>{isRtl ? "من:" : "From:"}</span>
+                      <input 
+                        type="date" 
+                        className="input" 
+                        style={{ background: "#0f172a", border: "1px solid rgba(255,255,255,0.15)", color: "#f8fafc", padding: "4px 8px", fontSize: "0.8rem", borderRadius: 6 }} 
+                        value={prodStartDate} 
+                        onChange={e => setProdStartDate(e.target.value)} 
+                      />
+                    </div>
+                    <div style={{ display: "flex", alignItems: "center", gap: 8, flexDirection: isRtl ? "row-reverse" : "row" }}>
+                      <span style={{ fontSize: "0.78rem", color: "#94a3b8" }}>{isRtl ? "إلى:" : "To:"}</span>
+                      <input 
+                        type="date" 
+                        className="input" 
+                        style={{ background: "#0f172a", border: "1px solid rgba(255,255,255,0.15)", color: "#f8fafc", padding: "4px 8px", fontSize: "0.8rem", borderRadius: 6 }} 
+                        value={prodEndDate} 
+                        onChange={e => setProdEndDate(e.target.value)} 
+                      />
+                    </div>
+                  </div>
+                )}
+
+                {/* Production Count Display */}
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", background: "rgba(255,255,255,0.03)", padding: "16px 20px", borderRadius: 12, border: "1px solid rgba(255,255,255,0.05)", flexWrap: "wrap", gap: 16, flexDirection: isRtl ? "row-reverse" : "row" }}>
+                  <div style={{ textAlign: isRtl ? "right" : "left" }}>
+                    <div style={{ fontSize: "0.8rem", color: "#94a3b8", marginBottom: 4 }}>
+                      {isRtl ? "الإنتاج الفعلي الناجح (Final OK)" : "Successful Production (Final OK)"}
+                    </div>
+                    <div style={{ fontSize: "2.2rem", fontWeight: 800, color: "#10b981", lineHeight: 1 }}>
+                      {persoTotals.ok.toLocaleString()} <span style={{ fontSize: "0.95rem", fontWeight: 500, color: "#94a3b8" }}>{isRtl ? "عداد ذكي" : "smart meters"}</span>
+                    </div>
+                  </div>
+                  
+                  <div style={{ display: "flex", gap: 30, flexDirection: isRtl ? "row-reverse" : "row" }}>
+                    <div style={{ borderRight: isRtl ? "none" : "1px solid rgba(255,255,255,0.1)", borderLeft: isRtl ? "1px solid rgba(255,255,255,0.1)" : "none", paddingRight: isRtl ? 0 : 30, paddingLeft: isRtl ? 30 : 0, textAlign: isRtl ? "right" : "left" }}>
+                      <div style={{ fontSize: "0.75rem", color: "#94a3b8", marginBottom: 2 }}>{isRtl ? "إجمالي المحاولات" : "Total Attempts"}</div>
+                      <div style={{ fontSize: "1.3rem", fontWeight: 700, color: "#38bdf8" }}>{persoTotals.total.toLocaleString()}</div>
+                    </div>
+                    <div style={{ textAlign: isRtl ? "right" : "left" }}>
+                      <div style={{ fontSize: "0.75rem", color: "#94a3b8", marginBottom: 2 }}>{isRtl ? "أيام التقارير المدرجة" : "Days of Reports"}</div>
+                      <div style={{ fontSize: "1.3rem", fontWeight: 700, color: "#f59e0b" }}>{persoTotals.reportsCount} {isRtl ? "أيام" : "days"}</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
               {/* Header with Selector */}
-              <div className="card" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "12px 20px" }}>
+              <div className="card" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "12px 20px", flexDirection: isRtl ? "row" : "row-reverse" }}>
                 <div style={{ fontWeight: 700 }}>تقرير {currentReport.date} — {currentReport.product}</div>
                 <select className="input" style={{ width: "auto" }} value={currentReport.id} onChange={e => setCurrentReport(reports.find(r => r.id === parseInt(e.target.value)))}>
                   {reports.map(r => (
