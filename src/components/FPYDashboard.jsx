@@ -205,8 +205,18 @@ export default function FPYDashboard() {
       d.setDate(d.getDate() - 29);
       setProdStartDate(d.toISOString().slice(0, 10));
       setProdEndDate(todayStr);
+    } else if (productionFilter === "all") {
+      if (reports && reports.length > 0) {
+        const dates = reports.map(r => r.date).filter(Boolean);
+        if (dates.length > 0) {
+          const minDate = dates.reduce((min, d) => d < min ? d : min, dates[0]);
+          const maxDate = dates.reduce((max, d) => d > max ? d : max, dates[0]);
+          setProdStartDate(minDate);
+          setProdEndDate(maxDate);
+        }
+      }
     }
-  }, [productionFilter]);
+  }, [productionFilter, reports]);
 
   // Compute Perso Totals
   const persoTotals = useMemo(() => {
@@ -215,7 +225,8 @@ export default function FPYDashboard() {
     let reportsCount = 0;
     
     reports.forEach(r => {
-      if (r.date >= prodStartDate && r.date <= prodEndDate) {
+      const matchDate = productionFilter === "all" || (r.date >= prodStartDate && r.date <= prodEndDate);
+      if (matchDate) {
         const persoStation = (r.stations || []).find(s => 
           s.stationName && s.stationName.toLowerCase().includes("perso")
         );
@@ -228,7 +239,7 @@ export default function FPYDashboard() {
     });
     
     return { ok, total, reportsCount };
-  }, [reports, prodStartDate, prodEndDate]);
+  }, [reports, prodStartDate, prodEndDate, productionFilter]);
   
   // Upload states
   const [isParsing, setIsParsing] = useState(false);
@@ -539,6 +550,16 @@ export default function FPYDashboard() {
                         onClick={() => setProductionFilter("month")}
                       >
                         {isRtl ? "آخر 30 يوم" : "Last 30 Days"}
+                      </button>
+                      <button 
+                        type="button"
+                        style={{
+                          background: productionFilter === "all" ? "rgba(255,255,255,0.15)" : "none",
+                          border: "none", color: "#f8fafc", padding: "5px 12px", borderRadius: 6, cursor: "pointer", fontSize: "0.78rem", fontWeight: 600
+                        }}
+                        onClick={() => setProductionFilter("all")}
+                      >
+                        {isRtl ? "الكل" : "All"}
                       </button>
                       <button 
                         type="button"
