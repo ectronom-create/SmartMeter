@@ -1,7 +1,8 @@
 import { useState, useMemo } from "react";
 import { useApp } from "../context/AppContext";
-import { Calendar, Plus, Trash2, Star, ChevronLeft, Clock, Filter } from "lucide-react";
+import { Calendar, Plus, Trash2, Star, ChevronLeft, Clock, Filter, Search, Download, RefreshCw, User, Layers } from "lucide-react";
 import ScheduleBuilderPanel from "./ScheduleBuilderPanel";
+import * as XLSX from "xlsx";
 
 const STAGE_COLORS = { 
   "STG-01": "#f97316", "STG-02": "#4f46e5", 
@@ -14,6 +15,13 @@ export default function ShiftSchedulesPanel() {
   const [showBuilder, setShowBuilder] = useState(false);
   const [activeTab, setActiveTab] = useState("current"); // "current" or "history"
   const [filterDate, setFilterDate] = useState(getTodayString());
+
+  const [historySubTab, setHistorySubTab] = useState("workstations"); // "workstations" or "operators"
+  const [filterStage, setFilterStage] = useState("");
+  const [filterShift, setFilterShift] = useState("");
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
+  const [searchQuery, setSearchQuery] = useState("");
 
   const isRtl = language === "ar";
 
@@ -75,6 +83,99 @@ export default function ShiftSchedulesPanel() {
       "الليلية (N)": "Night Shift (N)"
     };
     return translations[shift.name] || shift.name;
+  };
+
+  const workstationHistory = useMemo(() => {
+    const records = [];
+    const groups = {};
+    
+    schedules.forEach(s => {
+      if (s.stage_id === "SUPERVISION" || s.stage_id === "GLOBAL") return;
+      const key = `${s.schedule_date}__${s.shift_id}__${s.stage_id}`;
+      if (!groups[key]) {
+        groups[key] = {
+          date: s.schedule_date,
+          shiftId: s.shift_id,
+          stageId: s.stage_id,
+          operators: [],
+        };
+      }
+      const details = getScheduleWithDetails(s);
+      groups[key].operators.push({
+        employee_id: s.employee_id,
+        full_name: details.employee?.full_name || s.employee_id,
+        is_team_leader: s.is_team_leader
+      });
+    });
+
+    Object.values(groups).forEach(group => {
+      const supervisorEntry = schedules.find(s => 
+        s.schedule_date === group.date && 
+        s.shift_id === group.shiftId && 
+        s.stage_id === "SUPERVISION"
+      );
+      if (supervisorEntry) {
+        const details = getScheduleWithDetails(supervisorEntry);
+        group.supervisorName = details.employee?.full_name || supervisorEntry.employee_id;
+      } else {
+        group.supervisorName = "";
+      }
+      records.push(group);
+    });
+
+    return records.sort((a, b) => new Date(b.date) - new Date(a.date));
+  }, [schedules, getScheduleWithDetails]);
+
+  const filteredWorkstationHistory = useMemo(() => {
+    return workstationHistory.filter(r => {
+      if (filterStage && r.stageId !== filterStage) return false;
+      if (filterShift && r.shiftId !== filterShift) return false;
+      if (startDate && r.date < startDate) return false;
+      if (endDate && r.date > endDate) return false;
+      if (searchQuery) {
+        const q = searchQuery.toLowerCase();
+        const matchesOperator = r.operators.some(op => op.full_name.toLowerCase().includes(q));
+        const matchesSupervisor = r.supervisorName && r.supervisorName.toLowerCase().includes(q);
+        if (!matchesOperator && !matchesSupervisor) return false;
+      }
+      return true;
+    });
+  }, [workstationHistory, filterStage, filterShift, startDate, endDate, searchQuery]);
+
+  const handleExportExcel = () => {
+    try {
+      const dataToExport = filteredWorkstationHistory.map(row => {
+        const stage = productionStages.find(s => s.stage_id === row.stageId);
+        const shift = shift_types.find(s => s.shift_id === row.shiftId);
+        
+        return {
+          [isRtl ? "التاريخ" : "Date"]: row.date,
+          [isRtl ? "الشفت" : "Shift"]: getTranslatedShiftName(row.shiftId, isRtl),
+          [isRtl ? "خطوة الإنتاج (المحطة)" : "Workstation (Step)"]: getTranslatedStageName(stage, isRtl),
+          [isRtl ? "المشغلين المعينين" : "Assigned Operators"]: row.operators.map(op => `${op.full_name}${op.is_team_leader ? ` (${isRtl ? "قائد فريق" : "Team Leader"})` : ""}`).join(", "),
+          [isRtl ? "مشرف الشفت" : "Shift Supervisor"]: row.supervisorName || ""
+        };
+      });
+
+      const worksheet = XLSX.utils.json_to_sheet(dataToExport);
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, isRtl ? "سجل الخطوات والورديات" : "Workstations History");
+
+      // Auto-fit columns
+      const maxLen = {};
+      dataToExport.forEach(row => {
+        Object.keys(row).forEach(key => {
+          const val = String(row[key] || "");
+          maxLen[key] = Math.max(maxLen[key] || 10, val.length + 5);
+        });
+      });
+      worksheet["!cols"] = Object.keys(maxLen).map(key => ({ wch: maxLen[key] }));
+
+      XLSX.writeFile(workbook, `Workstations_Shift_History_${new Date().toISOString().split("T")[0]}.xlsx`);
+    } catch (err) {
+      console.error("Export Excel Error:", err);
+      alert(isRtl ? "فشل تصدير ملف الإكسل" : "Failed to export Excel file.");
+    }
   };
 
   if (showBuilder) {
@@ -253,50 +354,356 @@ export default function ShiftSchedulesPanel() {
         </>
       ) : (
         /* HISTORY VIEW */
-        <div className="card animate-fade" style={{ padding: 0 }}>
-          <div className="table-wrapper" style={{ border: "none" }}>
-            <table>
-              <thead>
-                <tr>
-                  <th style={{ textAlign: isRtl ? "right" : "left" }}>{isRtl ? "الموظف" : "Operator"}</th>
-                  <th style={{ textAlign: isRtl ? "right" : "left" }}>{isRtl ? "إجمالي الأيام" : "Total Workdays"}</th>
-                  <th style={{ textAlign: isRtl ? "right" : "left" }}>{isRtl ? "توزيع الشفتات" : "Shift Distribution"}</th>
-                  <th style={{ textAlign: isRtl ? "right" : "left" }}>{isRtl ? "أكثر مرحلة عملاً" : "Primary Workstation"}</th>
-                </tr>
-              </thead>
-              <tbody>
-                {users.filter(u => u.role !== "admin").map(u => {
-                  const stat = employeeHistory[u.employee_id] || { total: 0, shifts: {}, stages: {} };
-                  const topStageId = Object.entries(stat.stages).sort((a,b) => b[1] - a[1])[0]?.[0];
-                  const topStage = productionStages.find(s => s.stage_id === topStageId);
-                  
-                  return (
-                    <tr key={u.employee_id}>
-                      <td style={{ fontWeight: 700 }}>{u.full_name}</td>
-                      <td><span className="badge badge-blue">{stat.total} {isRtl ? "يوم" : "Days"}</span></td>
-                      <td>
-                        <div style={{ display: "flex", gap: 10, flexDirection: isRtl ? "row" : "row-reverse" }}>
-                          {Object.entries(stat.shifts).map(([sid, count]) => (
-                            <span key={sid} style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>
-                              {getTranslatedShiftName(sid, isRtl)}: <strong>{count}</strong>
-                            </span>
-                          ))}
-                        </div>
-                      </td>
-                      <td>
-                        {topStage ? (
-                          <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: "0.85rem", flexDirection: isRtl ? "row" : "row-reverse" }}>
-                            <span>{topStage.icon}</span>
-                            <span>{getTranslatedStageName(topStage, isRtl)} ({stat.stages[topStageId]})</span>
-                          </div>
-                        ) : "—"}
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
+        <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+          {/* Sub-tabs */}
+          <div style={{ display: "flex", gap: 8, borderBottom: "1px solid var(--border-subtle)", paddingBottom: 8, flexDirection: isRtl ? "row" : "row-reverse" }}>
+            <button
+              onClick={() => setHistorySubTab("workstations")}
+              className={`btn ${historySubTab === "workstations" ? "btn-primary" : "btn-secondary"}`}
+              style={{ fontSize: "0.85rem", padding: "8px 16px" }}
+            >
+              <Layers size={14} style={{ marginRight: isRtl ? 0 : 6, marginLeft: isRtl ? 6 : 0 }} />
+              {isRtl ? "سجل محطات العمل والخطوات" : "Workstations & Steps History"}
+            </button>
+            <button
+              onClick={() => setHistorySubTab("operators")}
+              className={`btn ${historySubTab === "operators" ? "btn-primary" : "btn-secondary"}`}
+              style={{ fontSize: "0.85rem", padding: "8px 16px" }}
+            >
+              <User size={14} style={{ marginRight: isRtl ? 0 : 6, marginLeft: isRtl ? 6 : 0 }} />
+              {isRtl ? "إحصائيات وسجل الموظفين" : "Operators Statistics & Logs"}
+            </button>
           </div>
+
+          {historySubTab === "workstations" ? (
+            <>
+              {/* Filter controls */}
+              <div className="card animate-fade" style={{ padding: "16px 20px", display: "flex", flexDirection: "column", gap: 14, background: "#f8fafc" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 8, color: "var(--text-secondary)", fontWeight: 700, flexDirection: isRtl ? "row" : "row-reverse" }}>
+                  <Filter size={16} />
+                  <span>{isRtl ? "فلترة سجل الخطوات والمحطات:" : "Filter Workstations History:"}</span>
+                </div>
+                
+                {/* Responsive Grid for Filters */}
+                <div style={{ 
+                  display: "grid", 
+                  gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", 
+                  gap: 12,
+                  alignItems: "end"
+                }}>
+                  {/* Select Stage */}
+                  <div style={{ display: "flex", flexDirection: "column", gap: 4, textAlign: isRtl ? "right" : "left" }}>
+                    <label style={{ fontSize: "0.75rem", fontWeight: 700, color: "var(--text-secondary)" }}>
+                      {isRtl ? "خطوة الإنتاج / المحطة" : "Workstation (Step)"}
+                    </label>
+                    <select
+                      className="input"
+                      value={filterStage}
+                      onChange={e => setFilterStage(e.target.value)}
+                      style={{ padding: "8px", height: "38px" }}
+                    >
+                      <option value="">{isRtl ? "كل خطوات الإنتاج" : "All Workstations"}</option>
+                      {productionStages.filter(s => s.stage_id !== "SUPERVISION" && s.stage_id !== "GLOBAL").map(s => (
+                        <option key={s.stage_id} value={s.stage_id}>
+                          {s.icon} {getTranslatedStageName(s, isRtl)}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {/* Select Shift */}
+                  <div style={{ display: "flex", flexDirection: "column", gap: 4, textAlign: isRtl ? "right" : "left" }}>
+                    <label style={{ fontSize: "0.75rem", fontWeight: 700, color: "var(--text-secondary)" }}>
+                      {isRtl ? "الوردية (الشفت)" : "Shift"}
+                    </label>
+                    <select
+                      className="input"
+                      value={filterShift}
+                      onChange={e => setFilterShift(e.target.value)}
+                      style={{ padding: "8px", height: "38px" }}
+                    >
+                      <option value="">{isRtl ? "كل الورديات" : "All Shifts"}</option>
+                      {shift_types.map(st => (
+                        <option key={st.shift_id} value={st.shift_id}>
+                          {getTranslatedShiftName(st.shift_id, isRtl)}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {/* Start Date */}
+                  <div style={{ display: "flex", flexDirection: "column", gap: 4, textAlign: isRtl ? "right" : "left" }}>
+                    <label style={{ fontSize: "0.75rem", fontWeight: 700, color: "var(--text-secondary)" }}>
+                      {isRtl ? "من تاريخ" : "From Date"}
+                    </label>
+                    <input
+                      type="date"
+                      className="input"
+                      value={startDate}
+                      onChange={e => setStartDate(e.target.value)}
+                      style={{ height: "38px" }}
+                    />
+                  </div>
+
+                  {/* End Date */}
+                  <div style={{ display: "flex", flexDirection: "column", gap: 4, textAlign: isRtl ? "right" : "left" }}>
+                    <label style={{ fontSize: "0.75rem", fontWeight: 700, color: "var(--text-secondary)" }}>
+                      {isRtl ? "إلى تاريخ" : "To Date"}
+                    </label>
+                    <input
+                      type="date"
+                      className="input"
+                      value={endDate}
+                      onChange={e => setEndDate(e.target.value)}
+                      style={{ height: "38px" }}
+                    />
+                  </div>
+                </div>
+
+                <div style={{ 
+                  display: "flex", 
+                  justifyContent: "space-between", 
+                  alignItems: "center", 
+                  flexWrap: "wrap", 
+                  gap: 12,
+                  marginTop: 4,
+                  flexDirection: isRtl ? "row" : "row-reverse"
+                }}>
+                  {/* Search Operator */}
+                  <div style={{ position: "relative", width: "100%", maxWidth: "320px" }}>
+                    <input
+                      className="input"
+                      value={searchQuery}
+                      onChange={e => setSearchQuery(e.target.value)}
+                      placeholder={isRtl ? "البحث باسم المشغل أو المشرف..." : "Search operator or supervisor..."}
+                      style={{ 
+                        paddingRight: isRtl ? 35 : 12, 
+                        paddingLeft: !isRtl ? 35 : 12, 
+                        textAlign: isRtl ? "right" : "left",
+                        height: "38px"
+                      }}
+                    />
+                    <Search size={16} style={{
+                      position: "absolute",
+                      right: isRtl ? 12 : "auto",
+                      left: !isRtl ? 12 : "auto",
+                      top: "50%", 
+                      transform: "translateY(-50%)", 
+                      color: "var(--text-muted)"
+                    }} />
+                  </div>
+
+                  {/* Quick Filters & Actions */}
+                  <div style={{ display: "flex", gap: 8, flexWrap: "wrap", flexDirection: isRtl ? "row" : "row-reverse" }}>
+                    <button 
+                      className="btn btn-ghost btn-sm"
+                      onClick={() => {
+                        const today = new Date().toISOString().split("T")[0];
+                        setStartDate(today);
+                        setEndDate(today);
+                      }}
+                    >
+                      {isRtl ? "اليوم" : "Today"}
+                    </button>
+                    <button 
+                      className="btn btn-ghost btn-sm"
+                      onClick={() => {
+                        const end = new Date();
+                        const start = new Date();
+                        start.setDate(end.getDate() - 7);
+                        setStartDate(start.toISOString().split("T")[0]);
+                        setEndDate(end.toISOString().split("T")[0]);
+                      }}
+                    >
+                      {isRtl ? "آخر 7 أيام" : "Last 7 Days"}
+                    </button>
+                    <button 
+                      className="btn btn-ghost btn-sm"
+                      onClick={() => {
+                        setStartDate("");
+                        setEndDate("");
+                        setFilterStage("");
+                        setFilterShift("");
+                        setSearchQuery("");
+                      }}
+                    >
+                      {isRtl ? "إعادة تعيين الكل" : "Reset All"}
+                    </button>
+                    
+                    {/* Excel Export Button */}
+                    <button 
+                      className="btn btn-primary"
+                      onClick={handleExportExcel}
+                      style={{ 
+                        background: "#16a34a", 
+                        borderColor: "#16a34a",
+                        color: "#fff",
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: 6,
+                        fontSize: "0.85rem",
+                        padding: "8px 16px"
+                      }}
+                    >
+                      <Download size={14} />
+                      {isRtl ? "تصدير إلى إكسل" : "Export to Excel"}
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              {/* Data Table */}
+              <div className="card animate-fade" style={{ padding: 0, overflow: "hidden" }}>
+                <div className="table-wrapper" style={{ border: "none", overflowX: "auto" }}>
+                  <table style={{ minWidth: "800px" }}>
+                    <thead>
+                      <tr>
+                        <th style={{ textAlign: isRtl ? "right" : "left", width: "15%" }}>{isRtl ? "التاريخ" : "Date"}</th>
+                        <th style={{ textAlign: isRtl ? "right" : "left", width: "15%" }}>{isRtl ? "الشفت" : "Shift"}</th>
+                        <th style={{ textAlign: isRtl ? "right" : "left", width: "20%" }}>{isRtl ? "خطوة الإنتاج / المحطة" : "Workstation (Step)"}</th>
+                        <th style={{ textAlign: isRtl ? "right" : "left", width: "30%" }}>{isRtl ? "المشغلين المعينين" : "Assigned Operators"}</th>
+                        <th style={{ textAlign: isRtl ? "right" : "left", width: "20%" }}>{isRtl ? "مشرف الشفت" : "Shift Supervisor"}</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {filteredWorkstationHistory.map((row, idx) => {
+                        const stage = productionStages.find(s => s.stage_id === row.stageId);
+                        const shift = shift_types.find(st => st.shift_id === row.shiftId);
+                        
+                        // Parse date for beautiful rendering
+                        const formattedDate = new Date(row.date).toLocaleDateString(isRtl ? "ar-SA" : "en-US", {
+                          weekday: 'short', year: 'numeric', month: 'short', day: 'numeric'
+                        });
+
+                        return (
+                          <tr key={`${row.date}_${row.shiftId}_${row.stageId}_${idx}`} className="animate-fade">
+                            <td style={{ fontWeight: 700, fontSize: "0.85rem" }}>
+                              📅 {formattedDate}
+                            </td>
+                            <td>
+                              <span 
+                                className="badge" 
+                                style={{ 
+                                  background: row.shiftId === "SHIFT-M" ? "#fff8c5" : row.shiftId === "SHIFT-E" ? "#f3e5f5" : "#ddf4ff",
+                                  color: row.shiftId === "SHIFT-M" ? "#855d00" : row.shiftId === "SHIFT-E" ? "#6b21a8" : "#0369a1",
+                                  fontWeight: 800,
+                                  border: `1px solid ${row.shiftId === "SHIFT-M" ? "#fef08a" : row.shiftId === "SHIFT-E" ? "#e9d5ff" : "#bae6fd"}`
+                                }}
+                              >
+                                🕒 {getTranslatedShiftName(row.shiftId, isRtl)}
+                              </span>
+                            </td>
+                            <td>
+                              <div style={{ 
+                                display: "flex", 
+                                alignItems: "center", 
+                                gap: 6, 
+                                fontWeight: 700, 
+                                color: STAGE_COLORS[row.stageId] || "var(--text)",
+                                flexDirection: isRtl ? "row" : "row-reverse"
+                              }}>
+                                <span>{stage?.icon || "⚙️"}</span>
+                                <span>{getTranslatedStageName(stage, isRtl)}</span>
+                              </div>
+                            </td>
+                            <td>
+                              <div style={{ display: "flex", flexWrap: "wrap", gap: 6, justifyContent: isRtl ? "flex-start" : "flex-end" }}>
+                                {row.operators.map(op => (
+                                  <span 
+                                    key={op.employee_id} 
+                                    className="badge"
+                                    style={{ 
+                                      display: "inline-flex", 
+                                      alignItems: "center", 
+                                      gap: 4,
+                                      background: op.is_team_leader ? "#fef3c7" : "#f1f5f9",
+                                      color: op.is_team_leader ? "#b45309" : "var(--text)",
+                                      border: op.is_team_leader ? "1px solid #fde68a" : "1px solid var(--border-subtle)",
+                                      padding: "2px 8px",
+                                      fontSize: "0.8rem",
+                                      borderRadius: "6px"
+                                    }}
+                                  >
+                                    {op.is_team_leader && <Star size={10} fill="#b45309" color="#b45309" />}
+                                    <span style={{ fontWeight: op.is_team_leader ? 800 : 500 }}>{op.full_name}</span>
+                                  </span>
+                                ))}
+                                {row.operators.length === 0 && <span style={{ color: "var(--text-muted)" }}>—</span>}
+                              </div>
+                            </td>
+                            <td style={{ fontSize: "0.85rem" }}>
+                              {row.supervisorName ? (
+                                <div style={{ display: "inline-flex", alignItems: "center", gap: 6, color: "#166534", fontWeight: 700 }}>
+                                  <span>👑</span>
+                                  <span>{row.supervisorName}</span>
+                                </div>
+                              ) : (
+                                <span style={{ color: "var(--text-muted)" }}>—</span>
+                              )}
+                            </td>
+                          </tr>
+                        );
+                      })}
+                      {filteredWorkstationHistory.length === 0 && (
+                        <tr>
+                          <td colSpan={5} style={{ textAlign: "center", padding: "40px", color: "var(--text-muted)" }}>
+                            {isRtl ? "لا توجد سجلات مطابقة لمعايير البحث والفلترة" : "No shift history records match the search filters"}
+                          </td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </>
+          ) : (
+            /* Existing Operator Statistics Tab */
+            <div className="card animate-fade" style={{ padding: 0 }}>
+              <div className="table-wrapper" style={{ border: "none", overflowX: "auto" }}>
+                <table>
+                  <thead>
+                    <tr>
+                      <th style={{ textAlign: isRtl ? "right" : "left" }}>{isRtl ? "الموظف" : "Operator"}</th>
+                      <th style={{ textAlign: isRtl ? "right" : "left" }}>{isRtl ? "إجمالي الأيام" : "Total Workdays"}</th>
+                      <th style={{ textAlign: isRtl ? "right" : "left" }}>{isRtl ? "توزيع الشفتات" : "Shift Distribution"}</th>
+                      <th style={{ textAlign: isRtl ? "right" : "left" }}>{isRtl ? "أكثر مرحلة عملاً" : "Primary Workstation"}</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {users.filter(u => u.role !== "admin").map(u => {
+                      const stat = employeeHistory[u.employee_id] || { total: 0, shifts: {}, stages: {} };
+                      const topStageId = Object.entries(stat.stages).sort((a,b) => b[1] - a[1])[0]?.[0];
+                      const topStage = productionStages.find(s => s.stage_id === topStageId);
+                      
+                      return (
+                        <tr key={u.employee_id}>
+                          <td style={{ fontWeight: 700 }}>{u.full_name}</td>
+                          <td><span className="badge badge-blue">{stat.total} {isRtl ? "يوم" : "Days"}</span></td>
+                          <td>
+                            <div style={{ display: "flex", gap: 10, flexDirection: isRtl ? "row" : "row-reverse" }}>
+                              {Object.entries(stat.shifts).map(([sid, count]) => (
+                                <span key={sid} style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>
+                                  {getTranslatedShiftName(sid, isRtl)}: <strong>{count}</strong>
+                                </span>
+                              ))}
+                            </div>
+                          </td>
+                          <td>
+                            {topStage ? (
+                              <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: "0.85rem", flexDirection: isRtl ? "row" : "row-reverse" }}>
+                                <span>{topStage.icon}</span>
+                                <span>{getTranslatedStageName(topStage, isRtl)} ({stat.stages[topStageId]})</span>
+                              </div>
+                            ) : "—"}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
         </div>
       )}
 
