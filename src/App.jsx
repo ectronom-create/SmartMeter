@@ -11,6 +11,7 @@ import KnowledgeBasePage from "./pages/KnowledgeBasePage";
 import AssetsPage from "./pages/AssetsPage";
 import StartOfProductionPage from "./pages/StartOfProductionPage";
 import ForceChangePassword from "./pages/ForceChangePassword";
+import FPYPage from "./pages/FPYPage";
 
 
 function ProtectedRoute({ children, adminOnly = false, supervisorOnly = false }) {
@@ -70,6 +71,9 @@ function AppRoutes() {
           } />
           <Route path="/start-production" element={
             <ProtectedRoute supervisorOnly><StartOfProductionPage /></ProtectedRoute>
+          } />
+          <Route path="/fpy-overview" element={
+            <ProtectedRoute><FPYPage /></ProtectedRoute>
           } />
 
           <Route path="*" element={<Navigate to={defaultRoute()} replace />} />

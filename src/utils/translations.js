@@ -93,6 +93,7 @@ export const translations = {
     shiftSettingsTab: "🕒 إعدادات الشفتات",
     defectSettingsTab: "⚠️ إعدادات الأعطال",
     sopReportsTab: "📋 تقارير بداية الإنتاج",
+    fpyOverview: "لوحة التحكم",
   },
   en: {
     // Auth & Navigation
@@ -188,5 +189,6 @@ export const translations = {
     shiftSettingsTab: "🕒 Shift Settings",
     defectSettingsTab: "⚠️ Defect Settings",
     sopReportsTab: "📋 SOP Reports Log",
+    fpyOverview: "Dashboard",
   }
 };

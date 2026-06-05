@@ -1,6 +1,6 @@
 import { useNavigate, useLocation } from "react-router-dom";
 import { useApp } from "../context/AppContext";
-import { LogOut, Shield, LayoutDashboard, BookOpen, Package } from "lucide-react";
+import { LogOut, Shield, LayoutDashboard, BookOpen, Package, BarChart2 } from "lucide-react";
 
 
 
@@ -78,6 +78,13 @@ export default function Topbar() {
         {isAdmin && (
           <button className="btn btn-ghost btn-sm topbar-nav-btn" onClick={() => navigate("/assets")} title={t("equipmentManagement")}>
             <Package size={15} /> <span className="btn-text" style={{ fontSize: "0.8rem" }}>{t("equipmentManagement")}</span>
+          </button>
+        )}
+
+        {/* FPY Overview Shortcut (All Logged-in Users except Admin) */}
+        {currentUser && !isAdmin && (
+          <button className="btn btn-ghost btn-sm topbar-nav-btn" onClick={() => navigate("/fpy-overview")} title={t("fpyOverview")}>
+            <BarChart2 size={15} /> <span className="btn-text" style={{ fontSize: "0.8rem" }}>{t("fpyOverview")}</span>
           </button>
         )}
 

@@ -1170,8 +1170,8 @@ function SOPReportsPanel() {
 }
 
 // ── Sidebar config ───────────────────────────────────
-const getSidebarPanels = (isRtl) => [
-  { id:"overview",   label: isRtl ? "نظرة عامة" : "Overview FPY",        icon:BarChart2,    section: isRtl ? "رئيسي" : "Main" },
+const getSidebarPanels = (isRtl, t) => [
+  { id:"overview",   label: t("fpyOverview"),        icon:BarChart2,    section: isRtl ? "رئيسي" : "Main" },
   { id:"users",      label: isRtl ? "المستخدمون" : "Operators Log",       icon:Users,        section: isRtl ? "رئيسي" : "Main" },
   { id:"stages",     label: isRtl ? "مراحل الإنتاج" : "Production Stages",   icon:Layers,       section: isRtl ? "الإدارة" : "Management" },
   { id:"schedule",   label: isRtl ? "جدول الورديات" : "Shift Schedules",     icon:Calendar,     section: isRtl ? "الإنتاج" : "Production" },
@@ -1181,11 +1181,11 @@ const getSidebarPanels = (isRtl) => [
 ];
 
 export default function AdminPage() {
-  const { currentUser, language } = useApp();
+  const { currentUser, language, t } = useApp();
   const [active, setActive] = useState("overview");
 
   const isRtl = language === "ar";
-  const PANELS = getSidebarPanels(isRtl);
+  const PANELS = getSidebarPanels(isRtl, t);
 
   const sections = [...new Set(PANELS.map(p=>p.section))];
 

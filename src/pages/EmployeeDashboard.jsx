@@ -2,7 +2,7 @@ import { useNavigate } from "react-router-dom";
 import { useApp } from "../context/AppContext";
 import {
   Play, Calendar, Star, Clock, ChevronLeft,
-  AlertTriangle, CheckCircle, Layers, BookOpen
+  AlertTriangle, CheckCircle, Layers, BookOpen, BarChart2
 } from "lucide-react";
 
 
@@ -80,7 +80,7 @@ export default function EmployeeDashboard() {
       <div className="stagger" style={{ display: "flex", flexDirection: "column", gap: 20 }}>
 
         {/* ── Welcome header ── */}
-        <div className="animate-fade" style={{ display: "flex", alignItems: "center", gap: 16 }}>
+        <div className="animate-fade" style={{ display: "flex", alignItems: "center", gap: 16, flexWrap: "wrap" }}>
           <div className="avatar">{initials}</div>
           <div>
             <h1 style={{ fontSize: "1.4rem" }}>{t("welcomeUser")}{currentUser.full_name.split(" ")[0]} 👋</h1>
@@ -89,13 +89,16 @@ export default function EmployeeDashboard() {
               &nbsp;·&nbsp;{currentUser.employee_id}
             </p>
           </div>
-          {currentUser.role === "supervisor" && (
-            <div style={isRtl ? { marginRight: "auto" } : { marginLeft: "auto" }}>
+          <div style={{ display: "flex", gap: 8, ...(isRtl ? { marginRight: "auto" } : { marginLeft: "auto" }) }}>
+            {currentUser.role === "supervisor" && (
               <button className="btn btn-secondary btn-sm" onClick={() => navigate("/supervisor")}>
                 <Layers size={15} /> {t("supervisorPanel")}
               </button>
-            </div>
-          )}
+            )}
+            <button className="btn btn-secondary btn-sm" onClick={() => navigate("/fpy-overview")} style={{ gap: 6 }}>
+              <BarChart2 size={15} /> {t("fpyOverview")}
+            </button>
+          </div>
         </div>
 
         {/* ── Stats row ── */}
@@ -184,6 +187,13 @@ export default function EmployeeDashboard() {
                     style={{ background: "rgba(99,102,241,0.08)", color: "var(--accent)", display: "flex", alignItems: "center", gap: 6 }}
                   >
                     <BookOpen size={14} /> {t("faultGuide")}
+                  </button>
+                  <button
+                    className="btn btn-ghost btn-sm"
+                    onClick={() => navigate("/fpy-overview")}
+                    style={{ background: "rgba(16,185,129,0.08)", color: "#10b981", display: "flex", alignItems: "center", gap: 6 }}
+                  >
+                    <BarChart2 size={14} /> {t("fpyOverview")}
                   </button>
                 </div>
               </div>

@@ -170,7 +170,7 @@ function parseFPYExcel(arrayBuffer) {
 // ===================== STYLES =====================
 
 export default function FPYDashboard() {
-  const { language } = useApp();
+  const { language, currentUser } = useApp();
   const isRtl = language === "ar";
 
   const [activeTab, setActiveTab] = useState("dashboard");
@@ -390,6 +390,10 @@ export default function FPYDashboard() {
   };
 
   const saveReport = async () => {
+    if (currentUser?.role !== "admin") {
+      alert("غير مسموح بهذا الإجراء.");
+      return;
+    }
     if (!parsedData) return;
     const existing = reports.find(r => r.date === reportDate);
     
@@ -421,6 +425,10 @@ export default function FPYDashboard() {
   };
 
   const deleteReport = async (id, date) => {
+    if (currentUser?.role !== "admin") {
+      alert("غير مسموح بهذا الإجراء.");
+      return;
+    }
     if (!window.confirm(`هل تريد حذف تقرير ${date} سحابياً؟`)) return;
     try {
       await supabase.from("fpy_reports").delete().eq("id", id);
@@ -432,6 +440,10 @@ export default function FPYDashboard() {
   };
 
   const clearAll = async () => {
+    if (currentUser?.role !== "admin") {
+      alert("غير مسموح بهذا الإجراء.");
+      return;
+    }
     if (!window.confirm("سيتم حذف كل البيانات المحفوظة نهائياً من السحابة. هل أنت متأكد؟")) return;
     try {
       await supabase.from("fpy_reports").delete().neq("id", 0); // Delete all
@@ -488,8 +500,12 @@ export default function FPYDashboard() {
         </div>
         <div style={{ display: "flex", gap: 8 }}>
           <button className={`btn ${activeTab === "dashboard" ? "btn-primary" : "btn-ghost"}`} onClick={() => setActiveTab("dashboard")}><BarChart2 size={16} /> لوحة التحكم</button>
-          <button className={`btn ${activeTab === "upload" ? "btn-primary" : "btn-ghost"}`} onClick={() => setActiveTab("upload")}><Upload size={16} /> رفع تقرير</button>
-          <button className={`btn ${activeTab === "history" ? "btn-primary" : "btn-ghost"}`} onClick={() => setActiveTab("history")}><History size={16} /> السجل السحابي</button>
+          {currentUser?.role === "admin" && (
+            <>
+              <button className={`btn ${activeTab === "upload" ? "btn-primary" : "btn-ghost"}`} onClick={() => setActiveTab("upload")}><Upload size={16} /> رفع تقرير</button>
+              <button className={`btn ${activeTab === "history" ? "btn-primary" : "btn-ghost"}`} onClick={() => setActiveTab("history")}><History size={16} /> السجل السحابي</button>
+            </>
+          )}
           <button className={`btn ${activeTab === "trend" ? "btn-primary" : "btn-ghost"}`} onClick={() => setActiveTab("trend")}><TrendingUp size={16} /> الاتجاهات</button>
         </div>
       </div>
@@ -501,8 +517,16 @@ export default function FPYDashboard() {
             <div className="card" style={{ textAlign: "center", padding: 60 }}>
               <div style={{ fontSize: "3rem", marginBottom: 12 }}>☁️</div>
               <h3>لا توجد تقارير سحابية بعد</h3>
-              <p style={{ color: "var(--text-muted)" }}>ارفع أول تقرير من صفحة "رفع تقرير" ليتم حفظه في Supabase وبدء العرض.</p>
-              <button className="btn btn-primary" style={{ marginTop: 20 }} onClick={() => setActiveTab("upload")}>📤 رفع تقرير</button>
+              <p style={{ color: "var(--text-muted)" }}>
+                {currentUser?.role === "admin" 
+                  ? (isRtl ? "ارفع أول تقرير من صفحة \"رفع تقرير\" ليتم حفظه في Supabase وبدء العرض." : "Upload the first report from the 'Upload Report' page to save to Supabase and start viewing.")
+                  : (isRtl ? "يرجى الطلب من المسؤول رفع أول تقرير للبدء بالتحليل." : "Please ask the administrator to upload the first report to begin analysis.")}
+              </p>
+              {currentUser?.role === "admin" && (
+                <button className="btn btn-primary" style={{ marginTop: 20 }} onClick={() => setActiveTab("upload")}>
+                  {isRtl ? "📤 رفع تقرير" : "📤 Upload Report"}
+                </button>
+              )}
             </div>
           ) : (
             <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
@@ -658,7 +682,8 @@ export default function FPYDashboard() {
               <div className="card" style={{ display: "flex", alignItems: "center", gap: 20 }}>
                 <div style={{ whiteSpace: "nowrap" }}>
                   <label style={{ fontSize: "0.8rem", color: "var(--text-muted)", display: "block", marginBottom: 4 }}>الهدف اليومي (لوحات)</label>
-                  <input type="number" className="input" style={{ width: 80, padding: "5px 10px" }} value={target} onChange={async e => {
+                  <input type="number" className="input" style={{ width: 80, padding: "5px 10px" }} value={target} disabled={currentUser?.role !== "admin"} onChange={async e => {
+                    if (currentUser?.role !== "admin") return;
                     const newTarget = parseInt(e.target.value) || 1;
                     setTarget(newTarget);
                     if (currentReport) {
@@ -798,7 +823,7 @@ export default function FPYDashboard() {
       )}
 
       {/* UPLOAD TAB */}
-      {activeTab === "upload" && (
+      {activeTab === "upload" && currentUser?.role === "admin" && (
         <div className="animate-fade" style={{ textAlign: "center", padding: "40px 0" }}>
           <h2>رفع ملف Excel الإنتاج</h2>
           <p style={{ color: "var(--text-muted)", marginBottom: 30 }}>ارفع ملف تقرير FPY اليومي ليتم تحليله وحفظه في السحابة</p>
@@ -862,7 +887,7 @@ export default function FPYDashboard() {
       )}
 
       {/* HISTORY TAB */}
-      {activeTab === "history" && (
+      {activeTab === "history" && currentUser?.role === "admin" && (
         <div className="animate-fade">
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
             <h3 style={{ margin: 0 }}>سجل التقارير السحابية</h3>
