@@ -24,7 +24,9 @@ CREATE TABLE users (
     role VARCHAR(50) NOT NULL DEFAULT 'operator', -- 'admin', 'supervisor', 'operator'
     password_hash VARCHAR(150) NOT NULL,
     must_change_password BOOLEAN NOT NULL DEFAULT TRUE,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    phone VARCHAR(50),
+    email VARCHAR(100)
 );
 
 -- Shift Types
@@ -184,17 +186,17 @@ CREATE POLICY "Enable all write access for sop_report_items" ON sop_report_items
 
 -- 5. SEED INITIAL MOCK DATABASE
 -- Seed Users
-INSERT INTO users (employee_id, full_name, role, password_hash) VALUES
-('ADMIN-001', 'مدير النظام الرئيسي', 'admin', 'admin123'),
-('EMP-001', 'أحمد محمد الزهراني', 'supervisor', 'supervisor123'),
-('EMP-002', 'فاطمة علي الشمري', 'operator', 'pass1234'),
-('EMP-003', 'خالد عبدالله الحربي', 'operator', 'pass1234'),
-('EMP-004', 'منى سعد القحطاني', 'operator', 'pass1234'),
-('EMP-005', 'يوسف إبراهيم العتيبي', 'operator', 'pass1234'),
-('EMP-006', 'نورة محمد الدوسري', 'operator', 'pass1234'),
-('EMP-007', 'عمر سلطان الغامدي', 'operator', 'pass1234'),
-('EMP-008', 'ريم عبدالعزيز البلوي', 'operator', 'pass1234'),
-('EMP-009', 'ناصر حمد المطيري', 'operator', 'pass1234');
+INSERT INTO users (employee_id, full_name, role, password_hash, phone, email) VALUES
+('ADMIN-001', 'مدير النظام الرئيسي', 'admin', 'admin123', '+966500000001', 'admin@example.com'),
+('EMP-001', 'أحمد محمد الزهراني', 'supervisor', 'supervisor123', '+966500000002', 'a.zahrani@example.com'),
+('EMP-002', 'فاطمة علي الشمري', 'operator', 'pass1234', '+966500000003', 'f.shammari@example.com'),
+('EMP-003', 'خالد عبدالله الحربي', 'operator', 'pass1234', '+966500000004', 'k.harbi@example.com'),
+('EMP-004', 'منى سعد القحطاني', 'operator', 'pass1234', '+966500000005', 'm.qahtani@example.com'),
+('EMP-005', 'يوسف إبراهيم العتيبي', 'operator', 'pass1234', '+966500000006', 'y.otaibi@example.com'),
+('EMP-006', 'نورة محمد الدوسري', 'operator', 'pass1234', '+966500000007', 'n.dosari@example.com'),
+('EMP-007', 'عمر سلطان الغامدي', 'operator', 'pass1234', '+966500000008', 'o.ghamdi@example.com'),
+('EMP-008', 'ريم عبدالعزيز البلوي', 'operator', 'pass1234', '+966500000009', 'r.balawi@example.com'),
+('EMP-009', 'ناصر حمد المطيري', 'operator', 'pass1234', '+966500000010', 'n.mutairi@example.com');
 
 -- Seed Shift Types
 INSERT INTO shift_types (shift_id, name, start_time, end_time, color) VALUES

@@ -217,6 +217,8 @@ export function AppProvider({ children }) {
       role:        userData.role,
       password_hash: userData.password,
       must_change_password: true,
+      phone:       userData.phone?.trim() || null,
+      email:       userData.email?.trim() || null,
     };
 
     try {
@@ -264,6 +266,34 @@ export function AppProvider({ children }) {
       console.error("Supabase delete user error:", err);
     }
   }, []);
+
+  const updateUser = useCallback(async (employee_id, updatedFields) => {
+    try {
+      const { error } = await supabase.from("users").update(updatedFields).eq("employee_id", employee_id);
+      if (error) throw error;
+      setUsers(prev => prev.map(u => u.employee_id === employee_id ? { ...u, ...updatedFields } : u));
+      if (currentUser?.employee_id === employee_id) {
+        setCurrentUser(prev => {
+          const updated = { ...prev, ...updatedFields };
+          const saved = localStorage.getItem("SmartMeter_UserSession");
+          if (saved) {
+            try {
+              const parsed = JSON.parse(saved);
+              parsed.user = updated;
+              localStorage.setItem("SmartMeter_UserSession", JSON.stringify(parsed));
+            } catch (err) {
+              console.error("Session sync failed:", err);
+            }
+          }
+          return updated;
+        });
+      }
+      return { success: true };
+    } catch (err) {
+      console.error("Supabase update user error:", err);
+      return { success: false, error: err.message || "Error updating user." };
+    }
+  }, [currentUser]);
 
   // ── Schedule management ───────────────────────────────
   const todaySchedule = currentUser
@@ -807,7 +837,7 @@ export function AppProvider({ children }) {
 
   const value = {
     currentUser, login, logout, loginError, changePassword,
-    users, addUser, updateUserRole, deleteUser,
+    users, addUser, updateUserRole, deleteUser, updateUser,
     schedules, todaySchedule, upcomingSchedule, currentStage, currentShift,
     generateRotationSchedule, saveGeneratedSchedule,
     deleteScheduleEntry, clearScheduleByDate,
