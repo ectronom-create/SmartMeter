@@ -9,9 +9,9 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.svg', 'icons/*.png'],
       manifest: {
-        name: 'SmartMeter MES — نظام إدارة الإنتاج',
-        short_name: 'SmartMeter',
-        description: 'نظام إدارة خط إنتاج العدادات الذكية',
+        name: 'ECTRON PLS — نظام إدارة الإنتاج',
+        short_name: 'ECTRON PLS',
+        description: 'نظام إدارة خط الإنتاج',
         theme_color: '#1a7f37',
         background_color: '#f0f2f5',
         display: 'standalone',

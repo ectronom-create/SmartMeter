@@ -1,7 +1,7 @@
 export const translations = {
   ar: {
     // Auth & Navigation
-    brandName: "SmartMeter MES",
+    brandName: "ECTRON PLS",
     subBrandName: "نظام إدارة خط الإنتاج",
     adminPanel: "مدير النظام",
     equipmentManagement: "إدارة العهدة",
@@ -97,7 +97,7 @@ export const translations = {
   },
   en: {
     // Auth & Navigation
-    brandName: "SmartMeter MES",
+    brandName: "ECTRON PLS",
     subBrandName: "Production Line Management System",
     adminPanel: "Admin Panel",
     equipmentManagement: "Equipment",
