@@ -891,7 +891,6 @@ export default function FPYDashboard() {
         <div className="animate-fade">
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
             <h3 style={{ margin: 0 }}>سجل التقارير السحابية</h3>
-            <button className="btn btn-danger btn-sm" onClick={clearAll}><Trash2 size={14} /> مسح السحابة</button>
           </div>
           <div style={{ display: "grid", gap: 12 }}>
             {reports.length === 0 ? (
