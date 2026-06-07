@@ -1,6 +1,6 @@
 import { useNavigate, useLocation } from "react-router-dom";
 import { useApp } from "../context/AppContext";
-import { LogOut, Shield, LayoutDashboard, BookOpen, Package, BarChart2 } from "lucide-react";
+import { LogOut, Shield, LayoutDashboard, BookOpen, Package, BarChart2, Wrench } from "lucide-react";
 
 
 
@@ -26,9 +26,8 @@ export default function Topbar() {
 
   return (
     <nav className="topbar">
-      {/* Brand */}
-      <div className="topbar-logo" style={{ cursor: "pointer" }} onClick={() => navigate(getDashboardPath())}>
-        <div className="topbar-logo-icon">⚡</div>
+      <div className="topbar-logo" style={{ cursor: "pointer", display: "flex", alignItems: "center", gap: 10 }} onClick={() => navigate(getDashboardPath())}>
+        <img src="/logo.png" alt="ECTRON" style={{ height: "34px", objectFit: "contain" }} />
         <div>
           <div className="topbar-brand">{t("brandName")}</div>
           <div className="topbar-sub">{t("subBrandName")}</div>
@@ -85,6 +84,13 @@ export default function Topbar() {
         {currentUser && !isAdmin && (
           <button className="btn btn-ghost btn-sm topbar-nav-btn" onClick={() => navigate("/fpy-overview")} title={t("fpyOverview")}>
             <BarChart2 size={15} /> <span className="btn-text" style={{ fontSize: "0.8rem" }}>{t("fpyOverview")}</span>
+          </button>
+        )}
+
+        {/* Maintenance Shortcut (All Logged-in Users) */}
+        {currentUser && (
+          <button className="btn btn-ghost btn-sm topbar-nav-btn" onClick={() => navigate("/maintenance")} title={t("maintenance")}>
+            <Wrench size={15} /> <span className="btn-text" style={{ fontSize: "0.8rem" }}>{t("maintenance")}</span>
           </button>
         )}
 

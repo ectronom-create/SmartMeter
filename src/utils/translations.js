@@ -94,6 +94,7 @@ export const translations = {
     defectSettingsTab: "⚠️ إعدادات الأعطال",
     sopReportsTab: "📋 تقارير بداية الإنتاج",
     fpyOverview: "لوحة التحكم",
+    maintenance: "الصيانة",
   },
   en: {
     // Auth & Navigation
@@ -190,5 +191,6 @@ export const translations = {
     defectSettingsTab: "⚠️ Defect Settings",
     sopReportsTab: "📋 SOP Reports Log",
     fpyOverview: "Dashboard",
+    maintenance: "Maintenance",
   }
 };

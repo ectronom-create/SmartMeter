@@ -46,8 +46,9 @@ export default function LoginPage() {
       </div>
 
       <div className="login-card">
-        {/* Logo */}
-        <div className="login-logo">⚡</div>
+        <div style={{ display: "flex", justifyContent: "center", marginBottom: 20 }}>
+          <img src="/logo.png" alt="ECTRON Logo" style={{ height: "64px", objectFit: "contain" }} />
+        </div>
 
         <div style={{ textAlign: "center", marginBottom: 28 }}>
           <h1 style={{ fontSize: "1.5rem", marginBottom: 6 }}>{t("brandName")}</h1>

@@ -2,7 +2,7 @@ import { useState, useMemo } from "react";
 import { useApp } from "../context/AppContext";
 import { 
   Users, AlertTriangle, CheckCircle, Clock, 
-  ArrowRight, Layers, ExternalLink, Info, BookOpen, ClipboardList, Search, BarChart2
+  ArrowRight, Layers, ExternalLink, Info, BookOpen, ClipboardList, Search, BarChart2, Wrench
 } from "lucide-react";
 
 import { useNavigate } from "react-router-dom";
@@ -76,6 +76,9 @@ export default function SupervisorPage() {
             </button>
             <button className="btn btn-secondary" onClick={() => navigate("/fpy-overview")}>
               <BarChart2 size={16} /> {t("fpyOverview")}
+            </button>
+            <button className="btn btn-secondary" onClick={() => navigate("/maintenance")}>
+              <Wrench size={16} /> {t("maintenance")}
             </button>
             <button className="btn btn-secondary" onClick={() => navigate("/knowledge")}>
               <BookOpen size={16} /> {t("faultGuide")}

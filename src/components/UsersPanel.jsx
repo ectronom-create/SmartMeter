@@ -9,20 +9,35 @@ const getRoles = (isRtl) => [
 ];
 
 function AddUserModal({ onClose }) {
-  const { addUser, language } = useApp();
+  const { addUser, language, users } = useApp();
   const isRtl = language === "ar";
   const ROLES = getRoles(isRtl);
 
   const [form, setForm] = useState({ employee_id: "", full_name: "", role: "operator", password: "pass1234", phone: "", email: "" });
   const [done, setDone] = useState(false);
+  const [errorMsg, setErrorMsg] = useState("");
 
   const handle = (e) => setForm(p => ({ ...p, [e.target.name]: e.target.value }));
 
-  const submit = (e) => {
+  const submit = async (e) => {
     e.preventDefault();
-    addUser(form);
-    setDone(true);
-    setTimeout(onClose, 1200);
+    const id = form.employee_id.trim().toUpperCase();
+    
+    // Check for duplicate employee_id
+    const duplicate = users.find(u => u.employee_id === id);
+    if (duplicate) {
+      setErrorMsg(isRtl ? "الرقم الوظيفي مسجل بالفعل لموظف آخر!" : "Employee ID is already registered for another operator!");
+      return;
+    }
+
+    setErrorMsg("");
+    const result = await addUser(form);
+    if (result) {
+      setDone(true);
+      setTimeout(onClose, 1200);
+    } else {
+      setErrorMsg(isRtl ? "حدث خطأ أثناء حفظ البيانات بالسحابة." : "An error occurred while saving user details.");
+    }
   };
 
   return (
@@ -38,6 +53,11 @@ function AddUserModal({ onClose }) {
           <div className="alert alert-success"><Check size={15} /> {isRtl ? "تمت إضافة الموظف بنجاح!" : "Operator registered successfully!"}</div>
         ) : (
           <form onSubmit={submit} style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+            {errorMsg && (
+              <div className="alert alert-danger" style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                <span>{errorMsg}</span>
+              </div>
+            )}
             <div className="input-group">
               <label className="input-label" style={{ textAlign: isRtl ? "right" : "left" }}>{isRtl ? "الرقم الوظيفي *" : "Employee ID *"}</label>
               <input className="input" name="employee_id" placeholder="EMP-010" value={form.employee_id} onChange={handle} required style={{ textAlign: isRtl ? "right" : "left" }} />

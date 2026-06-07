@@ -2,7 +2,7 @@ import { useNavigate } from "react-router-dom";
 import { useApp } from "../context/AppContext";
 import {
   Play, Calendar, Star, Clock, ChevronLeft,
-  AlertTriangle, CheckCircle, Layers, BookOpen, BarChart2
+  AlertTriangle, CheckCircle, Layers, BookOpen, BarChart2, Wrench
 } from "lucide-react";
 
 
@@ -97,6 +97,9 @@ export default function EmployeeDashboard() {
             )}
             <button className="btn btn-secondary btn-sm" onClick={() => navigate("/fpy-overview")} style={{ gap: 6 }}>
               <BarChart2 size={15} /> {t("fpyOverview")}
+            </button>
+            <button className="btn btn-secondary btn-sm" onClick={() => navigate("/maintenance")} style={{ gap: 6 }}>
+              <Wrench size={15} /> {t("maintenance")}
             </button>
           </div>
         </div>
