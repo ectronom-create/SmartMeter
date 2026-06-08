@@ -5,12 +5,12 @@ import { Check, X, ShieldAlert, Award, FileText, ArrowRight, Save, Trash2, Edit3
 import { supabase } from "../supabaseClient";
 
 const STAGES = [
-  { id: "assembly", name: "Assembly (التجميع)" },
-  { id: "insulation", name: "Insulation Test (العزل)" },
-  { id: "rf", name: "RF Test (التردد)" },
-  { id: "calibration", name: "CALIBRATION Stage (المعايرة)" },
-  { id: "multitest", name: "MULTI TEST Stage (الاختبار المتعدد)" },
-  { id: "packaging", name: "Packaging (التعبئة والتغليف)" }
+  { id: "assembly", name: "Assembly" },
+  { id: "insulation", name: "Insulation Test" },
+  { id: "rf", name: "RF Test" },
+  { id: "calibration", name: "Calibration Stage" },
+  { id: "multitest", name: "Multi Test Stage" },
+  { id: "packaging", name: "Packaging" }
 ];
 
 const COLUMNS = [
@@ -160,12 +160,12 @@ export default function StartOfProductionPage() {
   const categories = ["A- OPERATORS", "B- DOCUMENTATION", "C- PRODUCTION AND TEST MEANS", "D- COMPONENTS", "E- SCRAP & Scrap"];
 
   const getStageTranslatedName = (stage) => {
-    if (stage.id === "assembly") return isRtl ? "Assembly (التجميع)" : "Assembly";
-    if (stage.id === "insulation") return isRtl ? "Insulation Test (العزل)" : "Insulation Test";
-    if (stage.id === "rf") return isRtl ? "RF Test (التردد)" : "RF Test";
-    if (stage.id === "calibration") return isRtl ? "CALIBRATION Stage (المعايرة)" : "Calibration Stage";
-    if (stage.id === "multitest") return isRtl ? "MULTI TEST Stage (الاختبار المتعدد)" : "Multi-Test Stage";
-    if (stage.id === "packaging") return isRtl ? "Packaging (التعبئة والتغليف)" : "Packaging";
+    if (stage.id === "assembly") return "Assembly";
+    if (stage.id === "insulation") return "Insulation Test";
+    if (stage.id === "rf") return "RF Test";
+    if (stage.id === "calibration") return "Calibration Stage";
+    if (stage.id === "multitest") return "Multi-Test Stage";
+    if (stage.id === "packaging") return "Packaging";
     return stage.name;
   };
 

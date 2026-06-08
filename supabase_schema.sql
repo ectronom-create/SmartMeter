@@ -266,3 +266,24 @@ INSERT INTO equipment_stock (id, name, category, unit, current_stock, min_stock)
 INSERT INTO equipment_handouts (id, equipment_id, equipment_name, employee_id, employee_name, quantity, unit, handout_date, handed_by, notes) VALUES
 ('HANDOUT-0001', 'EQ-001', 'قفاز أمان', 'EMP-001', 'أحمد محمد الزهراني', 2, 'زوج', CURRENT_DATE, 'ADMIN-001', 'تسليم دوري'),
 ('HANDOUT-0002', 'EQ-004', 'قميص عمل', 'EMP-002', 'فاطمة علي الشمري', 1, 'قطعة', CURRENT_DATE, 'ADMIN-001', 'موظف جديد');
+
+-- Defect Logs / Movement History Log
+CREATE TABLE defect_logs (
+    id SERIAL PRIMARY KEY,
+    defect_id VARCHAR(100) REFERENCES defective_meters(id) ON DELETE CASCADE,
+    serial_number VARCHAR(100) NOT NULL,
+    action_type VARCHAR(50) NOT NULL, -- 'reported', 'status_change', 'deleted'
+    old_status VARCHAR(50),
+    new_status VARCHAR(50),
+    performed_by VARCHAR(50) REFERENCES users(employee_id) ON DELETE SET NULL,
+    performed_by_name VARCHAR(150),
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Enable RLS
+ALTER TABLE defect_logs ENABLE ROW LEVEL SECURITY;
+
+-- Configure Policies
+CREATE POLICY "Enable all read access for defect_logs" ON defect_logs FOR SELECT USING (true);
+CREATE POLICY "Enable all write access for defect_logs" ON defect_logs FOR ALL USING (true);
+

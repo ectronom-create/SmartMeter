@@ -1,6 +1,8 @@
 import { useState, useEffect } from "react";
 import { useApp } from "../context/AppContext";
-import { Users, Calendar, AlertTriangle, BarChart2, Shield, BookOpen, ChevronRight, CheckCircle, Clock, Layers, X, Search, ClipboardList } from "lucide-react";
+import { Users, Calendar, AlertTriangle, BarChart2, Shield, BookOpen, ChevronRight, CheckCircle, Clock, Layers, X, Search, ClipboardList, Wrench, Package } from "lucide-react";
+import MaintenancePage from "./MaintenancePage";
+import { AssetsPanel } from "./AssetsPage";
 import UsersPanel from "../components/UsersPanel";
 import ShiftSchedulesPanel from "../components/ShiftSchedulesPanel";
 import StagesPanel from "../components/StagesPanel";
@@ -34,12 +36,12 @@ function DefectsPanel() {
   const handleExportExcel = () => {
     try {
       const stageNames = {
-        "STG-01": isRtl ? "التجميع" : "Assembly", 
-        "STG-02": isRtl ? "العزل" : "Insulation",
-        "STG-03": isRtl ? "التردد اللاسلكي" : "Radio Frequency", 
-        "STG-04": isRtl ? "المعايرة" : "Calibration", 
-        "STG-05": isRtl ? "الاختبار المتعدد" : "Multi Test", 
-        "STG-06": isRtl ? "التخصيص" : "Perso"
+        "STG-01": "Assembly", 
+        "STG-02": "Insulation",
+        "STG-03": "Radio Frequency", 
+        "STG-04": "Calibration", 
+        "STG-05": "Multi Test", 
+        "STG-06": "Perso"
       };
 
       const STATUS_LABELS = {
@@ -168,7 +170,7 @@ function DefectsPanel() {
                 const rep=getUserById(m.reported_by);
                 const sc=STATUS[m.status]||STATUS.pending;
                 const stage=getStageById(m.stage_found);
-                const stageDisplay = stage ? (isRtl ? stage.short_name : (stage.stage_name.match(/\(([^)]+)\)/)?.[1] || stage.stage_name)) : m.stage_found;
+                const stageDisplay = stage ? (stage.stage_name.match(/\(([^)]+)\)/)?.[1] || stage.stage_name) : m.stage_found;
                 return (
                   <tr key={m.id}>
                     <td><code style={{fontFamily:"monospace",fontSize:"0.83rem",color:"var(--blue)"}}>{m.serial_number}</code></td>
@@ -248,7 +250,7 @@ function DefectsPanel() {
                   {filteredPending.map(m => {
                     const isConfirming = confirmingId === m.id;
                     const stage = getStageById(m.stage_found);
-                    const stageDisplay = stage ? (isRtl ? stage.short_name : (stage.stage_name.match(/\(([^)]+)\)/)?.[1] || stage.stage_name)) : m.stage_found;
+                    const stageDisplay = stage ? (stage.stage_name.match(/\(([^)]+)\)/)?.[1] || stage.stage_name) : m.stage_found;
                     return (
                       <div key={m.id} className="card" style={{ 
                         padding: 12, 
@@ -323,7 +325,7 @@ function ErrorCodesPanel() {
 
   const filteredErrorCodes = errorCodes.filter(e => {
     const stage = getStageById(e.stage_id);
-    const stageName = stage ? (isRtl ? stage.short_name : stage.stage_name) : "";
+    const stageName = stage ? (stage.stage_name.match(/\(([^)]+)\)/)?.[1] || stage.stage_name) : "";
     const query = searchQuery.toLowerCase().trim();
     if (!query) return true;
     return (
@@ -618,7 +620,7 @@ function ErrorCodesPanel() {
                     <td>
                       <div style={{display:"flex",alignItems:"center",gap:8,fontWeight:700,color, flexDirection: isRtl ? "row" : "row-reverse"}}>
                         <span>{stage?.icon}</span>
-                        <span style={{fontSize:"0.85rem"}}>{isRtl ? stage?.short_name : (stage?.stage_name.match(/\(([^)]+)\)/)?.[1] || stage?.stage_name)}</span>
+                        <span style={{fontSize:"0.85rem"}}>{stage?.stage_name ? (stage.stage_name.match(/\(([^)]+)\)/)?.[1] || stage.stage_name) : ""}</span>
                       </div>
                     </td>
                     <td><span className="badge badge-gray" style={{fontFamily:"monospace",fontWeight:800}}>{e.code}</span></td>
@@ -673,7 +675,7 @@ function ErrorCodesPanel() {
                 <div className="input-group" style={{ textAlign: isRtl ? "right" : "left" }}>
                   <label className="input-label">{isRtl ? "المرحلة المرتبطة" : "Associated Stage"}</label>
                   <select className="input" value={formData.stage_id} onChange={e=>setFormData({...formData, stage_id:e.target.value})}>
-                    {production_stages.map(s => <option key={s.stage_id} value={s.stage_id}>{s.icon} {isRtl ? s.stage_name : (s.stage_name.match(/\(([^)]+)\)/)?.[1] || s.stage_name)}</option>)}
+                    {production_stages.map(s => <option key={s.stage_id} value={s.stage_id}>{s.icon} {(s.stage_name.match(/\(([^)]+)\)/)?.[1] || s.stage_name)}</option>)}
                   </select>
                 </div>
               </div>
@@ -743,7 +745,7 @@ function ErrorCodesPanel() {
                       return (
                         <tr key={i} style={{ borderBottom: "1px solid var(--border)" }}>
                           <td style={{ padding: "8px 12px", fontSize: "0.78rem" }}>
-                            <span style={{ color, fontWeight: 700 }}>{stage?.icon} {isRtl ? stage?.short_name : (stage?.stage_name.match(/\(([^)]+)\)/)?.[1] || stage?.stage_name)}</span>
+                            <span style={{ color, fontWeight: 700 }}>{stage?.icon} {stage?.stage_name ? (stage.stage_name.match(/\(([^)]+)\)/)?.[1] || stage.stage_name) : ""}</span>
                           </td>
                           <td style={{ padding: "8px 12px", fontSize: "0.78rem" }}>
                             <span className="badge badge-gray" style={{ fontFamily: "monospace" }}>{r.code}</span>
@@ -803,12 +805,12 @@ function SOPReportsPanel() {
   }, []);
 
   const STAGES_MAP = [
-    { id: "assembly", name: isRtl ? "التجميع (Assembly)" : "Assembly" },
-    { id: "insulation", name: isRtl ? "العزل (Insulation)" : "Insulation Test" },
-    { id: "rf", name: isRtl ? "التردد (RF Test)" : "RF Test" },
-    { id: "calibration", name: isRtl ? "المعايرة (Calibration)" : "Calibration" },
-    { id: "multitest", name: isRtl ? "الاختبار المتعدد (Multi Test)" : "Multi Test" },
-    { id: "packaging", name: isRtl ? "التعبئة والتغليف (Packaging)" : "Packaging" }
+    { id: "assembly", name: "Assembly" },
+    { id: "insulation", name: "Insulation Test" },
+    { id: "rf", name: "RF Test" },
+    { id: "calibration", name: "Calibration" },
+    { id: "multitest", name: "Multi Test" },
+    { id: "packaging", name: "Packaging" }
   ];
 
   const COLUMNS = [
@@ -1174,10 +1176,12 @@ const getSidebarPanels = (isRtl, t) => [
   { id:"overview",   label: t("fpyOverview"),        icon:BarChart2,    section: isRtl ? "رئيسي" : "Main" },
   { id:"users",      label: isRtl ? "المستخدمون" : "Operators Log",       icon:Users,        section: isRtl ? "رئيسي" : "Main" },
   { id:"stages",     label: isRtl ? "مراحل الإنتاج" : "Production Stages",   icon:Layers,       section: isRtl ? "الإدارة" : "Management" },
+  { id:"assets",     label: t("equipmentManagement"), icon:Package,      section: isRtl ? "الإدارة" : "Management" },
   { id:"schedule",   label: isRtl ? "جدول الورديات" : "Shift Schedules",     icon:Calendar,     section: isRtl ? "الإنتاج" : "Production" },
   { id:"defects",    label: isRtl ? "العدادات المعطوبة" : "Defective Meters", icon:AlertTriangle,section: isRtl ? "الإنتاج" : "Production" },
   { id:"errorcodes", label: isRtl ? "دليل الأعطال" : "Fault Codes Guide",      icon:BookOpen,     section: isRtl ? "الإنتاج" : "Production" },
   { id:"sop_reports", label: isRtl ? "بداية الإنتاج (SOP)" : "Start of Production (SOP)", icon:ClipboardList, section: isRtl ? "الإنتاج" : "Production" },
+  { id:"maintenance", label: t("maintenance"),       icon:Wrench,       section: isRtl ? "الإنتاج" : "Production" },
 ];
 
 export default function AdminPage() {
@@ -1194,10 +1198,12 @@ export default function AdminPage() {
       case "overview":   return <OverviewPanel />;
       case "users":      return <UsersPanel />;
       case "stages":     return <StagesPanel />;
+      case "assets":     return <AssetsPanel />;
       case "schedule":   return <ShiftSchedulesPanel />;
       case "defects":    return <DefectsPanel />;
       case "errorcodes": return <ErrorCodesPanel />;
       case "sop_reports": return <SOPReportsPanel />;
+      case "maintenance": return <MaintenancePage />;
       default:           return <OverviewPanel />;
     }
   };

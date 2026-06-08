@@ -41,6 +41,56 @@ export default function MaintenancePage() {
     localStorage.setItem("Ectron_Maintenance_EmailLogs", JSON.stringify(emailLogs));
   }, [emailLogs]);
 
+  // EmailJS Settings State
+  const [emailSettings, setEmailSettings] = useState(() => {
+    const saved = localStorage.getItem("Ectron_Maintenance_EmailSettings");
+    return saved ? JSON.parse(saved) : { serviceId: "", templateId: "", publicKey: "" };
+  });
+
+  const handleUpdateEmailSettings = (key, value) => {
+    const updated = { ...emailSettings, [key]: value };
+    setEmailSettings(updated);
+    localStorage.setItem("Ectron_Maintenance_EmailSettings", JSON.stringify(updated));
+  };
+
+  const sendRealEmail = async (recipientName, recipientEmail, subject, message) => {
+    if (!emailSettings.serviceId || !emailSettings.templateId || !emailSettings.publicKey) {
+      console.log("EmailJS credentials not configured. Falling back to simulation.");
+      return { success: false, mode: "simulated" };
+    }
+
+    try {
+      const response = await fetch("https://api.emailjs.com/api/v1.0/email/send", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          service_id: emailSettings.serviceId,
+          template_id: emailSettings.templateId,
+          user_id: emailSettings.publicKey,
+          template_params: {
+            to_name: recipientName,
+            to_email: recipientEmail,
+            subject: subject,
+            message: message
+          }
+        })
+      });
+
+      if (response.ok) {
+        return { success: true, mode: "real" };
+      } else {
+        const errText = await response.text();
+        console.error("EmailJS sending failed:", errText);
+        return { success: false, mode: "error", error: errText };
+      }
+    } catch (err) {
+      console.error("EmailJS network error:", err);
+      return { success: false, mode: "error", error: err.message };
+    }
+  };
+
   // Load schedule
   const loadSchedule = async () => {
     setLoading(true);
@@ -74,6 +124,84 @@ export default function MaintenancePage() {
     loadSchedule();
   }, []);
 
+  // Automated background check for weeks that started and have not sent email yet
+  useEffect(() => {
+    if (loading || !schedule || schedule.length === 0 || !users || users.length === 0) return;
+
+    const todayStr = new Date().toISOString().slice(0, 10);
+    // Find pending slots that have started (week_start_date <= todayStr) and email_sent is not true
+    const slotsToRemind = schedule.filter(s => {
+      return s.week_start_date <= todayStr && !s.email_sent && s.status === "pending";
+    });
+
+    if (slotsToRemind.length === 0) return;
+
+    const runAutoReminders = async () => {
+      const newLogs = [];
+      let updatedSchedule = [...schedule];
+      let hasChanges = false;
+
+      for (const slot of slotsToRemind) {
+        const employee = users.find(u => u.employee_id === slot.employee_id);
+        if (!employee) continue;
+
+        const email = employee.email || `${employee.employee_id.toLowerCase()}@ectron.com`;
+        const fullName = employee.full_name;
+
+        const subject = isRtl 
+          ? "تنبيه تلقائي: مهمة الصيانة الأسبوعية الدورية (تبديل مياه الفلتر)" 
+          : "Automatic Alert: Weekly Maintenance Task (Filter Water Replacement)";
+        const message = isRtl 
+          ? `أهلاً ${fullName}، نود تنبيهك بأنك الموظف الموكل للقيام بالمهمة الدورية هذا الأسبوع: (تبديل مياه الفلتر). يرجى القيام بها وتأكيد الإنجاز في لوحة التحكم في نهاية الأسبوع. شكراً لك.`
+          : `Hello ${fullName}, this is an automatic reminder that you are scheduled for the periodic maintenance task this week: (Filter Water Replacement). Please perform it and confirm on the dashboard. Thank you.`;
+
+        const emailResult = await sendRealEmail(fullName, email, subject, message);
+
+        const newLog = {
+          id: Date.now() + Math.random(),
+          sent_at: new Date().toISOString(),
+          recipient_name: fullName,
+          recipient_email: email,
+          subject: subject,
+          message: message,
+          status: emailResult.success ? "delivered" : emailResult.mode === "simulated" ? "simulated" : "failed",
+          error_msg: emailResult.error || null
+        };
+
+        newLogs.push(newLog);
+        
+        updatedSchedule = updatedSchedule.map(s => 
+          (s.id === slot.id || s.week_start_date === slot.week_start_date) ? { ...s, email_sent: true } : s
+        );
+        hasChanges = true;
+
+        if (!isUsingFallback) {
+          try {
+            const query = supabase.from("maintenance_schedule").update({ email_sent: true });
+            if (slot.id) {
+              await query.eq("id", slot.id);
+            } else {
+              await query.eq("week_start_date", slot.week_start_date);
+            }
+          } catch (err) {
+            console.error("Failed to update email_sent on Supabase:", err);
+          }
+        }
+      }
+
+      if (hasChanges) {
+        setEmailLogs(prev => [...newLogs, ...prev]);
+        if (isUsingFallback) {
+          saveScheduleState(updatedSchedule);
+        } else {
+          setSchedule(updatedSchedule);
+        }
+      }
+    };
+
+    runAutoReminders();
+  }, [loading, schedule, users, isUsingFallback, isRtl, emailSettings]);
+
   // Sync local changes to localstorage if in fallback mode
   const saveScheduleState = async (newSchedule) => {
     setSchedule(newSchedule);
@@ -95,7 +223,8 @@ export default function MaintenancePage() {
       employee_id: manualUserId,
       task_name: "تبديل مياه الفلتر",
       status: "pending",
-      completed_at: null
+      completed_at: null,
+      email_sent: false
     };
 
     if (isUsingFallback) {
@@ -151,7 +280,8 @@ export default function MaintenancePage() {
         employee_id: userId,
         task_name: "تبديل مياه الفلتر",
         status: "pending",
-        completed_at: null
+        completed_at: null,
+        email_sent: false
       });
     }
 
@@ -231,27 +361,63 @@ export default function MaintenancePage() {
   };
 
   // Send Email Reminder
-  const handleSendReminder = (slot) => {
+  const handleSendReminder = async (slot) => {
     const employee = users.find(u => u.employee_id === slot.employee_id);
     if (!employee) return;
 
     const email = employee.email || `${employee.employee_id.toLowerCase()}@ectron.com`;
     const fullName = employee.full_name;
 
+    const subject = isRtl 
+      ? "تذكير: مهمة الصيانة الأسبوعية الدورية (تبديل مياه الفلتر)" 
+      : "Reminder: Weekly Maintenance Task (Filter Water Replacement)";
+    const message = isRtl 
+      ? `أهلاً ${fullName}، نود تذكيرك بأنك الموظف الموكل للقيام بالمهمة الدورية هذا الأسبوع: (تبديل مياه الفلتر). يرجى القيام بها وتأكيد الإنجاز في لوحة التحكم في نهاية الأسبوع. شكراً لك.`
+      : `Hello ${fullName}, this is a reminder that you are scheduled for the periodic maintenance task this week: (Filter Water Replacement). Please perform it and confirm on the dashboard before the week ends. Thank you.`;
+
+    const emailResult = await sendRealEmail(fullName, email, subject, message);
+
     const newLog = {
       id: Date.now(),
       sent_at: new Date().toISOString(),
       recipient_name: fullName,
       recipient_email: email,
-      subject: isRtl ? "تذكير: مهمة الصيانة الأسبوعية الدورية (تبديل مياه الفلتر)" : "Reminder: Weekly Maintenance Task (Filter Water Replacement)",
-      message: isRtl 
-        ? `أهلاً ${fullName}، نود تذكيرك بأنك الموظف الموكل للقيام بالمهمة الدورية هذا الأسبوع: (تبديل مياه الفلتر). يرجى القيام بها وتأكيد الإنجاز في لوحة التحكم في نهاية الأسبوع. شكراً لك.`
-        : `Hello ${fullName}, this is a reminder that you are scheduled for the periodic maintenance task this week: (Filter Water Replacement). Please perform it and confirm on the dashboard before the week ends. Thank you.`,
-      status: "delivered"
+      subject: subject,
+      message: message,
+      status: emailResult.success ? "delivered" : emailResult.mode === "simulated" ? "simulated" : "failed",
+      error_msg: emailResult.error || null
     };
 
     setEmailLogs(prev => [newLog, ...prev]);
-    setSuccessMsg(isRtl ? `تم إرسال إيميل التذكير بنجاح إلى ${fullName}!` : `Reminder email sent successfully to ${fullName}!`);
+
+    if (emailResult.success) {
+      setSuccessMsg(isRtl ? `تم إرسال إيميل حقيقي بنجاح إلى ${fullName}!` : `Real email sent successfully to ${fullName}!`);
+    } else if (emailResult.mode === "simulated") {
+      setSuccessMsg(isRtl ? `تمت محاكاة إرسال الإيميل بنجاح إلى ${fullName} (اضبط إعدادات EmailJS للإرسال الحقيقي)!` : `Email sending simulated for ${fullName} (Configure EmailJS settings for real delivery)!`);
+    } else {
+      setErrorMsg(isRtl ? `فشل إرسال الإيميل: ${emailResult.error}` : `Failed to send email: ${emailResult.error}`);
+    }
+
+    // Update email_sent status locally/globally
+    const updatedSchedule = schedule.map(s => 
+      (s.id === slot.id || s.week_start_date === slot.week_start_date) ? { ...s, email_sent: true } : s
+    );
+
+    if (isUsingFallback) {
+      saveScheduleState(updatedSchedule);
+    } else {
+      try {
+        const query = supabase.from("maintenance_schedule").update({ email_sent: true });
+        if (slot.id) {
+          await query.eq("id", slot.id);
+        } else {
+          await query.eq("week_start_date", slot.week_start_date);
+        }
+        setSchedule(updatedSchedule);
+      } catch (err) {
+        console.error("Supabase update error:", err);
+      }
+    }
 
     // Standard mailto fallback trigger to show it "opens" or simulates
     console.log("SIMULATED EMAIL SENDING:", newLog);

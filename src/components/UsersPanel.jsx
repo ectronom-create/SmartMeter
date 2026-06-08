@@ -6,6 +6,7 @@ const getRoles = (isRtl) => [
   { value: "operator",   label: isRtl ? "مشغّل" : "Operator",   badge: "badge-blue" },
   { value: "supervisor", label: isRtl ? "مشرف" : "Supervisor",    badge: "badge-amber" },
   { value: "admin",      label: isRtl ? "أدمن" : "Admin",    badge: "badge-admin" },
+  { value: "quality_management", label: isRtl ? "إدارة الجودة" : "Quality Management", badge: "badge-cyan" }
 ];
 
 function AddUserModal({ onClose }) {
@@ -200,11 +201,17 @@ export default function UsersPanel() {
   const isRtl = language === "ar";
   const ROLES = getRoles(isRtl);
 
-  const roleBadge = { admin: "badge-admin", supervisor: "badge-amber", operator: "badge-blue" };
+  const roleBadge = { 
+    admin: "badge-admin", 
+    supervisor: "badge-amber", 
+    operator: "badge-blue",
+    quality_management: "badge-cyan"
+  };
   const roleLabel = { 
     admin: isRtl ? "أدمن" : "Admin", 
     supervisor: isRtl ? "مشرف" : "Supervisor", 
-    operator: isRtl ? "مشغّل" : "Operator" 
+    operator: isRtl ? "مشغّل" : "Operator",
+    quality_management: isRtl ? "إدارة الجودة" : "Quality Management"
   };
 
   return (
@@ -245,7 +252,7 @@ export default function UsersPanel() {
                   <td><code style={{ fontFamily: "monospace", fontSize: "0.83rem", background: "var(--bg-elevated)", padding: "2px 7px", borderRadius: 4 }}>{u.employee_id}</code></td>
                   <td>
                     <div style={{ display: "flex", alignItems: "center", gap: 8, flexDirection: isRtl ? "row" : "row-reverse" }}>
-                      <div style={{ width: 30, height: 30, borderRadius: "50%", background: u.role === "admin" ? "linear-gradient(135deg,#e65100,#ff8f00)" : u.role === "supervisor" ? "linear-gradient(135deg,#9a6700,#d4a72c)" : "linear-gradient(135deg,#0550ae,#1a7f37)", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontWeight: 800, fontSize: "0.72rem", flexShrink: 0 }}>
+                      <div style={{ width: 30, height: 30, borderRadius: "50%", background: u.role === "admin" ? "linear-gradient(135deg,#e65100,#ff8f00)" : u.role === "supervisor" ? "linear-gradient(135deg,#9a6700,#d4a72c)" : u.role === "quality_management" ? "linear-gradient(135deg,#009688,#00796b)" : "linear-gradient(135deg,#0550ae,#1a7f37)", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontWeight: 800, fontSize: "0.72rem", flexShrink: 0 }}>
                         {u.full_name.split(" ").slice(0,2).map(w=>w[0]).join("")}
                       </div>
                       <span style={{ fontWeight: 600, fontSize: "0.9rem" }}>{u.full_name}</span>

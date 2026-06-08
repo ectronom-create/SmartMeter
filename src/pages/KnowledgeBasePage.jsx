@@ -565,42 +565,72 @@ export default function KnowledgeBasePage() {
   );
 }
 
+export async function translateTextCore(text, targetLang) {
+  if (!text) return text;
+  
+  const isArabic = /[\u0600-\u06FF]/.test(text);
+  const textLang = isArabic ? "ar" : "en";
+
+  if (textLang === targetLang) {
+    return text;
+  }
+
+  const cacheKey = `gtrans_${targetLang}_${text}`;
+  
+  // 1. Check localStorage first
+  try {
+    const cached = localStorage.getItem(cacheKey);
+    if (cached) return cached;
+  } catch (e) {
+    console.warn("localStorage read failed:", e);
+  }
+
+  // 2. Fetch from Google Translate API
+  try {
+    const url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=${textLang}&tl=${targetLang}&dt=t&q=${encodeURIComponent(text)}`;
+    const res = await fetch(url);
+    if (!res.ok) {
+      throw new Error(`HTTP error! status: ${res.status}`);
+    }
+    const data = await res.json();
+    if (data && data[0]) {
+      const translatedText = data[0].map(x => x[0]).join("");
+      if (translatedText) {
+        // Save to cache
+        try {
+          localStorage.setItem(cacheKey, translatedText);
+        } catch (e) {
+          console.warn("localStorage write failed:", e);
+        }
+        return translatedText;
+      }
+    }
+  } catch (err) {
+    console.error("Translation request failed:", err);
+  }
+  
+  return text; // Graceful fallback
+}
+
 export function TranslateText({ text, targetLang, fallback = "" }) {
   const [translated, setTranslated] = useState(text || fallback);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    if (!text) {
-      setTranslated(fallback);
-      return;
-    }
-
-    const isArabic = /[\u0600-\u06FF]/.test(text);
-    const textLang = isArabic ? "ar" : "en";
-
-    if (textLang === targetLang) {
-      setTranslated(text);
-      return;
-    }
-
     let active = true;
-    const translate = async () => {
+    const run = async () => {
+      if (!text) {
+        setTranslated(fallback);
+        return;
+      }
       setLoading(true);
-      try {
-        const langpair = `${textLang}|${targetLang}`;
-        const res = await fetch(`https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=${langpair}`);
-        const data = await res.json();
-        if (active && data?.responseData?.translatedText) {
-          setTranslated(data.responseData.translatedText);
-        }
-      } catch (err) {
-        console.error("Translation error:", err);
-      } finally {
-        if (active) setLoading(false);
+      const resText = await translateTextCore(text, targetLang);
+      if (active) {
+        setTranslated(resText);
+        setLoading(false);
       }
     };
-
-    translate();
+    run();
     return () => { active = false; };
   }, [text, targetLang, fallback]);
 
@@ -617,38 +647,18 @@ export function TranslateSteps({ steps, targetLang, renderStep }) {
       return;
     }
 
-    const needsTranslation = steps.some(step => {
-      const isArabic = /[\u0600-\u06FF]/.test(step);
-      const stepLang = isArabic ? "ar" : "en";
-      return stepLang !== targetLang;
-    });
-
-    if (!needsTranslation) {
-      setTranslatedSteps(steps);
-      return;
-    }
-
     let active = true;
     const translateAll = async () => {
       setLoading(true);
       try {
-        const promises = steps.map(async (step) => {
-          const isArabic = /[\u0600-\u06FF]/.test(step);
-          const stepLang = isArabic ? "ar" : "en";
-          if (stepLang === targetLang) return step;
-
-          const langpair = `${stepLang}|${targetLang}`;
-          const res = await fetch(`https://api.mymemory.translated.net/get?q=${encodeURIComponent(step)}&langpair=${langpair}`);
-          const data = await res.json();
-          return data?.responseData?.translatedText || step;
-        });
-
+        const promises = steps.map(step => translateTextCore(step, targetLang));
         const results = await Promise.all(promises);
         if (active) {
           setTranslatedSteps(results);
         }
       } catch (err) {
         console.error("Steps translation error:", err);
+        if (active) setTranslatedSteps(steps);
       } finally {
         if (active) setLoading(false);
       }

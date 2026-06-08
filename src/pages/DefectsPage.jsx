@@ -13,14 +13,14 @@ const getStatusConfig = (isRtl) => ({
   resolved: { label: isRtl ? "يعود لخط الانتاج" : "Returned to Line",  class: "badge-green",  icon: <CheckCircle size={11} /> },
 });
 
-const getStageNames = (isRtl) => ({
-  "STG-01": isRtl ? "التجميع" : "Assembly", 
-  "STG-02": isRtl ? "العزل" : "Insulation",
-  "STG-03": isRtl ? "التردد اللاسلكي" : "Radio Frequency", 
-  "STG-04": isRtl ? "المعايرة" : "Calibration", 
-  "STG-05": isRtl ? "الاختبار المتعدد" : "Multi Test", 
-  "STG-06": isRtl ? "التخصيص" : "Perso",
-  "GLOBAL": isRtl ? "عام" : "General"
+const getStageNames = () => ({
+  "STG-01": "Assembly", 
+  "STG-02": "Insulation",
+  "STG-03": "Radio Frequency", 
+  "STG-04": "Calibration", 
+  "STG-05": "Multi Test", 
+  "STG-06": "Perso",
+  "GLOBAL": "General"
 });
 
 export default function DefectsPage() {
@@ -28,7 +28,8 @@ export default function DefectsPage() {
   const location = useLocation();
   const { 
     defectiveMeters, currentUser, updateMeterStatus, 
-    getErrorByCode, addDefectiveMeter, addDefectiveMetersBulk, currentStage, errorCodes, language
+    getErrorByCode, addDefectiveMeter, addDefectiveMetersBulk, currentStage, errorCodes, language,
+    defectLogs
   } = useApp();
 
   const isRtl = language === "ar";
@@ -369,6 +370,33 @@ export default function DefectsPage() {
     setTimeout(() => setSubmitMsg(null), 3000);
   };
 
+  const [activeTab, setActiveTab] = useState("defects");
+  const [historySearch, setHistorySearch] = useState("");
+
+  const filteredLogs = (defectLogs || []).filter(log => 
+    (log.serial_number || "").includes(historySearch.trim().toUpperCase())
+  );
+
+  const getActionLabel = (type, oldSt, newSt) => {
+    if (type === "reported") {
+      return isRtl ? "تسجيل بلاغ عطل جديد" : "New defect reported";
+    }
+    if (type === "status_change") {
+      const STATUS_LABELS = {
+        reported: isRtl ? "بلاغ جديد" : "New Report",
+        pending: isRtl ? "قيد الانتظار" : "Pending Review",
+        verified: isRtl ? "تم التحقق (معطوب)" : "Verified Defective",
+        resolved: isRtl ? "يعود لخط الانتاج" : "Returned to Line"
+      };
+      const oldLbl = STATUS_LABELS[oldSt] || oldSt || "—";
+      const newLbl = STATUS_LABELS[newSt] || newSt || "—";
+      return isRtl 
+        ? `تعديل الحالة من [${oldLbl}] إلى [${newLbl}]`
+        : `Changed status from [${oldLbl}] to [${newLbl}]`;
+    }
+    return type;
+  };
+
   if (!currentUser) return null;
 
   return (
@@ -412,7 +440,7 @@ export default function DefectsPage() {
                 />
               </label>
             )}
-            {(currentUser.role === "supervisor" || currentUser.role === "admin") && (
+            {(currentUser.role === "supervisor" || currentUser.role === "admin" || currentUser.role === "quality_management") && (
               <button className="btn btn-primary btn-sm" onClick={() => setReviewModal(true)} style={{ gap: 8 }}>
                 <Clock size={15} /> {isRtl ? "معاينة العدادات قيد الانتظار" : "Review Pending Quality Gate"}
                 {defectiveMeters.filter(m => m.status === "pending").length > 0 && (
@@ -433,8 +461,30 @@ export default function DefectsPage() {
           </div>
         )}
 
-        {/* Quick Report Form */}
-        {currentUser.role !== "admin" && (
+        {/* Tab Selection */}
+        {["admin", "supervisor", "quality_management"].includes(currentUser.role) && (
+          <div style={{ display: "flex", gap: 10, borderBottom: "1px solid var(--border-subtle)", paddingBottom: 10 }}>
+            <button 
+              className={`btn ${activeTab === "defects" ? "btn-primary" : "btn-secondary"}`} 
+              onClick={() => setActiveTab("defects")}
+              style={{ fontSize: "0.85rem", padding: "6px 16px" }}
+            >
+              📋 {isRtl ? "قائمة الأعطال" : "Defect List"}
+            </button>
+            <button 
+              className={`btn ${activeTab === "history" ? "btn-primary" : "btn-secondary"}`} 
+              onClick={() => setActiveTab("history")}
+              style={{ fontSize: "0.85rem", padding: "6px 16px" }}
+            >
+              📜 {isRtl ? "سجل حركات الجودة" : "Quality Audit Logs"}
+            </button>
+          </div>
+        )}
+
+        {activeTab === "defects" && (
+          <>
+            {/* Quick Report Form */}
+            {currentUser.role !== "admin" && (
           <div className="card animate-fade" style={{ background: "#fff5f5", border: "1px solid #feb2b2", overflow: "visible" }}>
             <div className="card-header" style={{ paddingBottom: 12 }}>
               <AlertTriangle size={18} style={{ color: "var(--red)" }} />
@@ -584,7 +634,7 @@ export default function DefectsPage() {
                   <th style={{ textAlign: isRtl ? "right" : "left" }}>{isRtl ? "الوصف" : "Description"}</th>
                   <th style={{ textAlign: isRtl ? "right" : "left" }}>{isRtl ? "الوقت" : "Time"}</th>
                   <th style={{ textAlign: isRtl ? "right" : "left" }}>{isRtl ? "الحالة" : "Status"}</th>
-                  {currentUser.role === "supervisor" && <th style={{ textAlign: isRtl ? "right" : "left" }}>{isRtl ? "تغيير الحالة" : "Change Status"}</th>}
+                  {["supervisor", "quality_management", "admin"].includes(currentUser.role) && <th style={{ textAlign: isRtl ? "right" : "left" }}>{isRtl ? "تغيير الحالة" : "Change Status"}</th>}
                 </tr>
               </thead>
               <tbody>
@@ -625,7 +675,7 @@ export default function DefectsPage() {
                           <CountdownTimer resolvedAt={m.resolved_at} isRtl={isRtl} />
                         )}
                       </td>
-                      {currentUser.role === "supervisor" && (
+                      {["supervisor", "quality_management", "admin"].includes(currentUser.role) && (
                         <td>
                           <select
                             className="input"
@@ -695,7 +745,7 @@ export default function DefectsPage() {
                   )}
                 </div>
                 
-                {currentUser.role === "supervisor" && (
+                {["supervisor", "quality_management", "admin"].includes(currentUser.role) && (
                   <div className="defect-card-actions">
                     <label>{isRtl ? "تعديل حالة العداد" : "Change Status"}</label>
                     <select
@@ -715,6 +765,109 @@ export default function DefectsPage() {
             );
           })}
         </div>
+        </>
+        )}
+
+        {activeTab === "history" && (
+          <div className="animate-fade" style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+            {/* Filters */}
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 12 }}>
+              <div className="input-group" style={{ maxWidth: 300, flex: 1 }}>
+                <input 
+                  className="input" 
+                  value={historySearch} 
+                  onChange={e => setHistorySearch(e.target.value)} 
+                  placeholder={isRtl ? "البحث بالسيريال نمبر..." : "Search by Serial Number..."} 
+                />
+              </div>
+              <div className="badge badge-gray" style={{ flexShrink: 0 }}>
+                {isRtl ? "إجمالي الحركات:" : "Total Actions:"} {filteredLogs.length}
+              </div>
+            </div>
+
+            {/* Desktop History Table */}
+            <div className="card desktop-only" style={{ padding: 0 }}>
+              <div className="table-wrapper">
+                <table>
+                  <thead>
+                    <tr>
+                      <th style={{ textAlign: isRtl ? "right" : "left" }}>{isRtl ? "السيريال نمبر" : "Serial Number"}</th>
+                      <th style={{ textAlign: isRtl ? "right" : "left" }}>{isRtl ? "نوع الحركة" : "Action Type"}</th>
+                      <th style={{ textAlign: isRtl ? "right" : "left" }}>{isRtl ? "تفاصيل الحركة" : "Action Details"}</th>
+                      <th style={{ textAlign: isRtl ? "right" : "left" }}>{isRtl ? "بواسطة" : "Performed By"}</th>
+                      <th style={{ textAlign: isRtl ? "right" : "left" }}>{isRtl ? "التاريخ والوقت" : "Date & Time"}</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {filteredLogs.length === 0 ? (
+                      <tr>
+                        <td colSpan={5} style={{ textAlign: "center", padding: "40px", color: "var(--text-muted)" }}>
+                          {isRtl ? "لا توجد سجلات مطابقة" : "No history records found"}
+                        </td>
+                      </tr>
+                    ) : filteredLogs.map((log) => (
+                      <tr key={log.id}>
+                        <td>
+                          <code style={{ fontFamily: "monospace", fontSize: "0.85rem", color: "var(--cyan)" }}>
+                            {log.serial_number}
+                          </code>
+                        </td>
+                        <td>
+                          <span className={`badge ${
+                            log.action_type === 'reported' ? 'badge-blue' : 'badge-amber'
+                          }`}>
+                            {log.action_type === 'reported' 
+                              ? (isRtl ? "تسجيل بلاغ" : "Reported") 
+                              : (isRtl ? "تغيير حالة" : "Status Change")}
+                          </span>
+                        </td>
+                        <td style={{ fontSize: "0.83rem" }}>
+                          {getActionLabel(log.action_type, log.old_status, log.new_status)}
+                        </td>
+                        <td>
+                          <div style={{ display: "flex", flexDirection: "column" }}>
+                            <span style={{ fontWeight: 600, fontSize: "0.82rem" }}>{log.performed_by_name}</span>
+                            <span style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>{log.performed_by}</span>
+                          </div>
+                        </td>
+                        <td style={{ fontSize: "0.8rem", color: "var(--text-muted)", whiteSpace: "nowrap" }}>
+                          {formatDate(log.created_at)}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            {/* Mobile History Cards */}
+            <div className="mobile-only" style={{ display: "grid", gap: 12 }}>
+              {filteredLogs.length === 0 ? (
+                <div className="card" style={{ textAlign: "center", padding: "40px", color: "var(--text-muted)" }}>
+                  {isRtl ? "لا توجد سجلات مطابقة" : "No history records found"}
+                </div>
+              ) : filteredLogs.map((log) => (
+                <div key={log.id} className="card animate-fade" style={{ padding: 16 }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
+                    <code style={{ fontSize: "0.9rem", fontWeight: 800, color: "var(--cyan)" }}>{log.serial_number}</code>
+                    <span className={`badge ${
+                      log.action_type === 'reported' ? 'badge-blue' : 'badge-amber'
+                    }`}>
+                      {log.action_type === 'reported' ? (isRtl ? "بلاغ" : "Reported") : (isRtl ? "تعديل" : "Edit")}
+                    </span>
+                  </div>
+                  <div style={{ fontSize: "0.82rem", marginBottom: 8 }}>
+                    <strong>{isRtl ? "الحركة:" : "Action:"}</strong> {getActionLabel(log.action_type, log.old_status, log.new_status)}
+                  </div>
+                  <div style={{ fontSize: "0.8rem", color: "var(--text-muted)", display: "flex", justifyContent: "space-between" }}>
+                    <span>👤 {log.performed_by_name} ({log.performed_by})</span>
+                    <span>🕒 {formatDate(log.created_at).split(" · ")[0]}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
       </div>
 

@@ -15,11 +15,12 @@ import FPYPage from "./pages/FPYPage";
 import MaintenancePage from "./pages/MaintenancePage";
 
 
-function ProtectedRoute({ children, adminOnly = false, supervisorOnly = false }) {
+function ProtectedRoute({ children, adminOnly = false, supervisorOnly = false, defectsPage = false }) {
   const { currentUser } = useApp();
   if (!currentUser) return <Navigate to="/login" replace />;
   if (adminOnly && currentUser.role !== "admin") return <Navigate to="/dashboard" replace />;
   if (supervisorOnly && !["admin", "supervisor"].includes(currentUser.role)) return <Navigate to="/dashboard" replace />;
+  if (defectsPage && !["admin", "supervisor", "quality_management"].includes(currentUser.role)) return <Navigate to="/dashboard" replace />;
   return children;
 }
 
@@ -30,6 +31,7 @@ function AppRoutes() {
     if (!currentUser) return "/login";
     if (currentUser.role === "admin") return "/admin";
     if (currentUser.role === "supervisor") return "/dashboard";
+    if (currentUser.role === "quality_management") return "/defects";
     return "/dashboard";
   };
 
@@ -62,7 +64,7 @@ function AppRoutes() {
             <ProtectedRoute><WorkspacePage /></ProtectedRoute>
           } />
           <Route path="/defects" element={
-            <ProtectedRoute><DefectsPage /></ProtectedRoute>
+            <ProtectedRoute defectsPage><DefectsPage /></ProtectedRoute>
           } />
           <Route path="/knowledge" element={
             <ProtectedRoute><KnowledgeBasePage /></ProtectedRoute>

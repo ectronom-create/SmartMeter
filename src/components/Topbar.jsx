@@ -17,10 +17,12 @@ export default function Topbar() {
 
   const isAdmin = currentUser?.role === "admin";
   const isSupervisor = currentUser?.role === "supervisor";
+  const isQuality = currentUser?.role === "quality_management";
 
   const getDashboardPath = () => {
     if (isAdmin) return "/admin";
     if (isSupervisor) return "/dashboard";
+    if (isQuality) return "/defects";
     return "/dashboard";
   };
 
@@ -55,6 +57,11 @@ export default function Topbar() {
             <Shield size={13} /> {t("lineSupervisor")}
           </div>
         )}
+        {isQuality && (
+          <div className="topbar-role-badge badge-quality-role" style={{ display: "flex", alignItems: "center", gap: 6, padding: "4px 12px", borderRadius: "100px", background: "#e0f7fa", color: "#006064", border: "1px solid #b2ebf266", fontSize: "0.8rem", fontWeight: 700 }}>
+            <Shield size={13} /> {language === "ar" ? "إدارة الجودة" : "Quality Management"}
+          </div>
+        )}
 
         {/* Nav toggle buttons */}
         {isAdmin && location.pathname !== "/admin" && (
@@ -67,16 +74,14 @@ export default function Topbar() {
             <LayoutDashboard size={14} /> <span className="btn-text">{t("supervisorPanel")}</span>
           </button>
         )}
+        {isQuality && location.pathname !== "/defects" && (
+          <button className="btn btn-secondary btn-sm topbar-nav-btn" onClick={() => navigate("/defects")}>
+            <LayoutDashboard size={14} /> <span className="btn-text">{language === "ar" ? "العدادات المعطوبة" : "Defective Meters"}</span>
+          </button>
+        )}
         {isSupervisor && location.pathname === "/supervisor" && (
           <button className="btn btn-secondary btn-sm topbar-nav-btn" onClick={() => navigate("/dashboard")}>
             <LayoutDashboard size={14} /> <span className="btn-text">{language === "ar" ? "الشاشة الرئيسية" : "Main Dashboard"}</span>
-          </button>
-        )}
-
-        {/* Assets / Inventory Shortcut (Admin Only) */}
-        {isAdmin && (
-          <button className="btn btn-ghost btn-sm topbar-nav-btn" onClick={() => navigate("/assets")} title={t("equipmentManagement")}>
-            <Package size={15} /> <span className="btn-text" style={{ fontSize: "0.8rem" }}>{t("equipmentManagement")}</span>
           </button>
         )}
 
@@ -87,8 +92,8 @@ export default function Topbar() {
           </button>
         )}
 
-        {/* Maintenance Shortcut (All Logged-in Users) */}
-        {currentUser && (
+        {/* Maintenance Shortcut (All Logged-in Users except Admin) */}
+        {currentUser && !isAdmin && (
           <button className="btn btn-ghost btn-sm topbar-nav-btn" onClick={() => navigate("/maintenance")} title={t("maintenance")}>
             <Wrench size={15} /> <span className="btn-text" style={{ fontSize: "0.8rem" }}>{t("maintenance")}</span>
           </button>
@@ -123,7 +128,7 @@ export default function Topbar() {
           <div className="topbar-user" style={{ display: "flex", alignItems: "center", gap: 8, fontSize: "0.85rem", color: "var(--text-secondary)", fontWeight: 600 }}>
             <div className="topbar-avatar" style={{
               width: 30, height: 30, borderRadius: "50%",
-              background: isAdmin ? "linear-gradient(135deg,#e65100,#ff8f00)" : "linear-gradient(135deg,#1a7f37,#0550ae)",
+              background: isAdmin ? "linear-gradient(135deg,#e65100,#ff8f00)" : isQuality ? "linear-gradient(135deg,#009688,#00796b)" : "linear-gradient(135deg,#1a7f37,#0550ae)",
               display: "flex", alignItems: "center", justifyContent: "center",
               color: "#fff", fontWeight: 800, fontSize: "0.72rem"
             }}>

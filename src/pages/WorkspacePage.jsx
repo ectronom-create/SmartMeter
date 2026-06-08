@@ -6,7 +6,7 @@ import {
   Plus, Book, ChevronDown, ChevronUp, Zap, AlertCircle
 } from "lucide-react";
 
-import { translateError } from "./KnowledgeBasePage";
+import { translateError, TranslateText, TranslateSteps } from "./KnowledgeBasePage";
 
 function InstructionStep({ num, text, stageColor }) {
   return (
@@ -259,7 +259,7 @@ export default function WorkspacePage() {
 
             <div className="flex-grow-mobile" style={{ flex: 1 }}>
               <div className="mobile-center-row" style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", marginBottom: 4 }}>
-                <h2 style={{ margin: 0 }}>{currentStage.stage_name}</h2>
+                <h2 style={{ margin: 0 }}>{currentStage.stage_name.match(/\(([^)]+)\)/)?.[1] || currentStage.stage_name}</h2>
                 <span className="badge badge-gray">{currentStage.stage_id}</span>
                 {todaySchedule?.is_team_leader && <span className="badge badge-amber">⭐ {t("teamLeaderBadge")}</span>}
               </div>
@@ -307,11 +307,16 @@ export default function WorkspacePage() {
                     <div key={i} style={{ background: "#fff5f5", border: "1px solid #feb2b2", borderRadius: 12, padding: 14 }}>
                       <div style={{ display: "flex", alignItems: "flex-start", gap: 8, marginBottom: 6 }}>
                         <X size={14} style={{ color: "var(--red)", marginTop: 3 }} />
-                        <span style={{ fontWeight: 700, fontSize: "0.88rem", color: "#c53030" }}>{item.problem}</span>
+                        <span style={{ fontWeight: 700, fontSize: "0.88rem", color: "#c53030" }}>
+                          <TranslateText text={item.problem} targetLang={isRtl ? "ar" : "en"} />
+                        </span>
                       </div>
                       <div style={{ display: "flex", alignItems: "flex-start", gap: 8, paddingRight: isRtl ? 22 : 0, paddingLeft: !isRtl ? 22 : 0 }}>
                         <CheckCircle size={14} style={{ color: "var(--green)", marginTop: 3 }} />
-                        <span style={{ fontSize: "0.85rem", color: "#2f855a", fontWeight: 600 }}>{language === "ar" ? "الحل" : "Solution"}: {item.solution}</span>
+                        <span style={{ fontSize: "0.85rem", color: "#2f855a", fontWeight: 600 }}>
+                          {language === "ar" ? "الحل: " : "Solution: "}
+                          <TranslateText text={item.solution} targetLang={isRtl ? "ar" : "en"} />
+                        </span>
                       </div>
                     </div>
                   ))}

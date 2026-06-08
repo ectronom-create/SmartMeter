@@ -32,6 +32,7 @@ export function AppProvider({ children }) {
   const [defectiveMeters, setDefectiveMeters] = useState([]);
   const [equipmentStock, setEquipmentStock] = useState([]);
   const [equipmentHandouts, setEquipmentHandouts] = useState([]);
+  const [defectLogs, setDefectLogs]         = useState([]);
   
   const [loginError, setLoginError]         = useState("");
   const [isLoading, setIsLoading]           = useState(true);
@@ -48,6 +49,16 @@ export function AppProvider({ children }) {
       try {
         setIsLoading(true);
         
+        const fetchLogsPromise = supabase.from("defect_logs").select("*").order("created_at", { ascending: false })
+          .then(({ data, error }) => {
+            if (error) {
+              console.warn("defect_logs table might not exist yet:", error.message);
+              return { data: null };
+            }
+            return { data };
+          })
+          .catch(() => ({ data: null }));
+
         // Fetch all data in parallel for speed
         const [
           { data: uData },
@@ -57,7 +68,8 @@ export function AppProvider({ children }) {
           { data: defData },
           { data: eqData },
           { data: hoData },
-          { data: shiftData }
+          { data: shiftData },
+          { data: logsData }
         ] = await Promise.all([
           supabase.from("users").select("*"),
           supabase.from("production_stages").select("*"),
@@ -66,7 +78,8 @@ export function AppProvider({ children }) {
           supabase.from("defective_meters").select("*"),
           supabase.from("equipment_stock").select("*"),
           supabase.from("equipment_handouts").select("*"),
-          supabase.from("shift_types").select("*")
+          supabase.from("shift_types").select("*"),
+          fetchLogsPromise
         ]);
 
         if (uData) setUsers(uData);
@@ -98,6 +111,15 @@ export function AppProvider({ children }) {
         if (eqData) setEquipmentStock(eqData);
         if (hoData) setEquipmentHandouts(hoData);
         if (shiftData) setShiftTypes(shiftData);
+        
+        if (logsData) {
+          setDefectLogs(logsData);
+        } else {
+          try {
+            const cached = localStorage.getItem("SmartMeter_DefectLogs");
+            if (cached) setDefectLogs(JSON.parse(cached));
+          } catch (e) {}
+        }
 
       } catch (err) {
         console.error("Error loading data from Supabase:", err);
@@ -472,6 +494,38 @@ export function AppProvider({ children }) {
     }
   }, []);
 
+  const addDefectLog = useCallback(async (log) => {
+    const payload = {
+      defect_id: log.defect_id,
+      serial_number: log.serial_number,
+      action_type: log.action_type,
+      old_status: log.old_status || null,
+      new_status: log.new_status || null,
+      performed_by: log.performed_by || currentUser?.employee_id || "System",
+      performed_by_name: log.performed_by_name || currentUser?.full_name || "System"
+    };
+
+    try {
+      const { data, error } = await supabase.from("defect_logs").insert([payload]).select().single();
+      if (error) throw error;
+      setDefectLogs(prev => [data, ...prev]);
+    } catch (err) {
+      console.warn("Supabase defect log insert failed, saving locally:", err.message);
+      const localLog = {
+        id: `LOG-${Date.now()}-${Math.random().toString(36).substr(2, 6)}`,
+        ...payload,
+        created_at: new Date().toISOString()
+      };
+      setDefectLogs(prev => {
+        const next = [localLog, ...prev];
+        try {
+          localStorage.setItem("SmartMeter_DefectLogs", JSON.stringify(next));
+        } catch (e) {}
+        return next;
+      });
+    }
+  }, [currentUser]);
+
   const addDefectiveMeter = useCallback(async (entry) => {
     const existing = defectiveMeters.find(m => 
       m.serial_number === entry.serial_number && m.status !== "resolved"
@@ -510,16 +564,27 @@ export function AppProvider({ children }) {
         .single();
       if (error) throw error;
       setDefectiveMeters(prev => [data, ...prev]);
+
+      // Log action
+      addDefectLog({
+        defect_id: data.id,
+        serial_number: data.serial_number,
+        action_type: "reported",
+        old_status: null,
+        new_status: "reported",
+        performed_by: entry.reported_by,
+        performed_by_name: currentUser?.full_name || "Operator"
+      });
+
       return { success: true, entry: data };
     } catch (err) {
       console.error("Supabase defect add error:", err.message, err.details, err.hint);
       return { success: false, message: `خطأ في الحفظ: ${err.message || 'Error saving to cloud.'}` };
     }
-  }, [defectiveMeters, errorCodes]);
+  }, [defectiveMeters, errorCodes, addDefectLog, currentUser]);
 
   const addDefectiveMetersBulk = useCallback(async (entriesArray) => {
     try {
-      // Filter out duplicate serials that are already open (not resolved)
       const existingSerials = new Set(
         defectiveMeters
           .filter(m => m.status !== "resolved")
@@ -532,7 +597,6 @@ export function AppProvider({ children }) {
         return { success: false, message: "جميع العدادات مضافة مسبقاً ولديهم بلاغات نشطة." };
       }
 
-      // Strip any custom id fields — let Supabase auto-generate UUIDs
       const payloads = uniqueNew.map(({ id, ...rest }) => {
         let finalStage = rest.stage_found;
         const errCodeObj = errorCodes.find(e => e.code === rest.error_code);
@@ -556,23 +620,55 @@ export function AppProvider({ children }) {
       if (error) throw error;
 
       setDefectiveMeters(prev => [...(data || payloads), ...prev]);
+
+      // Log bulk upload
+      if (data && data.length > 0) {
+        data.forEach(m => {
+          addDefectLog({
+            defect_id: m.id,
+            serial_number: m.serial_number,
+            action_type: "reported",
+            old_status: null,
+            new_status: m.status,
+            performed_by: currentUser?.employee_id || "System",
+            performed_by_name: currentUser?.full_name || "System"
+          });
+        });
+      }
+
       return { success: true, count: uniqueNew.length };
     } catch (err) {
       console.error("Supabase defective meters bulk add error:", err);
       return { success: false, error: err };
     }
-  }, [defectiveMeters, errorCodes]);
+  }, [defectiveMeters, errorCodes, addDefectLog, currentUser]);
 
   const updateMeterStatus = useCallback(async (id, status) => {
     const resolved_at = status === "resolved" ? new Date().toISOString() : null;
+    const resolved_by = status === "resolved" ? currentUser?.employee_id : null;
+    const oldMeter = defectiveMeters.find(m => m.id === id);
+    const oldStatus = oldMeter ? oldMeter.status : null;
+    const serialNumber = oldMeter ? oldMeter.serial_number : "UNKNOWN";
+
     try {
-      const { error } = await supabase.from("defective_meters").update({ status, resolved_at }).eq("id", id);
+      const { error } = await supabase.from("defective_meters").update({ status, resolved_at, resolved_by }).eq("id", id);
       if (error) throw error;
-      setDefectiveMeters(prev => prev.map(m => m.id === id ? { ...m, status, resolved_at } : m));
+      setDefectiveMeters(prev => prev.map(m => m.id === id ? { ...m, status, resolved_at, resolved_by } : m));
+
+      // Log status change
+      addDefectLog({
+        defect_id: id,
+        serial_number: serialNumber,
+        action_type: "status_change",
+        old_status: oldStatus,
+        new_status: status,
+        performed_by: currentUser?.employee_id,
+        performed_by_name: currentUser?.full_name || "User"
+      });
     } catch (err) {
       console.error("Supabase defect update error:", err);
     }
-  }, []);
+  }, [defectiveMeters, currentUser, addDefectLog]);
 
   // ── Error code management ────────────────────────────
   const addErrorCode = useCallback(async (errorData) => {
@@ -845,6 +941,7 @@ export function AppProvider({ children }) {
     errorCodes, addErrorCode, updateErrorCode, deleteErrorCode, addErrorCodesBulk,
     getStageById, getShiftById, getUserById, getScheduleWithDetails,
     defectiveMeters, addDefectiveMeter, addDefectiveMetersBulk, updateMeterStatus,
+    defectLogs, addDefectLog,
     searchErrorCodes, getErrorByCode,
     equipmentStock, addEquipmentStock, updateEquipmentStock, deleteEquipmentItem, restockEquipment,
     equipmentHandouts, handoutEquipment, returnEquipment, getMyHandouts, getLowStockItems,

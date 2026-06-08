@@ -1,5 +1,8 @@
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useApp } from "../context/AppContext";
+import { supabase } from "../supabaseClient";
+import { TranslateText } from "./KnowledgeBasePage";
 import {
   Play, Calendar, Star, Clock, ChevronLeft,
   AlertTriangle, CheckCircle, Layers, BookOpen, BarChart2, Wrench
@@ -33,6 +36,62 @@ export default function EmployeeDashboard() {
   } = useApp();
 
   const isRtl = language === "ar";
+  const [myMaintenanceShift, setMyMaintenanceShift] = useState(null);
+
+  useEffect(() => {
+    if (!currentUser) return;
+
+    const fetchMyShift = async () => {
+      try {
+        const today = new Date();
+        today.setHours(0,0,0,0);
+        
+        const { data, error } = await supabase
+          .from("maintenance_schedule")
+          .select("*")
+          .eq("employee_id", currentUser.employee_id)
+          .eq("status", "pending");
+
+        if (error) throw error;
+
+        const active = data?.find(s => {
+          const start = new Date(s.week_start_date + "T00:00:00");
+          const end = new Date(start);
+          end.setDate(start.getDate() + 7);
+          return today >= start && today < end;
+        });
+
+        if (active) {
+          setMyMaintenanceShift(active);
+        }
+      } catch (err) {
+        try {
+          const local = localStorage.getItem("Ectron_Maintenance_Schedule");
+          if (local) {
+            const parsed = JSON.parse(local);
+            const today = new Date();
+            today.setHours(0,0,0,0);
+            
+            const active = parsed.find(s => {
+              const start = new Date(s.week_start_date + "T00:00:00");
+              const end = new Date(start);
+              end.setDate(start.getDate() + 7);
+              return s.employee_id === currentUser.employee_id && 
+                     s.status === "pending" && 
+                     today >= start && today < end;
+            });
+            if (active) {
+              setMyMaintenanceShift(active);
+            }
+          }
+        } catch (e) {
+          console.error("Local storage fallback error:", e);
+        }
+      }
+    };
+
+    fetchMyShift();
+  }, [currentUser]);
 
   if (!currentUser) {
     return null;
@@ -104,6 +163,53 @@ export default function EmployeeDashboard() {
           </div>
         </div>
 
+        {/* Maintenance Alert Notification Banner */}
+        {myMaintenanceShift && (
+          <div className="alert alert-warning animate-fade animate-slide-up" style={{ 
+            background: "linear-gradient(135deg, #78350f, #451a03)", 
+            color: "#fef3c7", 
+            border: "1px solid #f59e0b",
+            padding: "16px 20px",
+            borderRadius: "var(--radius-lg)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            gap: 16,
+            flexWrap: "wrap",
+            boxShadow: "0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06)",
+            marginTop: 4
+          }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+              <Wrench size={22} style={{ color: "#fbbf24", flexShrink: 0 }} />
+              <div>
+                <strong style={{ display: "block", fontSize: "0.95rem", fontWeight: 700 }}>
+                  {isRtl ? "⚠️ تنبيه مهمة صيانة مطلوبة!" : "⚠️ Pending Maintenance Task Alert!"}
+                </strong>
+                <span style={{ fontSize: "0.8rem", color: "#fcd34d" }}>
+                  {isRtl 
+                    ? `أنت مكلف بمهمة الصيانة الدورية هذا الأسبوع: (${myMaintenanceShift.task_name}). يرجى القيام بالصيانة وتأكيد إنجازها.`
+                    : `You are scheduled for the periodic maintenance task this week: (${myMaintenanceShift.task_name}). Please perform the task and confirm completion.`}
+                </span>
+              </div>
+            </div>
+            <button 
+              className="btn btn-sm" 
+              onClick={() => navigate("/maintenance")}
+              style={{ 
+                background: "#f59e0b", 
+                borderColor: "#f59e0b", 
+                color: "#451a03", 
+                fontWeight: 800,
+                fontSize: "0.78rem",
+                padding: "6px 12px",
+                cursor: "pointer"
+              }}
+            >
+              {isRtl ? "عرض تفاصيل الصيانة" : "View Maintenance Details"}
+            </button>
+          </div>
+        )}
+
         {/* ── Stats row ── */}
         <div className="grid-3 animate-fade stagger">
           <div className="stat-card">
@@ -153,7 +259,7 @@ export default function EmployeeDashboard() {
               {/* Info */}
               <div style={{ flex: 1 }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", marginBottom: 6 }}>
-                  <h2>{currentStage.stage_name}</h2>
+                  <h2>{currentStage.stage_name.match(/\(([^)]+)\)/)?.[1] || currentStage.stage_name}</h2>
                   {todaySchedule.is_team_leader && (
                     <span className="badge badge-amber">
                       <Star size={11} fill="currentColor" /> {t("teamLeaderBadge")}
@@ -235,8 +341,12 @@ export default function EmployeeDashboard() {
                   <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
                     {currentStage.troubleshooting.slice(0, 2).map((item, i) => (
                       <div key={i} style={{ fontSize: "0.82rem" }}>
-                        <div style={{ fontWeight: 700, color: "#c53030", marginBottom: 2 }}>{item.problem}</div>
-                        <div style={{ color: "#2f855a", fontWeight: 600 }}>💡 {t("solutionPrefix")}{item.solution}</div>
+                        <div style={{ fontWeight: 700, color: "#c53030", marginBottom: 2 }}>
+                          <TranslateText text={item.problem} targetLang={isRtl ? "ar" : "en"} />
+                        </div>
+                        <div style={{ color: "#2f855a", fontWeight: 600 }}>
+                          💡 {t("solutionPrefix")}<TranslateText text={item.solution} targetLang={isRtl ? "ar" : "en"} />
+                        </div>
                       </div>
                     ))}
                   </div>
@@ -287,7 +397,7 @@ export default function EmployeeDashboard() {
 
                     <div style={{ flex: 1, textAlign: isRtl ? "right" : "left" }}>
                       <div style={{ fontWeight: 700, fontSize: "0.9rem", display: "flex", alignItems: "center", gap: 6, justifyContent: isRtl ? "flex-start" : "flex-end" }}>
-                        {d.stage?.icon} {d.stage?.stage_name}
+                        {d.stage?.icon} {d.stage?.stage_name ? (d.stage.stage_name.match(/\(([^)]+)\)/)?.[1] || d.stage.stage_name) : ""}
                         {sch.is_team_leader && (
                           <Star size={12} style={{ color: "#d29922" }} fill="#d29922" />
                         )}

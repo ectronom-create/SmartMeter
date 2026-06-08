@@ -1,7 +1,7 @@
 export const translations = {
   ar: {
     // Auth & Navigation
-    brandName: "ECTRON PLS",
+    brandName: "ECTRON",
     subBrandName: "نظام إدارة خط الإنتاج",
     adminPanel: "مدير النظام",
     equipmentManagement: "إدارة العهدة",
@@ -98,7 +98,7 @@ export const translations = {
   },
   en: {
     // Auth & Navigation
-    brandName: "ECTRON PLS",
+    brandName: "ECTRON",
     subBrandName: "Production Line Management System",
     adminPanel: "Admin Panel",
     equipmentManagement: "Equipment",

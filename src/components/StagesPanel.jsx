@@ -148,9 +148,8 @@ export default function StagesPanel() {
 
   const isRtl = language === "ar";
 
-  const getTranslatedStageName = (s, isRtl) => {
+  const getTranslatedStageName = (s) => {
     if (!s) return "";
-    if (isRtl) return s.stage_name;
     const match = s.stage_name.match(/\(([^)]+)\)/);
     return match ? match[1].trim() : s.stage_name;
   };
@@ -184,7 +183,7 @@ export default function StagesPanel() {
               </div>
               <div style={{ flex: 1, textAlign: isRtl ? "right" : "left" }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4, flexDirection: isRtl ? "row" : "row-reverse" }}>
-                  <h3 style={{ margin: 0 }}>{getTranslatedStageName(s, isRtl)}</h3>
+                  <h3 style={{ margin: 0 }}>{getTranslatedStageName(s)}</h3>
                   <span className="badge badge-gray">{s.stage_id}</span>
                 </div>
                 <div style={{ fontSize: "0.85rem", color: "var(--text-muted)", marginBottom: 12 }}>

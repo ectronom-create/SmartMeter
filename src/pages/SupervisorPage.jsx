@@ -7,18 +7,17 @@ import {
 
 import { useNavigate } from "react-router-dom";
 
-const getStageNameTranslated = (stageId, isRtl) => {
-  const namesAr = {
-    "STG-01": "التجميع", "STG-02": "العزل",
-    "STG-03": "التردد اللاسلكي", "STG-04": "المعايرة", "STG-05": "الاختبار المتعدد", "STG-06": "التخصيص",
-    "GLOBAL": "عام"
-  };
-  const namesEn = {
-    "STG-01": "Assembly", "STG-02": "Insulation",
-    "STG-03": "Radio Frequency", "STG-04": "Calibration", "STG-05": "Multi Test", "STG-06": "Perso",
+const getStageNameTranslated = (stageId) => {
+  const names = {
+    "STG-01": "Assembly", 
+    "STG-02": "Insulation",
+    "STG-03": "Radio Frequency", 
+    "STG-04": "Calibration", 
+    "STG-05": "Multi Test", 
+    "STG-06": "Perso",
     "GLOBAL": "General"
   };
-  return isRtl ? (namesAr[stageId] || stageId) : (namesEn[stageId] || stageId);
+  return names[stageId] || stageId;
 };
 
 export default function SupervisorPage() {
@@ -136,7 +135,7 @@ export default function SupervisorPage() {
                   <div key={stage.stage_id} className="stage-assignment-row">
                     <div className="stage-assignment-icon">{stage.icon}</div>
                     <div className="stage-assignment-info">
-                      <div className="stage-assignment-name">{stage.stage_name}</div>
+                       <div className="stage-assignment-name">{stage.stage_name.match(/\(([^)]+)\)/)?.[1] || stage.stage_name}</div>
                       <div className="stage-assignment-workers">
                         {workers.map(w => (
                           <span key={w.employee_id} className={`badge ${w.is_team_leader ? "badge-amber" : "badge-gray"}`} style={{ fontSize: "0.7rem" }}>

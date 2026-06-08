@@ -1,0 +1,2957 @@
+[
+  {
+    "code": "-107",
+    "stage_id": "STG-01",
+    "description": "محاولة حفظ قيمة غير مقبولة كإعداد صالح.",
+    "troubleshooting_steps": [
+      "Verify the setting value before saving. Check configuration."
+    ],
+    "created_at": "2026-06-08T06:37:36.928639+00:00",
+    "title_ar": "خطأ - حفظ قيمة غير معتمدة",
+    "title_en": "Error - Save Non-Setting Value"
+  },
+  {
+    "code": "-501",
+    "stage_id": "STG-01",
+    "description": "فشل إرسال أمر قراءة إصدار التطبيق للعداد.",
+    "troubleshooting_steps": [
+      "Check meter communication. Retry command."
+    ],
+    "created_at": "2026-06-08T06:37:36.928639+00:00",
+    "title_ar": "خطأ - أمر قراءة إصدار التطبيق",
+    "title_en": "Error - App Version Command"
+  },
+  {
+    "code": "-502",
+    "stage_id": "STG-01",
+    "description": "إصدار التطبيق لا يطابق الإصدار المطلوب.",
+    "troubleshooting_steps": [
+      "Update firmware to the correct version."
+    ],
+    "created_at": "2026-06-08T06:37:36.928639+00:00",
+    "title_ar": "خطأ - التحقق من إصدار التطبيق",
+    "title_en": "Error - App Version Mismatch"
+  },
+  {
+    "code": "-102",
+    "stage_id": "GLOBAL",
+    "description": "Error during the validation or verification of the product code.",
+    "troubleshooting_steps": [],
+    "created_at": "2026-06-08T05:14:13.061382+00:00",
+    "title_ar": "خطأ في التحقق من كود المنتج",
+    "title_en": "ERR_CHECK_CODE_PROD"
+  },
+  {
+    "code": "-103",
+    "stage_id": "GLOBAL",
+    "description": "Error checking the product index, revision, or version number.",
+    "troubleshooting_steps": [],
+    "created_at": "2026-06-08T05:14:49.036172+00:00",
+    "title_ar": "خطأ في التحقق من مؤشر/إصدار المنتج",
+    "title_en": "ERR_CHECK_INDICE_PROD"
+  },
+  {
+    "code": "-503",
+    "stage_id": "STG-01",
+    "description": "فشل حفظ إصدار التطبيق في قاعدة البيانات.",
+    "troubleshooting_steps": [
+      "Check database connection and retry."
+    ],
+    "created_at": "2026-06-08T06:37:36.928639+00:00",
+    "title_ar": "خطأ - حفظ إصدار التطبيق",
+    "title_en": "Error - Save App Version"
+  },
+  {
+    "code": "-505",
+    "stage_id": "STG-01",
+    "description": "فشل إرسال أمر قراءة إصدار العداد.",
+    "troubleshooting_steps": [
+      "Verify meter is powered and connected."
+    ],
+    "created_at": "2026-06-08T06:37:36.928639+00:00",
+    "title_ar": "خطأ - أمر قراءة إصدار العداد",
+    "title_en": "Error - Meter Version Command"
+  },
+  {
+    "code": "-506",
+    "stage_id": "STG-01",
+    "description": "إصدار العداد لا يطابق المواصفات المطلوبة.",
+    "troubleshooting_steps": [
+      "Update meter firmware to correct version."
+    ],
+    "created_at": "2026-06-08T06:37:36.928639+00:00",
+    "title_ar": "خطأ - عدم تطابق إصدار العداد",
+    "title_en": "Error - Meter Version Mismatch"
+  },
+  {
+    "code": "-507",
+    "stage_id": "STG-01",
+    "description": "فشل حفظ إصدار العداد في السجل.",
+    "troubleshooting_steps": [
+      "Check database connection and retry."
+    ],
+    "created_at": "2026-06-08T06:37:36.928639+00:00",
+    "title_ar": "خطأ - حفظ إصدار العداد",
+    "title_en": "Error - Save Meter Version"
+  },
+  {
+    "code": "-574",
+    "stage_id": "STG-01",
+    "description": "فشل استرداد بيانات العنصر الأصلي من نظام SFC.",
+    "troubleshooting_steps": [
+      "Verify SFC system is reachable. Check parent record."
+    ],
+    "created_at": "2026-06-08T06:37:36.928639+00:00",
+    "title_ar": "خطأ - استرداد بيانات SFC الأصلي",
+    "title_en": "Error - Get SFC Parent Record"
+  },
+  {
+    "code": "-575",
+    "stage_id": "STG-01",
+    "description": "الرقم التسلسلي موجود مسبقاً أو غير مسجل في النظام.",
+    "troubleshooting_steps": [
+      "Verify the serial number is unique in the system."
+    ],
+    "created_at": "2026-06-08T06:37:36.928639+00:00",
+    "title_ar": "خطأ - التحقق من وجود الرقم التسلسلي",
+    "title_en": "Error - Serial Number Already Exists"
+  },
+  {
+    "code": "-576",
+    "stage_id": "STG-01",
+    "description": "فشل التحقق من اتصال RS485 مع العداد.",
+    "troubleshooting_steps": [
+      "Inspect RS485 cable. Verify port settings and address."
+    ],
+    "created_at": "2026-06-08T06:37:36.928639+00:00",
+    "title_ar": "خطأ - فشل اتصال RS485",
+    "title_en": "Error - RS485 Connection Failed"
+  },
+  {
+    "code": "-577",
+    "stage_id": "STG-01",
+    "description": "فشل توليد رقم تسلسلي جديد من النظام.",
+    "troubleshooting_steps": [
+      "Check SFC system availability and retry."
+    ],
+    "created_at": "2026-06-08T06:37:36.928639+00:00",
+    "title_ar": "خطأ - فشل توليد الرقم التسلسلي",
+    "title_en": "Error - Serial Number Generation Failed"
+  },
+  {
+    "code": "-578",
+    "stage_id": "STG-01",
+    "description": "فشل كتابة الرقم التسلسلي في ذاكرة العداد.",
+    "troubleshooting_steps": [
+      "Verify communication port and meter response."
+    ],
+    "created_at": "2026-06-08T06:37:36.928639+00:00",
+    "title_ar": "خطأ - فشل كتابة الرقم التسلسلي",
+    "title_en": "Error - Write Serial Number Failed"
+  },
+  {
+    "code": "-579",
+    "stage_id": "STG-01",
+    "description": "فشل ربط العنصر بسجل آخر في نظام SFC.",
+    "troubleshooting_steps": [
+      "Check system connectivity and data validity."
+    ],
+    "created_at": "2026-06-08T06:37:36.928639+00:00",
+    "title_ar": "خطأ - فشل إضافة الرابط",
+    "title_en": "Error - Add Link Failed"
+  },
+  {
+    "code": "-633",
+    "stage_id": "STG-01",
+    "description": "فشل قراءة رمز تعريف بطاقة SIM (ICCID).",
+    "troubleshooting_steps": [
+      "Verify SIM card is inserted. Check module communication."
+    ],
+    "created_at": "2026-06-08T06:37:36.928639+00:00",
+    "title_ar": "خطأ - قراءة ICCID",
+    "title_en": "Error - Read ICCID Failed"
+  },
+  {
+    "code": "-106",
+    "stage_id": "STG-02",
+    "description": "فشل إنهاء جلسة الاتصال مع نظام TracaCOM.",
+    "troubleshooting_steps": [
+      "Verify TracaCOM service is running. Restart session."
+    ],
+    "created_at": "2026-06-08T06:37:36.928639+00:00",
+    "title_ar": "خطأ - إنهاء اتصال TracaCOM",
+    "title_en": "Error - End TracaCOM Session Failed"
+  },
+  {
+    "code": "-591",
+    "stage_id": "STG-01",
+    "description": "فشل حفظ إصدار البرنامج الثابت في قاعدة البيانات.",
+    "troubleshooting_steps": [
+      "Check database connectivity and retry."
+    ],
+    "created_at": "2026-06-08T06:37:36.928639+00:00",
+    "title_ar": "خطأ - حفظ إصدار البرنامج الثابت",
+    "title_en": "Error - Save Firmware Version Failed"
+  },
+  {
+    "code": "-613",
+    "stage_id": "STG-01",
+    "description": "فشل إرسال أمر التهيئة JI0 لوحدة RF.",
+    "troubleshooting_steps": [
+      "Verify RF module is powered and responsive."
+    ],
+    "created_at": "2026-06-08T06:37:36.928639+00:00",
+    "title_ar": "خطأ - أمر تهيئة JI0",
+    "title_en": "Error - JI0 Initialization Command Failed"
+  },
+  {
+    "code": "-615",
+    "stage_id": "STG-01",
+    "description": "فشل ضبط إعدادات جهاز الاختبار CMW.",
+    "troubleshooting_steps": [
+      "Check CMW instrument connection and configuration."
+    ],
+    "created_at": "2026-06-08T06:37:36.928639+00:00",
+    "title_ar": "خطأ - ضبط جهاز CMW",
+    "title_en": "Error - CMW Instrument Configuration Failed"
+  },
+  {
+    "code": "-616",
+    "stage_id": "STG-01",
+    "description": "فشل إرسال أمر تفعيل الإرسال في النطاق الترددي 3.",
+    "troubleshooting_steps": [
+      "Verify RF module firmware. Check AT command syntax."
+    ],
+    "created_at": "2026-06-08T06:37:36.928639+00:00",
+    "title_ar": "خطأ - تفعيل الإرسال في النطاق 3",
+    "title_en": "Error - Enable TX Band 3 Failed"
+  },
+  {
+    "code": "-617",
+    "stage_id": "STG-01",
+    "description": "فشل إرسال إشارة RF في النطاق الترددي 3.",
+    "troubleshooting_steps": [
+      "Check antenna connection. Verify RF module operation."
+    ],
+    "created_at": "2026-06-08T06:37:36.928639+00:00",
+    "title_ar": "خطأ - إرسال في النطاق 3",
+    "title_en": "Error - TX Band 3 Failed"
+  },
+  {
+    "code": "-618",
+    "stage_id": "STG-01",
+    "description": "قياس طاقة الإرسال في النطاق 3 خارج الحدود المقبولة.",
+    "troubleshooting_steps": [
+      "Check antenna. Recalibrate RF power settings."
+    ],
+    "created_at": "2026-06-08T06:37:36.928639+00:00",
+    "title_ar": "خطأ - قياس طاقة الإرسال النطاق 3",
+    "title_en": "Error - TX Power Measurement Band 3 Out of Range"
+  },
+  {
+    "code": "-622",
+    "stage_id": "STG-01",
+    "description": "فشل إرسال أمر تفعيل النطاق الترددي 20.",
+    "troubleshooting_steps": [
+      "Verify RF module supports Band 20."
+    ],
+    "created_at": "2026-06-08T06:37:36.928639+00:00",
+    "title_ar": "خطأ - أمر النطاق الترددي 20",
+    "title_en": "Error - Band 20 Command Failed"
+  },
+  {
+    "code": "-623",
+    "stage_id": "STG-01",
+    "description": "قياس طاقة الإرسال في النطاق 20 خارج الحدود المقبولة.",
+    "troubleshooting_steps": [
+      "Check antenna connection. Recalibrate RF module."
+    ],
+    "created_at": "2026-06-08T06:37:36.928639+00:00",
+    "title_ar": "خطأ - قياس طاقة الإرسال النطاق 20",
+    "title_en": "Error - TX Power Measurement Band 20 Out of Range"
+  },
+  {
+    "code": "-640",
+    "stage_id": "STG-01",
+    "description": "فشل إرسال أمر قراءة رقم IMEI من الوحدة اللاسلكية.",
+    "troubleshooting_steps": [
+      "Verify module communication. Check AT command port."
+    ],
+    "created_at": "2026-06-08T06:37:36.928639+00:00",
+    "title_ar": "خطأ - قراءة رقم IMEI",
+    "title_en": "Error - Read IMEI Command Failed"
+  },
+  {
+    "code": "-641",
+    "stage_id": "STG-01",
+    "description": "فشل قراءة معلومات الوحدة اللاسلكية.",
+    "troubleshooting_steps": [
+      "Check module communication port and power."
+    ],
+    "created_at": "2026-06-08T06:37:36.928639+00:00",
+    "title_ar": "خطأ - قراءة معلومات الوحدة",
+    "title_en": "Error - Read Module Info Failed"
+  },
+  {
+    "code": "-642",
+    "stage_id": "STG-01",
+    "description": "فشل إرسال أمر قراءة ICCID من وحدة RF.",
+    "troubleshooting_steps": [
+      "Verify SIM is inserted. Check module response."
+    ],
+    "created_at": "2026-06-08T06:37:36.928639+00:00",
+    "title_ar": "خطأ - قراءة ICCID من وحدة RF",
+    "title_en": "Error - Read ICCID from RF Module Failed"
+  },
+  {
+    "code": "-643",
+    "stage_id": "STG-01",
+    "description": "فشل قراءة رقم تعريف المشترك IMSI من بطاقة SIM.",
+    "troubleshooting_steps": [
+      "Verify SIM card is valid and correctly inserted."
+    ],
+    "created_at": "2026-06-08T06:37:36.928639+00:00",
+    "title_ar": "خطأ - قراءة رقم IMSI",
+    "title_en": "Error - Read IMSI Command Failed"
+  },
+  {
+    "code": "-670",
+    "stage_id": "STG-01",
+    "description": "فشل حفظ رقم IMEI في قاعدة البيانات.",
+    "troubleshooting_steps": [
+      "Check database connection. Verify IMEI format."
+    ],
+    "created_at": "2026-06-08T06:37:36.928639+00:00",
+    "title_ar": "خطأ - حفظ IMEI في قاعدة البيانات",
+    "title_en": "Error - Save IMEI Property Failed"
+  },
+  {
+    "code": "-671",
+    "stage_id": "STG-01",
+    "description": "فشل حفظ معلومات الوحدة في قاعدة البيانات.",
+    "troubleshooting_steps": [
+      "Check database connectivity and retry."
+    ],
+    "created_at": "2026-06-08T06:37:36.928639+00:00",
+    "title_ar": "خطأ - حفظ بيانات الوحدة",
+    "title_en": "Error - Save Module Property Failed"
+  },
+  {
+    "code": "-672",
+    "stage_id": "STG-01",
+    "description": "فشل حفظ رقم ICCID في قاعدة البيانات.",
+    "troubleshooting_steps": [
+      "Check database connection. Verify ICCID format."
+    ],
+    "created_at": "2026-06-08T06:37:36.928639+00:00",
+    "title_ar": "خطأ - حفظ ICCID في قاعدة البيانات",
+    "title_en": "Error - Save ICCID Property Failed"
+  },
+  {
+    "code": "-673",
+    "stage_id": "STG-01",
+    "description": "فشل حفظ رقم IMSI في قاعدة البيانات.",
+    "troubleshooting_steps": [
+      "Check database connection. Verify IMSI format."
+    ],
+    "created_at": "2026-06-08T06:37:36.928639+00:00",
+    "title_ar": "خطأ - حفظ IMSI في قاعدة البيانات",
+    "title_en": "Error - Save IMSI Property Failed"
+  },
+  {
+    "code": "-912",
+    "stage_id": "STG-01",
+    "description": "لم يُستقبل أي إشارة في نطاق الاستقبال 20.",
+    "troubleshooting_steps": [
+      "Check RF signal source. Verify antenna connection."
+    ],
+    "created_at": "2026-06-08T06:37:36.928639+00:00",
+    "title_ar": "خطأ - الاستقبال في النطاق 20 فارغ",
+    "title_en": "Error - RX Band 20 Empty/No Signal"
+  },
+  {
+    "code": "-211",
+    "stage_id": "STG-04",
+    "description": "فشل إرسال قيمة الإشارة المطلوبة لمولد الاختبار.",
+    "troubleshooting_steps": [
+      "Verify generator connection and COM port settings."
+    ],
+    "created_at": "2026-06-08T06:37:36.928639+00:00",
+    "title_ar": "خطأ - إرسال إشارة المولد المرجعية",
+    "title_en": "Error - Send Generator Setpoint Failed"
+  },
+  {
+    "code": "-311",
+    "stage_id": "STG-04",
+    "description": "فشل قراءة القيمة من جهاز القياس المرجعي.",
+    "troubleshooting_steps": [
+      "Check reference meter connection. Verify RS232/RS485 cable."
+    ],
+    "created_at": "2026-06-08T06:37:36.928639+00:00",
+    "title_ar": "خطأ - قراءة قيمة الجهاز المرجعي",
+    "title_en": "Error - Read Reference Meter Value Failed"
+  },
+  {
+    "code": "-340",
+    "stage_id": "STG-04",
+    "description": "فشل حساب تكامل الطاقة من الجهاز المرجعي.",
+    "troubleshooting_steps": [
+      "Verify reference meter is stable. Retry calibration step."
+    ],
+    "created_at": "2026-06-08T06:37:36.928639+00:00",
+    "title_ar": "خطأ - تكامل طاقة الجهاز المرجعي",
+    "title_en": "Error - Reference Power Integration Failed"
+  },
+  {
+    "code": "-299",
+    "stage_id": "STG-04",
+    "description": "فشل إرسال أمر إيقاف مولد الاختبار.",
+    "troubleshooting_steps": [
+      "Check generator communication. Power cycle if needed."
+    ],
+    "created_at": "2026-06-08T06:37:36.928639+00:00",
+    "title_ar": "خطأ - إيقاف المولد",
+    "title_en": "Error - Stop Generator Failed"
+  },
+  {
+    "code": "-140",
+    "stage_id": "STG-04",
+    "description": "فشل تكامل طاقة العداد أثناء الاختبار.",
+    "troubleshooting_steps": [
+      "Check pulse output connection. Verify counter settings."
+    ],
+    "created_at": "2026-06-08T06:37:36.928639+00:00",
+    "title_ar": "خطأ - تكامل طاقة العداد",
+    "title_en": "Error - Meter Power Integration Failed"
+  },
+  {
+    "code": "-341",
+    "stage_id": "STG-04",
+    "description": "قيمة الجهد في الطور 1 لا تطابق الهدف المطلوب.",
+    "troubleshooting_steps": [
+      "Adjust voltage calibration for Phase 1."
+    ],
+    "created_at": "2026-06-08T06:37:36.928639+00:00",
+    "title_ar": "خطأ - جهد PH1 خارج الهدف",
+    "title_en": "Error - Voltage Target PH1 Out of Range"
+  },
+  {
+    "code": "-342",
+    "stage_id": "STG-04",
+    "description": "قيمة التيار في الطور 1 لا تطابق الهدف المطلوب.",
+    "troubleshooting_steps": [
+      "Adjust current calibration for Phase 1."
+    ],
+    "created_at": "2026-06-08T06:37:36.928639+00:00",
+    "title_ar": "خطأ - تيار PH1 خارج الهدف",
+    "title_en": "Error - Current Target PH1 Out of Range"
+  },
+  {
+    "code": "-343",
+    "stage_id": "STG-04",
+    "description": "زاوية الطور 1 خارج النطاق المسموح به.",
+    "troubleshooting_steps": [
+      "Check power factor settings for Phase 1."
+    ],
+    "created_at": "2026-06-08T06:37:36.928639+00:00",
+    "title_ar": "خطأ - زاوية طور PH1 خارج الهدف",
+    "title_en": "Error - Phase Angle Target PH1 Out of Range"
+  },
+  {
+    "code": "-344",
+    "stage_id": "STG-04",
+    "description": "قيمة الجهد في الطور 2 لا تطابق الهدف المطلوب.",
+    "troubleshooting_steps": [
+      "Adjust voltage calibration for Phase 2."
+    ],
+    "created_at": "2026-06-08T06:37:36.928639+00:00",
+    "title_ar": "خطأ - جهد PH2 خارج الهدف",
+    "title_en": "Error - Voltage Target PH2 Out of Range"
+  },
+  {
+    "code": "-345",
+    "stage_id": "STG-04",
+    "description": "قيمة التيار في الطور 2 لا تطابق الهدف المطلوب.",
+    "troubleshooting_steps": [
+      "Adjust current calibration for Phase 2."
+    ],
+    "created_at": "2026-06-08T06:37:36.928639+00:00",
+    "title_ar": "خطأ - تيار PH2 خارج الهدف",
+    "title_en": "Error - Current Target PH2 Out of Range"
+  },
+  {
+    "code": "-346",
+    "stage_id": "STG-04",
+    "description": "زاوية الطور 2 خارج النطاق المسموح به.",
+    "troubleshooting_steps": [
+      "Check power factor settings for Phase 2."
+    ],
+    "created_at": "2026-06-08T06:37:36.928639+00:00",
+    "title_ar": "خطأ - زاوية طور PH2 خارج الهدف",
+    "title_en": "Error - Phase Angle Target PH2 Out of Range"
+  },
+  {
+    "code": "-347",
+    "stage_id": "STG-04",
+    "description": "قيمة الجهد في الطور 3 لا تطابق الهدف المطلوب.",
+    "troubleshooting_steps": [
+      "Adjust voltage calibration for Phase 3."
+    ],
+    "created_at": "2026-06-08T06:37:36.928639+00:00",
+    "title_ar": "خطأ - جهد PH3 خارج الهدف",
+    "title_en": "Error - Voltage Target PH3 Out of Range"
+  },
+  {
+    "code": "-348",
+    "stage_id": "STG-04",
+    "description": "قيمة التيار في الطور 3 لا تطابق الهدف المطلوب.",
+    "troubleshooting_steps": [
+      "Adjust current calibration for Phase 3."
+    ],
+    "created_at": "2026-06-08T06:37:36.928639+00:00",
+    "title_ar": "خطأ - تيار PH3 خارج الهدف",
+    "title_en": "Error - Current Target PH3 Out of Range"
+  },
+  {
+    "code": "-349",
+    "stage_id": "STG-04",
+    "description": "زاوية الطور 3 خارج النطاق المسموح به.",
+    "troubleshooting_steps": [
+      "Check power factor settings for Phase 3."
+    ],
+    "created_at": "2026-06-08T06:37:36.928639+00:00",
+    "title_ar": "خطأ - زاوية طور PH3 خارج الهدف",
+    "title_en": "Error - Phase Angle Target PH3 Out of Range"
+  },
+  {
+    "code": "-150",
+    "stage_id": "STG-04",
+    "description": "فشل إرسال المعاملات الافتراضية للعداد.",
+    "troubleshooting_steps": [
+      "Check meter communication. Verify parameter file."
+    ],
+    "created_at": "2026-06-08T06:37:36.928639+00:00",
+    "title_ar": "خطأ - إرسال المعاملات الافتراضية",
+    "title_en": "Error - Send Default Parameters Failed"
+  },
+  {
+    "code": "-151",
+    "stage_id": "STG-04",
+    "description": "فشل تعيين قنوات التيار في العداد.",
+    "troubleshooting_steps": [
+      "Check channel mapping configuration."
+    ],
+    "created_at": "2026-06-08T06:37:36.928639+00:00",
+    "title_ar": "خطأ - تعيين قنوات التيار",
+    "title_en": "Error - Assign Current Channels Failed"
+  },
+  {
+    "code": "-152",
+    "stage_id": "STG-04",
+    "description": "خطأ عام في إجراء ضبط الكسب للتيار الأساسي FOI.",
+    "troubleshooting_steps": [
+      "Restart calibration procedure. Check meter connection."
+    ],
+    "created_at": "2026-06-08T06:37:36.928639+00:00",
+    "title_ar": "خطأ - ضبط كسب التيار الأساسي FOI",
+    "title_en": "Error - FOI Fundamental Current Gain Regulation"
+  },
+  {
+    "code": "-153",
+    "stage_id": "STG-04",
+    "description": "فشل بدء إجراء ضبط الكسب للتيار الأساسي FOI.",
+    "troubleshooting_steps": [
+      "Verify generator is ready. Check initial conditions."
+    ],
+    "created_at": "2026-06-08T06:37:36.928639+00:00",
+    "title_ar": "خطأ - بدء ضبط كسب FOI",
+    "title_en": "Error - Start FOI Gain Regulation Failed"
+  },
+  {
+    "code": "-154",
+    "stage_id": "STG-04",
+    "description": "فشل قراءة قيمة معامل الكسب FOI من العداد.",
+    "troubleshooting_steps": [
+      "Check meter communication port."
+    ],
+    "created_at": "2026-06-08T06:37:36.928639+00:00",
+    "title_ar": "خطأ - قراءة قيمة كسب FOI",
+    "title_en": "Error - Get FOI Gain Calibration Value Failed"
+  },
+  {
+    "code": "-155",
+    "stage_id": "STG-04",
+    "description": "فشل تهيئة العداد الداخلي لضبط الكسب FOI.",
+    "troubleshooting_steps": [
+      "Power cycle meter. Retry initialization."
+    ],
+    "created_at": "2026-06-08T06:37:36.928639+00:00",
+    "title_ar": "خطأ - تهيئة عداد كسب FOI",
+    "title_en": "Error - Initialize FOI Gain Counter Failed"
+  },
+  {
+    "code": "-156",
+    "stage_id": "STG-04",
+    "description": "فشل تكامل قراءات الجهاز المرجعي أثناء ضبط كسب FOI.",
+    "troubleshooting_steps": [
+      "Verify reference meter stability."
+    ],
+    "created_at": "2026-06-08T06:37:36.928639+00:00",
+    "title_ar": "خطأ - تكامل المرجع لكسب FOI",
+    "title_en": "Error - FOI Gain Reference Integration Failed"
+  },
+  {
+    "code": "-157",
+    "stage_id": "STG-04",
+    "description": "فشل قراءة نبضات العداد أثناء تكامل ضبط كسب FOI.",
+    "troubleshooting_steps": [
+      "Check pulse output wiring."
+    ],
+    "created_at": "2026-06-08T06:37:36.928639+00:00",
+    "title_ar": "خطأ - تكامل النبضات لكسب FOI",
+    "title_en": "Error - FOI Gain Meter Counter Integration Failed"
+  },
+  {
+    "code": "-158",
+    "stage_id": "STG-04",
+    "description": "فشل كتابة قيمة الكسب المحسوبة في ذاكرة العداد FOI.",
+    "troubleshooting_steps": [
+      "Verify write permissions. Check meter response."
+    ],
+    "created_at": "2026-06-08T06:37:36.928639+00:00",
+    "title_ar": "خطأ - كتابة قيمة كسب FOI",
+    "title_en": "Error - Set FOI Gain Calibration Value Failed"
+  },
+  {
+    "code": "-159",
+    "stage_id": "STG-04",
+    "description": "فشل حساب معامل الجهد KU لضبط الكسب FOI.",
+    "troubleshooting_steps": [
+      "Check measured voltage values. Verify calculation inputs."
+    ],
+    "created_at": "2026-06-08T06:37:36.928639+00:00",
+    "title_ar": "خطأ - حساب معامل الجهد KU لـ FOI",
+    "title_en": "Error - Calculate Voltage Coefficient KU FOI Gain"
+  },
+  {
+    "code": "-160",
+    "stage_id": "STG-04",
+    "description": "فشل حساب معامل التيار KI لضبط الكسب FOI.",
+    "troubleshooting_steps": [
+      "Check measured current values. Verify reference accuracy."
+    ],
+    "created_at": "2026-06-08T06:37:36.928639+00:00",
+    "title_ar": "خطأ - حساب معامل التيار KI لـ FOI",
+    "title_en": "Error - Calculate Current Coefficient KI FOI Gain"
+  },
+  {
+    "code": "-161",
+    "stage_id": "STG-04",
+    "description": "فشل حساب معامل Ksin لضبط الكسب FOI.",
+    "troubleshooting_steps": [
+      "Verify phase angle measurement. Retry calculation."
+    ],
+    "created_at": "2026-06-08T06:37:36.928639+00:00",
+    "title_ar": "خطأ - حساب Ksin لكسب FOI",
+    "title_en": "Error - Calculate Ksin FOI Gain"
+  },
+  {
+    "code": "-162",
+    "stage_id": "STG-04",
+    "description": "فشل حساب معاملات Kcos/Ksin لضبط الكسب FOI.",
+    "troubleshooting_steps": [
+      "Check phase measurement accuracy. Retry calibration."
+    ],
+    "created_at": "2026-06-08T06:37:36.928639+00:00",
+    "title_ar": "خطأ - حساب Kcos/Ksin لكسب FOI",
+    "title_en": "Error - Calculate Kcos/Ksin FOI Gain"
+  },
+  {
+    "code": "-163",
+    "stage_id": "STG-04",
+    "description": "فشل إيقاف إجراء ضبط الكسب FOI.",
+    "troubleshooting_steps": [
+      "Force stop generator. Power cycle equipment."
+    ],
+    "created_at": "2026-06-08T06:37:36.928639+00:00",
+    "title_ar": "خطأ - إيقاف ضبط كسب FOI",
+    "title_en": "Error - Stop FOI Gain Regulation Failed"
+  },
+  {
+    "code": "-164",
+    "stage_id": "STG-04",
+    "description": "خطأ عام في إجراء ضبط كسب التيار التوافقي FAI.",
+    "troubleshooting_steps": [
+      "Restart FAI calibration. Check meter connection."
+    ],
+    "created_at": "2026-06-08T06:37:36.928639+00:00",
+    "title_ar": "خطأ - ضبط كسب التيار التوافقي FAI",
+    "title_en": "Error - FAI Harmonic Current Gain Regulation"
+  },
+  {
+    "code": "-165",
+    "stage_id": "STG-04",
+    "description": "فشل بدء إجراء ضبط الكسب للتيار التوافقي FAI.",
+    "troubleshooting_steps": [
+      "Verify harmonic generator is ready."
+    ],
+    "created_at": "2026-06-08T06:37:36.928639+00:00",
+    "title_ar": "خطأ - بدء ضبط كسب FAI",
+    "title_en": "Error - Start FAI Gain Regulation Failed"
+  },
+  {
+    "code": "-166",
+    "stage_id": "STG-04",
+    "description": "فشل قراءة قيمة معامل الكسب FAI من العداد.",
+    "troubleshooting_steps": [
+      "Check meter communication port."
+    ],
+    "created_at": "2026-06-08T06:37:36.928639+00:00",
+    "title_ar": "خطأ - قراءة قيمة كسب FAI",
+    "title_en": "Error - Get FAI Gain Calibration Value Failed"
+  },
+  {
+    "code": "-167",
+    "stage_id": "STG-04",
+    "description": "فشل تهيئة العداد الداخلي لضبط الكسب FAI.",
+    "troubleshooting_steps": [
+      "Power cycle meter. Retry initialization."
+    ],
+    "created_at": "2026-06-08T06:37:36.928639+00:00",
+    "title_ar": "خطأ - تهيئة عداد كسب FAI",
+    "title_en": "Error - Initialize FAI Gain Counter Failed"
+  },
+  {
+    "code": "-168",
+    "stage_id": "STG-04",
+    "description": "فشل تكامل قراءات المرجع أثناء ضبط كسب FAI.",
+    "troubleshooting_steps": [
+      "Verify reference meter stability."
+    ],
+    "created_at": "2026-06-08T06:37:36.928639+00:00",
+    "title_ar": "خطأ - تكامل المرجع لكسب FAI",
+    "title_en": "Error - FAI Gain Reference Integration Failed"
+  },
+  {
+    "code": "-169",
+    "stage_id": "STG-04",
+    "description": "فشل قراءة النبضات أثناء تكامل ضبط كسب FAI.",
+    "troubleshooting_steps": [
+      "Check pulse output wiring."
+    ],
+    "created_at": "2026-06-08T06:37:36.928639+00:00",
+    "title_ar": "خطأ - تكامل النبضات لكسب FAI",
+    "title_en": "Error - FAI Gain Meter Counter Integration Failed"
+  },
+  {
+    "code": "-170",
+    "stage_id": "STG-04",
+    "description": "فشل كتابة قيمة الكسب المحسوبة في ذاكرة العداد FAI.",
+    "troubleshooting_steps": [
+      "Verify write access. Check meter response."
+    ],
+    "created_at": "2026-06-08T06:37:36.928639+00:00",
+    "title_ar": "خطأ - كتابة قيمة كسب FAI",
+    "title_en": "Error - Set FAI Gain Calibration Value Failed"
+  },
+  {
+    "code": "-171",
+    "stage_id": "STG-04",
+    "description": "فشل حساب معامل الجهد KU لضبط الكسب FAI.",
+    "troubleshooting_steps": [
+      "Verify input voltage values."
+    ],
+    "created_at": "2026-06-08T06:37:36.928639+00:00",
+    "title_ar": "خطأ - حساب KU لكسب FAI",
+    "title_en": "Error - Calculate KU FAI Gain"
+  },
+  {
+    "code": "-172",
+    "stage_id": "STG-04",
+    "description": "فشل حساب معامل التيار KI لضبط الكسب FAI.",
+    "troubleshooting_steps": [
+      "Verify current measurement accuracy."
+    ],
+    "created_at": "2026-06-08T06:37:36.928639+00:00",
+    "title_ar": "خطأ - حساب KI لكسب FAI",
+    "title_en": "Error - Calculate KI FAI Gain"
+  },
+  {
+    "code": "-173",
+    "stage_id": "STG-04",
+    "description": "فشل حساب معامل Ksin لضبط الكسب FAI.",
+    "troubleshooting_steps": [
+      "Check phase angle measurement."
+    ],
+    "created_at": "2026-06-08T06:37:36.928639+00:00",
+    "title_ar": "خطأ - حساب Ksin لكسب FAI",
+    "title_en": "Error - Calculate Ksin FAI Gain"
+  },
+  {
+    "code": "-174",
+    "stage_id": "STG-04",
+    "description": "فشل حساب معاملات Ksin/Kcos لضبط الكسب FAI.",
+    "troubleshooting_steps": [
+      "Verify phase measurements. Retry calibration."
+    ],
+    "created_at": "2026-06-08T06:37:36.928639+00:00",
+    "title_ar": "خطأ - حساب Ksin/Kcos لكسب FAI",
+    "title_en": "Error - Calculate Ksin/Kcos FAI Gain"
+  },
+  {
+    "code": "-175",
+    "stage_id": "STG-04",
+    "description": "فشل إيقاف إجراء ضبط الكسب FAI.",
+    "troubleshooting_steps": [
+      "Force stop generator. Power cycle equipment."
+    ],
+    "created_at": "2026-06-08T06:37:36.928639+00:00",
+    "title_ar": "خطأ - إيقاف ضبط كسب FAI",
+    "title_en": "Error - Stop FAI Gain Regulation Failed"
+  },
+  {
+    "code": "-176",
+    "stage_id": "STG-04",
+    "description": "فشل بدء إجراء ضبط إزاحة التيار الأساسي FOI.",
+    "troubleshooting_steps": [
+      "Verify initial conditions. Check generator."
+    ],
+    "created_at": "2026-06-08T06:37:36.928639+00:00",
+    "title_ar": "خطأ - بدء ضبط إزاحة FOI",
+    "title_en": "Error - Start FOI Offset Regulation Failed"
+  },
+  {
+    "code": "-177",
+    "stage_id": "STG-04",
+    "description": "فشل قراءة قيمة إزاحة FOI من العداد.",
+    "troubleshooting_steps": [
+      "Check meter communication."
+    ],
+    "created_at": "2026-06-08T06:37:36.928639+00:00",
+    "title_ar": "خطأ - قراءة إزاحة FOI",
+    "title_en": "Error - Get FOI Offset Value Failed"
+  },
+  {
+    "code": "-178",
+    "stage_id": "STG-04",
+    "description": "فشل تهيئة عداد النبضات لضبط إزاحة FOI.",
+    "troubleshooting_steps": [
+      "Power cycle meter. Retry."
+    ],
+    "created_at": "2026-06-08T06:37:36.928639+00:00",
+    "title_ar": "خطأ - تهيئة عداد إزاحة FOI",
+    "title_en": "Error - Initialize FOI Offset Counter Failed"
+  },
+  {
+    "code": "-179",
+    "stage_id": "STG-04",
+    "description": "فشل تكامل قراءات المرجع أثناء ضبط إزاحة FOI.",
+    "troubleshooting_steps": [
+      "Check reference meter connection."
+    ],
+    "created_at": "2026-06-08T06:37:36.928639+00:00",
+    "title_ar": "خطأ - تكامل المرجع لإزاحة FOI",
+    "title_en": "Error - FOI Offset Reference Integration Failed"
+  },
+  {
+    "code": "-180",
+    "stage_id": "STG-04",
+    "description": "فشل قراءة نبضات العداد أثناء ضبط إزاحة FOI.",
+    "troubleshooting_steps": [
+      "Check pulse counter wiring."
+    ],
+    "created_at": "2026-06-08T06:37:36.928639+00:00",
+    "title_ar": "خطأ - تكامل النبضات لإزاحة FOI",
+    "title_en": "Error - FOI Offset Counter Integration Failed"
+  },
+  {
+    "code": "-181",
+    "stage_id": "STG-04",
+    "description": "فشل كتابة قيمة الإزاحة المحسوبة للعداد FOI.",
+    "troubleshooting_steps": [
+      "Verify meter write access."
+    ],
+    "created_at": "2026-06-08T06:37:36.928639+00:00",
+    "title_ar": "خطأ - كتابة إزاحة FOI",
+    "title_en": "Error - Set FOI Offset Value Failed"
+  },
+  {
+    "code": "-182",
+    "stage_id": "STG-04",
+    "description": "فشل حساب معاملات الضوضاء Kcos/Ksin لإزاحة FOI.",
+    "troubleshooting_steps": [
+      "Ensure no external interference. Retry."
+    ],
+    "created_at": "2026-06-08T06:37:36.928639+00:00",
+    "title_ar": "خطأ - حساب ضوضاء Kcos/Ksin لإزاحة FOI",
+    "title_en": "Error - Calculate Kcos/Ksin Noise FOI Offset"
+  },
+  {
+    "code": "-183",
+    "stage_id": "STG-04",
+    "description": "فشل إيقاف إجراء ضبط إزاحة FOI.",
+    "troubleshooting_steps": [
+      "Force stop generator."
+    ],
+    "created_at": "2026-06-08T06:37:36.928639+00:00",
+    "title_ar": "خطأ - إيقاف ضبط إزاحة FOI",
+    "title_en": "Error - Stop FOI Offset Regulation Failed"
+  },
+  {
+    "code": "-184",
+    "stage_id": "STG-04",
+    "description": "خطأ عام في ضبط إزاحة التيار التوافقي FAI.",
+    "troubleshooting_steps": [
+      "Restart calibration. Check meter."
+    ],
+    "created_at": "2026-06-08T06:37:36.928639+00:00",
+    "title_ar": "خطأ - ضبط إزاحة FAI",
+    "title_en": "Error - FAI Offset Adjustment Failed"
+  },
+  {
+    "code": "-185",
+    "stage_id": "STG-04",
+    "description": "قيمة إزاحة FOI خارج النطاق المقبول.",
+    "troubleshooting_steps": [
+      "Recalibrate meter offset. Check reference connection."
+    ],
+    "created_at": "2026-06-08T06:37:36.928639+00:00",
+    "title_ar": "خطأ - إزاحة FOI خارج النطاق",
+    "title_en": "Error - FOI Offset Out of Range"
+  },
+  {
+    "code": "-186",
+    "stage_id": "STG-04",
+    "description": "فشل بدء ضبط إزاحة التيار التوافقي FAI.",
+    "troubleshooting_steps": [
+      "Verify generator and meter ready state."
+    ],
+    "created_at": "2026-06-08T06:37:36.928639+00:00",
+    "title_ar": "خطأ - بدء ضبط إزاحة FAI",
+    "title_en": "Error - Start FAI Offset Regulation Failed"
+  },
+  {
+    "code": "-187",
+    "stage_id": "STG-04",
+    "description": "فشل قراءة قيمة إزاحة FAI من العداد.",
+    "troubleshooting_steps": [
+      "Check meter communication port."
+    ],
+    "created_at": "2026-06-08T06:37:36.928639+00:00",
+    "title_ar": "خطأ - قراءة إزاحة FAI",
+    "title_en": "Error - Get FAI Offset Value Failed"
+  },
+  {
+    "code": "-188",
+    "stage_id": "STG-04",
+    "description": "فشل تهيئة عداد النبضات لضبط إزاحة FAI.",
+    "troubleshooting_steps": [
+      "Power cycle meter. Retry initialization."
+    ],
+    "created_at": "2026-06-08T06:37:36.928639+00:00",
+    "title_ar": "خطأ - تهيئة عداد إزاحة FAI",
+    "title_en": "Error - Initialize FAI Offset Counter Failed"
+  },
+  {
+    "code": "-189",
+    "stage_id": "STG-04",
+    "description": "فشل تكامل قراءات المرجع أثناء ضبط إزاحة FAI.",
+    "troubleshooting_steps": [
+      "Check reference meter stability."
+    ],
+    "created_at": "2026-06-08T06:37:36.928639+00:00",
+    "title_ar": "خطأ - تكامل المرجع لإزاحة FAI",
+    "title_en": "Error - FAI Offset Reference Integration Failed"
+  },
+  {
+    "code": "-190",
+    "stage_id": "STG-04",
+    "description": "فشل قراءة نبضات العداد أثناء ضبط إزاحة FAI.",
+    "troubleshooting_steps": [
+      "Check pulse output wiring."
+    ],
+    "created_at": "2026-06-08T06:37:36.928639+00:00",
+    "title_ar": "خطأ - تكامل النبضات لإزاحة FAI",
+    "title_en": "Error - FAI Offset Counter Integration Failed"
+  },
+  {
+    "code": "-191",
+    "stage_id": "STG-04",
+    "description": "فشل كتابة قيمة إزاحة FAI في العداد.",
+    "troubleshooting_steps": [
+      "Verify write permissions."
+    ],
+    "created_at": "2026-06-08T06:37:36.928639+00:00",
+    "title_ar": "خطأ - كتابة إزاحة FAI",
+    "title_en": "Error - Set FAI Offset Value Failed"
+  },
+  {
+    "code": "-192",
+    "stage_id": "STG-04",
+    "description": "فشل حساب معاملات الضوضاء Kcos/Ksin لإزاحة FAI.",
+    "troubleshooting_steps": [
+      "Remove interference sources. Retry."
+    ],
+    "created_at": "2026-06-08T06:37:36.928639+00:00",
+    "title_ar": "خطأ - حساب ضوضاء Kcos/Ksin لإزاحة FAI",
+    "title_en": "Error - Calculate Kcos/Ksin Noise FAI Offset"
+  },
+  {
+    "code": "-193",
+    "stage_id": "STG-04",
+    "description": "فشل إيقاف إجراء ضبط إزاحة FAI.",
+    "troubleshooting_steps": [
+      "Force stop generator."
+    ],
+    "created_at": "2026-06-08T06:37:36.928639+00:00",
+    "title_ar": "خطأ - إيقاف ضبط إزاحة FAI",
+    "title_en": "Error - Stop FAI Offset Regulation Failed"
+  },
+  {
+    "code": "-120",
+    "stage_id": "STG-04",
+    "description": "فشل تكامل قراءات المرجع لنقطة الأداء FOI.",
+    "troubleshooting_steps": [
+      "Check reference meter. Verify signal stability."
+    ],
+    "created_at": "2026-06-08T06:37:36.928639+00:00",
+    "title_ar": "خطأ - تكامل مرجع نقطة أداء FOI",
+    "title_en": "Error - FOI Performance Point Reference Integration"
+  },
+  {
+    "code": "-121",
+    "stage_id": "STG-04",
+    "description": "فشل قراءة نبضات العداد لنقطة الأداء FOI.",
+    "troubleshooting_steps": [
+      "Check pulse counter wiring."
+    ],
+    "created_at": "2026-06-08T06:37:36.928639+00:00",
+    "title_ar": "خطأ - تكامل نبضات نقطة أداء FOI",
+    "title_en": "Error - FOI Performance Point Counter Integration"
+  },
+  {
+    "code": "-122",
+    "stage_id": "STG-04",
+    "description": "فشل كتابة قيمة نقطة الأداء FOI في العداد.",
+    "troubleshooting_steps": [
+      "Verify meter write access."
+    ],
+    "created_at": "2026-06-08T06:37:36.928639+00:00",
+    "title_ar": "خطأ - كتابة نقطة أداء FOI",
+    "title_en": "Error - Set FOI Performance Point Value Failed"
+  },
+  {
+    "code": "-124",
+    "stage_id": "STG-04",
+    "description": "قيمة انزياح الطاقة FOI خارج النطاق المسموح به.",
+    "troubleshooting_steps": [
+      "Recalibrate power offset. Check connections."
+    ],
+    "created_at": "2026-06-08T06:37:36.928639+00:00",
+    "title_ar": "خطأ - انزياح طاقة FOI خارج الحد",
+    "title_en": "Error - FOI Power Offset Out of Range"
+  },
+  {
+    "code": "-125",
+    "stage_id": "STG-04",
+    "description": "فشل تكامل قراءات المرجع لنقطة الأداء FAI.",
+    "troubleshooting_steps": [
+      "Check reference meter. Verify signal stability."
+    ],
+    "created_at": "2026-06-08T06:37:36.928639+00:00",
+    "title_ar": "خطأ - تكامل مرجع نقطة أداء FAI",
+    "title_en": "Error - FAI Performance Point Reference Integration"
+  },
+  {
+    "code": "-126",
+    "stage_id": "STG-04",
+    "description": "فشل قراءة نبضات العداد لنقطة الأداء FAI.",
+    "troubleshooting_steps": [
+      "Check pulse counter wiring."
+    ],
+    "created_at": "2026-06-08T06:37:36.928639+00:00",
+    "title_ar": "خطأ - تكامل نبضات نقطة أداء FAI",
+    "title_en": "Error - FAI Performance Point Counter Integration"
+  },
+  {
+    "code": "-127",
+    "stage_id": "STG-04",
+    "description": "فشل كتابة قيمة نقطة الأداء FAI في العداد.",
+    "troubleshooting_steps": [
+      "Verify meter write access."
+    ],
+    "created_at": "2026-06-08T06:37:36.928639+00:00",
+    "title_ar": "خطأ - كتابة نقطة أداء FAI",
+    "title_en": "Error - Set FAI Performance Point Value Failed"
+  },
+  {
+    "code": "-128",
+    "stage_id": "STG-04",
+    "description": "قيمة انزياح الطاقة FAI عند نقطة القياس 1 خارج الحد.",
+    "troubleshooting_steps": [
+      "Recalibrate FAI P1 offset. Check connections."
+    ],
+    "created_at": "2026-06-08T06:37:36.928639+00:00",
+    "title_ar": "خطأ - انزياح الطاقة FAI نقطة 1",
+    "title_en": "Error - FAI Power Offset Point 1 Out of Range"
+  },
+  {
+    "code": "-129",
+    "stage_id": "STG-04",
+    "description": "قيمة انزياح الطاقة FAI خارج النطاق المسموح به.",
+    "troubleshooting_steps": [
+      "Recalibrate FAI power offset. Check connections."
+    ],
+    "created_at": "2026-06-08T06:37:36.928639+00:00",
+    "title_ar": "خطأ - انزياح طاقة FAI خارج الحد",
+    "title_en": "Error - FAI Power Offset Out of Range"
+  },
+  {
+    "code": "-500",
+    "stage_id": "STG-04",
+    "description": "فشل التحقق من نتائج المترولوجيا للعداد.",
+    "troubleshooting_steps": [
+      "Review calibration results. Retry if within tolerance."
+    ],
+    "created_at": "2026-06-08T06:37:36.928639+00:00",
+    "title_ar": "خطأ - التحقق من المترولوجيا",
+    "title_en": "Error - Metrology Verification Failed"
+  },
+  {
+    "code": "-560",
+    "stage_id": "STG-04",
+    "description": "قيمة جهد الطور 1 في نقطة القياس 1 خارج حدود الدقة المطلوبة.",
+    "troubleshooting_steps": [
+      "Recalibrate Phase 1 Voltage. Verify reference meter accuracy."
+    ],
+    "created_at": "2026-06-08T06:37:36.928639+00:00",
+    "title_ar": "خطأ - جهد الطور 1 في نقطة القياس 1",
+    "title_en": "Error - Phase 1 Voltage at P1 Out of Range"
+  },
+  {
+    "code": "-570",
+    "stage_id": "STG-04",
+    "description": "قيمة تيار الطور 1 في نقطة القياس 1 خارج حدود الدقة المطلوبة.",
+    "troubleshooting_steps": [
+      "Recalibrate Phase 1 Current. Verify reference meter accuracy."
+    ],
+    "created_at": "2026-06-08T06:37:36.928639+00:00",
+    "title_ar": "خطأ - تيار الطور 1 في نقطة القياس 1",
+    "title_en": "Error - Phase 1 Current at P1 Out of Range"
+  },
+  {
+    "code": "-550",
+    "stage_id": "STG-04",
+    "description": "قيمة طاقة فعلية طور 1 في نقطة القياس 1 خارج حدود الدقة المطلوبة.",
+    "troubleshooting_steps": [
+      "Recalibrate Phase 1 Active Power. Verify reference meter accuracy."
+    ],
+    "created_at": "2026-06-08T06:37:36.928639+00:00",
+    "title_ar": "خطأ - طاقة فعلية طور 1 في نقطة القياس 1",
+    "title_en": "Error - Phase 1 Active Power at P1 Out of Range"
+  },
+  {
+    "code": "-540",
+    "stage_id": "STG-04",
+    "description": "قيمة طاقة تفاعلية طور 1 في نقطة القياس 1 خارج حدود الدقة المطلوبة.",
+    "troubleshooting_steps": [
+      "Recalibrate Phase 1 Reactive Power. Verify reference meter accuracy."
+    ],
+    "created_at": "2026-06-08T06:37:36.928639+00:00",
+    "title_ar": "خطأ - طاقة تفاعلية طور 1 في نقطة القياس 1",
+    "title_en": "Error - Phase 1 Reactive Power at P1 Out of Range"
+  },
+  {
+    "code": "-561",
+    "stage_id": "STG-04",
+    "description": "قيمة جهد الطور 2 في نقطة القياس 1 خارج حدود الدقة المطلوبة.",
+    "troubleshooting_steps": [
+      "Recalibrate Phase 2 Voltage. Verify reference meter accuracy."
+    ],
+    "created_at": "2026-06-08T06:37:36.928639+00:00",
+    "title_ar": "خطأ - جهد الطور 2 في نقطة القياس 1",
+    "title_en": "Error - Phase 2 Voltage at P1 Out of Range"
+  },
+  {
+    "code": "-571",
+    "stage_id": "STG-04",
+    "description": "قيمة تيار الطور 2 في نقطة القياس 1 خارج حدود الدقة المطلوبة.",
+    "troubleshooting_steps": [
+      "Recalibrate Phase 2 Current. Verify reference meter accuracy."
+    ],
+    "created_at": "2026-06-08T06:37:36.928639+00:00",
+    "title_ar": "خطأ - تيار الطور 2 في نقطة القياس 1",
+    "title_en": "Error - Phase 2 Current at P1 Out of Range"
+  },
+  {
+    "code": "-551",
+    "stage_id": "STG-04",
+    "description": "قيمة طاقة فعلية طور 2 في نقطة القياس 1 خارج حدود الدقة المطلوبة.",
+    "troubleshooting_steps": [
+      "Recalibrate Phase 2 Active Power. Verify reference meter accuracy."
+    ],
+    "created_at": "2026-06-08T06:37:36.928639+00:00",
+    "title_ar": "خطأ - طاقة فعلية طور 2 في نقطة القياس 1",
+    "title_en": "Error - Phase 2 Active Power at P1 Out of Range"
+  },
+  {
+    "code": "-541",
+    "stage_id": "STG-04",
+    "description": "قيمة طاقة تفاعلية طور 2 في نقطة القياس 1 خارج حدود الدقة المطلوبة.",
+    "troubleshooting_steps": [
+      "Recalibrate Phase 2 Reactive Power. Verify reference meter accuracy."
+    ],
+    "created_at": "2026-06-08T06:37:36.928639+00:00",
+    "title_ar": "خطأ - طاقة تفاعلية طور 2 في نقطة القياس 1",
+    "title_en": "Error - Phase 2 Reactive Power at P1 Out of Range"
+  },
+  {
+    "code": "-562",
+    "stage_id": "STG-04",
+    "description": "قيمة جهد الطور 3 في نقطة القياس 1 خارج حدود الدقة المطلوبة.",
+    "troubleshooting_steps": [
+      "Recalibrate Phase 3 Voltage. Verify reference meter accuracy."
+    ],
+    "created_at": "2026-06-08T06:37:36.928639+00:00",
+    "title_ar": "خطأ - جهد الطور 3 في نقطة القياس 1",
+    "title_en": "Error - Phase 3 Voltage at P1 Out of Range"
+  },
+  {
+    "code": "-572",
+    "stage_id": "STG-04",
+    "description": "قيمة تيار الطور 3 في نقطة القياس 1 خارج حدود الدقة المطلوبة.",
+    "troubleshooting_steps": [
+      "Recalibrate Phase 3 Current. Verify reference meter accuracy."
+    ],
+    "created_at": "2026-06-08T06:37:36.928639+00:00",
+    "title_ar": "خطأ - تيار الطور 3 في نقطة القياس 1",
+    "title_en": "Error - Phase 3 Current at P1 Out of Range"
+  },
+  {
+    "code": "-60",
+    "stage_id": "STG-04",
+    "description": "فشل تسجيل خروج العملية من النظام.",
+    "troubleshooting_steps": [
+      "Verify user credentials. Check system availability."
+    ],
+    "created_at": "2026-06-08T06:37:36.928639+00:00",
+    "title_ar": "خطأ - تسجيل الخروج من العملية",
+    "title_en": "Error - Sign Off Failed"
+  },
+  {
+    "code": "-552",
+    "stage_id": "STG-04",
+    "description": "قيمة طاقة فعلية طور 3 في نقطة القياس 1 خارج حدود الدقة المطلوبة.",
+    "troubleshooting_steps": [
+      "Recalibrate Phase 3 Active Power. Verify reference meter accuracy."
+    ],
+    "created_at": "2026-06-08T06:37:36.928639+00:00",
+    "title_ar": "خطأ - طاقة فعلية طور 3 في نقطة القياس 1",
+    "title_en": "Error - Phase 3 Active Power at P1 Out of Range"
+  },
+  {
+    "code": "-542",
+    "stage_id": "STG-04",
+    "description": "قيمة طاقة تفاعلية طور 3 في نقطة القياس 1 خارج حدود الدقة المطلوبة.",
+    "troubleshooting_steps": [
+      "Recalibrate Phase 3 Reactive Power. Verify reference meter accuracy."
+    ],
+    "created_at": "2026-06-08T06:37:36.928639+00:00",
+    "title_ar": "خطأ - طاقة تفاعلية طور 3 في نقطة القياس 1",
+    "title_en": "Error - Phase 3 Reactive Power at P1 Out of Range"
+  },
+  {
+    "code": "-553",
+    "stage_id": "STG-04",
+    "description": "قيمة إجمالي الطاقة الفعلية في نقطة القياس 1 خارج حدود الدقة المطلوبة.",
+    "troubleshooting_steps": [
+      "Recalibrate Total Active Power. Verify reference meter accuracy."
+    ],
+    "created_at": "2026-06-08T06:37:36.928639+00:00",
+    "title_ar": "خطأ - إجمالي الطاقة الفعلية في نقطة القياس 1",
+    "title_en": "Error - Total Active Power at P1 Out of Range"
+  },
+  {
+    "code": "-543",
+    "stage_id": "STG-04",
+    "description": "قيمة إجمالي الطاقة التفاعلية في نقطة القياس 1 خارج حدود الدقة المطلوبة.",
+    "troubleshooting_steps": [
+      "Recalibrate Total Reactive Power. Verify reference meter accuracy."
+    ],
+    "created_at": "2026-06-08T06:37:36.928639+00:00",
+    "title_ar": "خطأ - إجمالي الطاقة التفاعلية في نقطة القياس 1",
+    "title_en": "Error - Total Reactive Power at P1 Out of Range"
+  },
+  {
+    "code": "-660",
+    "stage_id": "STG-04",
+    "description": "قيمة جهد الطور 1 في نقطة القياس 2 خارج حدود الدقة المطلوبة.",
+    "troubleshooting_steps": [
+      "Recalibrate Phase 1 Voltage. Verify reference meter accuracy."
+    ],
+    "created_at": "2026-06-08T06:37:36.928639+00:00",
+    "title_ar": "خطأ - جهد الطور 1 في نقطة القياس 2",
+    "title_en": "Error - Phase 1 Voltage at P2 Out of Range"
+  },
+  {
+    "code": "-670",
+    "stage_id": "STG-04",
+    "description": "قيمة تيار الطور 1 في نقطة القياس 2 خارج حدود الدقة المطلوبة.",
+    "troubleshooting_steps": [
+      "Recalibrate Phase 1 Current. Verify reference meter accuracy."
+    ],
+    "created_at": "2026-06-08T06:37:36.928639+00:00",
+    "title_ar": "خطأ - تيار الطور 1 في نقطة القياس 2",
+    "title_en": "Error - Phase 1 Current at P2 Out of Range"
+  },
+  {
+    "code": "-650",
+    "stage_id": "STG-04",
+    "description": "قيمة طاقة فعلية طور 1 في نقطة القياس 2 خارج حدود الدقة المطلوبة.",
+    "troubleshooting_steps": [
+      "Recalibrate Phase 1 Active Power. Verify reference meter accuracy."
+    ],
+    "created_at": "2026-06-08T06:37:36.928639+00:00",
+    "title_ar": "خطأ - طاقة فعلية طور 1 في نقطة القياس 2",
+    "title_en": "Error - Phase 1 Active Power at P2 Out of Range"
+  },
+  {
+    "code": "-640",
+    "stage_id": "STG-04",
+    "description": "قيمة طاقة تفاعلية طور 1 في نقطة القياس 2 خارج حدود الدقة المطلوبة.",
+    "troubleshooting_steps": [
+      "Recalibrate Phase 1 Reactive Power. Verify reference meter accuracy."
+    ],
+    "created_at": "2026-06-08T06:37:36.928639+00:00",
+    "title_ar": "خطأ - طاقة تفاعلية طور 1 في نقطة القياس 2",
+    "title_en": "Error - Phase 1 Reactive Power at P2 Out of Range"
+  },
+  {
+    "code": "-661",
+    "stage_id": "STG-04",
+    "description": "قيمة جهد الطور 2 في نقطة القياس 2 خارج حدود الدقة المطلوبة.",
+    "troubleshooting_steps": [
+      "Recalibrate Phase 2 Voltage. Verify reference meter accuracy."
+    ],
+    "created_at": "2026-06-08T06:37:36.928639+00:00",
+    "title_ar": "خطأ - جهد الطور 2 في نقطة القياس 2",
+    "title_en": "Error - Phase 2 Voltage at P2 Out of Range"
+  },
+  {
+    "code": "-671",
+    "stage_id": "STG-04",
+    "description": "قيمة تيار الطور 2 في نقطة القياس 2 خارج حدود الدقة المطلوبة.",
+    "troubleshooting_steps": [
+      "Recalibrate Phase 2 Current. Verify reference meter accuracy."
+    ],
+    "created_at": "2026-06-08T06:37:36.928639+00:00",
+    "title_ar": "خطأ - تيار الطور 2 في نقطة القياس 2",
+    "title_en": "Error - Phase 2 Current at P2 Out of Range"
+  },
+  {
+    "code": "-651",
+    "stage_id": "STG-04",
+    "description": "قيمة طاقة فعلية طور 2 في نقطة القياس 2 خارج حدود الدقة المطلوبة.",
+    "troubleshooting_steps": [
+      "Recalibrate Phase 2 Active Power. Verify reference meter accuracy."
+    ],
+    "created_at": "2026-06-08T06:37:36.928639+00:00",
+    "title_ar": "خطأ - طاقة فعلية طور 2 في نقطة القياس 2",
+    "title_en": "Error - Phase 2 Active Power at P2 Out of Range"
+  },
+  {
+    "code": "-641",
+    "stage_id": "STG-04",
+    "description": "قيمة طاقة تفاعلية طور 2 في نقطة القياس 2 خارج حدود الدقة المطلوبة.",
+    "troubleshooting_steps": [
+      "Recalibrate Phase 2 Reactive Power. Verify reference meter accuracy."
+    ],
+    "created_at": "2026-06-08T06:37:36.928639+00:00",
+    "title_ar": "خطأ - طاقة تفاعلية طور 2 في نقطة القياس 2",
+    "title_en": "Error - Phase 2 Reactive Power at P2 Out of Range"
+  },
+  {
+    "code": "-662",
+    "stage_id": "STG-04",
+    "description": "قيمة جهد الطور 3 في نقطة القياس 2 خارج حدود الدقة المطلوبة.",
+    "troubleshooting_steps": [
+      "Recalibrate Phase 3 Voltage. Verify reference meter accuracy."
+    ],
+    "created_at": "2026-06-08T06:37:36.928639+00:00",
+    "title_ar": "خطأ - جهد الطور 3 في نقطة القياس 2",
+    "title_en": "Error - Phase 3 Voltage at P2 Out of Range"
+  },
+  {
+    "code": "-672",
+    "stage_id": "STG-04",
+    "description": "قيمة تيار الطور 3 في نقطة القياس 2 خارج حدود الدقة المطلوبة.",
+    "troubleshooting_steps": [
+      "Recalibrate Phase 3 Current. Verify reference meter accuracy."
+    ],
+    "created_at": "2026-06-08T06:37:36.928639+00:00",
+    "title_ar": "خطأ - تيار الطور 3 في نقطة القياس 2",
+    "title_en": "Error - Phase 3 Current at P2 Out of Range"
+  },
+  {
+    "code": "-652",
+    "stage_id": "STG-04",
+    "description": "قيمة طاقة فعلية طور 3 في نقطة القياس 2 خارج حدود الدقة المطلوبة.",
+    "troubleshooting_steps": [
+      "Recalibrate Phase 3 Active Power. Verify reference meter accuracy."
+    ],
+    "created_at": "2026-06-08T06:37:36.928639+00:00",
+    "title_ar": "خطأ - طاقة فعلية طور 3 في نقطة القياس 2",
+    "title_en": "Error - Phase 3 Active Power at P2 Out of Range"
+  },
+  {
+    "code": "-642",
+    "stage_id": "STG-04",
+    "description": "قيمة طاقة تفاعلية طور 3 في نقطة القياس 2 خارج حدود الدقة المطلوبة.",
+    "troubleshooting_steps": [
+      "Recalibrate Phase 3 Reactive Power. Verify reference meter accuracy."
+    ],
+    "created_at": "2026-06-08T06:37:36.928639+00:00",
+    "title_ar": "خطأ - طاقة تفاعلية طور 3 في نقطة القياس 2",
+    "title_en": "Error - Phase 3 Reactive Power at P2 Out of Range"
+  },
+  {
+    "code": "-653",
+    "stage_id": "STG-04",
+    "description": "قيمة إجمالي الطاقة الفعلية في نقطة القياس 2 خارج حدود الدقة المطلوبة.",
+    "troubleshooting_steps": [
+      "Recalibrate Total Active Power. Verify reference meter accuracy."
+    ],
+    "created_at": "2026-06-08T06:37:36.928639+00:00",
+    "title_ar": "خطأ - إجمالي الطاقة الفعلية في نقطة القياس 2",
+    "title_en": "Error - Total Active Power at P2 Out of Range"
+  },
+  {
+    "code": "-643",
+    "stage_id": "STG-04",
+    "description": "قيمة إجمالي الطاقة التفاعلية في نقطة القياس 2 خارج حدود الدقة المطلوبة.",
+    "troubleshooting_steps": [
+      "Recalibrate Total Reactive Power. Verify reference meter accuracy."
+    ],
+    "created_at": "2026-06-08T06:37:36.928639+00:00",
+    "title_ar": "خطأ - إجمالي الطاقة التفاعلية في نقطة القياس 2",
+    "title_en": "Error - Total Reactive Power at P2 Out of Range"
+  },
+  {
+    "code": "-760",
+    "stage_id": "STG-04",
+    "description": "قيمة جهد الطور 1 في نقطة القياس 3 خارج حدود الدقة المطلوبة.",
+    "troubleshooting_steps": [
+      "Recalibrate Phase 1 Voltage. Verify reference meter accuracy."
+    ],
+    "created_at": "2026-06-08T06:37:36.928639+00:00",
+    "title_ar": "خطأ - جهد الطور 1 في نقطة القياس 3",
+    "title_en": "Error - Phase 1 Voltage at P3 Out of Range"
+  },
+  {
+    "code": "-770",
+    "stage_id": "STG-04",
+    "description": "قيمة تيار الطور 1 في نقطة القياس 3 خارج حدود الدقة المطلوبة.",
+    "troubleshooting_steps": [
+      "Recalibrate Phase 1 Current. Verify reference meter accuracy."
+    ],
+    "created_at": "2026-06-08T06:37:36.928639+00:00",
+    "title_ar": "خطأ - تيار الطور 1 في نقطة القياس 3",
+    "title_en": "Error - Phase 1 Current at P3 Out of Range"
+  },
+  {
+    "code": "-750",
+    "stage_id": "STG-04",
+    "description": "قيمة طاقة فعلية طور 1 في نقطة القياس 3 خارج حدود الدقة المطلوبة.",
+    "troubleshooting_steps": [
+      "Recalibrate Phase 1 Active Power. Verify reference meter accuracy."
+    ],
+    "created_at": "2026-06-08T06:37:36.928639+00:00",
+    "title_ar": "خطأ - طاقة فعلية طور 1 في نقطة القياس 3",
+    "title_en": "Error - Phase 1 Active Power at P3 Out of Range"
+  },
+  {
+    "code": "-61",
+    "stage_id": "STG-04",
+    "description": "فشل تسجيل خروج جلسة CMS.",
+    "troubleshooting_steps": [
+      "Check CMS connection. Force logout if needed."
+    ],
+    "created_at": "2026-06-08T06:37:36.928639+00:00",
+    "title_ar": "خطأ - تسجيل خروج CMS",
+    "title_en": "Error - CMS Sign Off Failed"
+  },
+  {
+    "code": "-740",
+    "stage_id": "STG-04",
+    "description": "قيمة طاقة تفاعلية طور 1 في نقطة القياس 3 خارج حدود الدقة المطلوبة.",
+    "troubleshooting_steps": [
+      "Recalibrate Phase 1 Reactive Power. Verify reference meter accuracy."
+    ],
+    "created_at": "2026-06-08T06:37:36.928639+00:00",
+    "title_ar": "خطأ - طاقة تفاعلية طور 1 في نقطة القياس 3",
+    "title_en": "Error - Phase 1 Reactive Power at P3 Out of Range"
+  },
+  {
+    "code": "-761",
+    "stage_id": "STG-04",
+    "description": "قيمة جهد الطور 2 في نقطة القياس 3 خارج حدود الدقة المطلوبة.",
+    "troubleshooting_steps": [
+      "Recalibrate Phase 2 Voltage. Verify reference meter accuracy."
+    ],
+    "created_at": "2026-06-08T06:37:36.928639+00:00",
+    "title_ar": "خطأ - جهد الطور 2 في نقطة القياس 3",
+    "title_en": "Error - Phase 2 Voltage at P3 Out of Range"
+  },
+  {
+    "code": "-771",
+    "stage_id": "STG-04",
+    "description": "قيمة تيار الطور 2 في نقطة القياس 3 خارج حدود الدقة المطلوبة.",
+    "troubleshooting_steps": [
+      "Recalibrate Phase 2 Current. Verify reference meter accuracy."
+    ],
+    "created_at": "2026-06-08T06:37:36.928639+00:00",
+    "title_ar": "خطأ - تيار الطور 2 في نقطة القياس 3",
+    "title_en": "Error - Phase 2 Current at P3 Out of Range"
+  },
+  {
+    "code": "-751",
+    "stage_id": "STG-04",
+    "description": "قيمة طاقة فعلية طور 2 في نقطة القياس 3 خارج حدود الدقة المطلوبة.",
+    "troubleshooting_steps": [
+      "Recalibrate Phase 2 Active Power. Verify reference meter accuracy."
+    ],
+    "created_at": "2026-06-08T06:37:36.928639+00:00",
+    "title_ar": "خطأ - طاقة فعلية طور 2 في نقطة القياس 3",
+    "title_en": "Error - Phase 2 Active Power at P3 Out of Range"
+  },
+  {
+    "code": "-741",
+    "stage_id": "STG-04",
+    "description": "قيمة طاقة تفاعلية طور 2 في نقطة القياس 3 خارج حدود الدقة المطلوبة.",
+    "troubleshooting_steps": [
+      "Recalibrate Phase 2 Reactive Power. Verify reference meter accuracy."
+    ],
+    "created_at": "2026-06-08T06:37:36.928639+00:00",
+    "title_ar": "خطأ - طاقة تفاعلية طور 2 في نقطة القياس 3",
+    "title_en": "Error - Phase 2 Reactive Power at P3 Out of Range"
+  },
+  {
+    "code": "-762",
+    "stage_id": "STG-04",
+    "description": "قيمة جهد الطور 3 في نقطة القياس 3 خارج حدود الدقة المطلوبة.",
+    "troubleshooting_steps": [
+      "Recalibrate Phase 3 Voltage. Verify reference meter accuracy."
+    ],
+    "created_at": "2026-06-08T06:37:36.928639+00:00",
+    "title_ar": "خطأ - جهد الطور 3 في نقطة القياس 3",
+    "title_en": "Error - Phase 3 Voltage at P3 Out of Range"
+  },
+  {
+    "code": "-772",
+    "stage_id": "STG-04",
+    "description": "قيمة تيار الطور 3 في نقطة القياس 3 خارج حدود الدقة المطلوبة.",
+    "troubleshooting_steps": [
+      "Recalibrate Phase 3 Current. Verify reference meter accuracy."
+    ],
+    "created_at": "2026-06-08T06:37:36.928639+00:00",
+    "title_ar": "خطأ - تيار الطور 3 في نقطة القياس 3",
+    "title_en": "Error - Phase 3 Current at P3 Out of Range"
+  },
+  {
+    "code": "-752",
+    "stage_id": "STG-04",
+    "description": "قيمة طاقة فعلية طور 3 في نقطة القياس 3 خارج حدود الدقة المطلوبة.",
+    "troubleshooting_steps": [
+      "Recalibrate Phase 3 Active Power. Verify reference meter accuracy."
+    ],
+    "created_at": "2026-06-08T06:37:36.928639+00:00",
+    "title_ar": "خطأ - طاقة فعلية طور 3 في نقطة القياس 3",
+    "title_en": "Error - Phase 3 Active Power at P3 Out of Range"
+  },
+  {
+    "code": "-742",
+    "stage_id": "STG-04",
+    "description": "قيمة طاقة تفاعلية طور 3 في نقطة القياس 3 خارج حدود الدقة المطلوبة.",
+    "troubleshooting_steps": [
+      "Recalibrate Phase 3 Reactive Power. Verify reference meter accuracy."
+    ],
+    "created_at": "2026-06-08T06:37:36.928639+00:00",
+    "title_ar": "خطأ - طاقة تفاعلية طور 3 في نقطة القياس 3",
+    "title_en": "Error - Phase 3 Reactive Power at P3 Out of Range"
+  },
+  {
+    "code": "-753",
+    "stage_id": "STG-04",
+    "description": "قيمة إجمالي الطاقة الفعلية في نقطة القياس 3 خارج حدود الدقة المطلوبة.",
+    "troubleshooting_steps": [
+      "Recalibrate Total Active Power. Verify reference meter accuracy."
+    ],
+    "created_at": "2026-06-08T06:37:36.928639+00:00",
+    "title_ar": "خطأ - إجمالي الطاقة الفعلية في نقطة القياس 3",
+    "title_en": "Error - Total Active Power at P3 Out of Range"
+  },
+  {
+    "code": "-743",
+    "stage_id": "STG-04",
+    "description": "قيمة إجمالي الطاقة التفاعلية في نقطة القياس 3 خارج حدود الدقة المطلوبة.",
+    "troubleshooting_steps": [
+      "Recalibrate Total Reactive Power. Verify reference meter accuracy."
+    ],
+    "created_at": "2026-06-08T06:37:36.928639+00:00",
+    "title_ar": "خطأ - إجمالي الطاقة التفاعلية في نقطة القياس 3",
+    "title_en": "Error - Total Reactive Power at P3 Out of Range"
+  },
+  {
+    "code": "-777",
+    "stage_id": "STG-04",
+    "description": "فشل إجراء الضبط الدقيق للمعاملات.",
+    "troubleshooting_steps": [
+      "Review calibration coefficients. Retry fine tuning."
+    ],
+    "created_at": "2026-06-08T06:37:36.928639+00:00",
+    "title_ar": "خطأ - الضبط الدقيق",
+    "title_en": "Error - Fine Tuning Failed"
+  },
+  {
+    "code": "-333",
+    "stage_id": "STG-04",
+    "description": "تم تجاوز حاجز الأمان أثناء العملية.",
+    "troubleshooting_steps": [
+      "Clear safety zone. Reset safety barrier system."
+    ],
+    "created_at": "2026-06-08T06:37:36.928639+00:00",
+    "title_ar": "تجاوز الحاجز",
+    "title_en": "Barrier Exceeded / Safety Barrier Crossed"
+  },
+  {
+    "code": "-888",
+    "stage_id": "STG-04",
+    "description": "تم تفعيل إيقاف الطوارئ في المحطة.",
+    "troubleshooting_steps": [
+      "Resolve safety condition before restarting. Check E-stop button."
+    ],
+    "created_at": "2026-06-08T06:37:36.928639+00:00",
+    "title_ar": "إيقاف طارئ",
+    "title_en": "Emergency Stop"
+  },
+  {
+    "code": "-999",
+    "stage_id": "STG-04",
+    "description": "حدث عطل في واجهة الاتصال مع النظام.",
+    "troubleshooting_steps": [
+      "Check interface hardware. Restart communication service."
+    ],
+    "created_at": "2026-06-08T06:37:36.928639+00:00",
+    "title_ar": "عطل في الواجهة",
+    "title_en": "Interface Failure"
+  },
+  {
+    "code": "-795",
+    "stage_id": "STG-04",
+    "description": "قيمة تيار المحايد المقيسة خارج النطاق المقبول.",
+    "troubleshooting_steps": [
+      "Check neutral current connection. Verify measurement."
+    ],
+    "created_at": "2026-06-08T06:37:36.928639+00:00",
+    "title_ar": "خطأ - تيار المحايد",
+    "title_en": "Error - Neutral Current Error"
+  },
+  {
+    "code": "-695",
+    "stage_id": "STG-04",
+    "description": "قيمة تيار المحايد المقيسة خارج النطاق المقبول.",
+    "troubleshooting_steps": [
+      "Check neutral current connection. Verify measurement."
+    ],
+    "created_at": "2026-06-08T06:37:36.928639+00:00",
+    "title_ar": "خطأ - تيار المحايد",
+    "title_en": "Error - Neutral Current Error"
+  },
+  {
+    "code": "-595",
+    "stage_id": "STG-04",
+    "description": "قيمة تيار المحايد المقيسة خارج النطاق المقبول.",
+    "troubleshooting_steps": [
+      "Check neutral current connection. Verify measurement."
+    ],
+    "created_at": "2026-06-08T06:37:36.928639+00:00",
+    "title_ar": "خطأ - تيار المحايد",
+    "title_en": "Error - Neutral Current Error"
+  },
+  {
+    "code": "-801",
+    "stage_id": "STG-04",
+    "description": "قيمة Kcos للتيار التوافقي في الطور 1 (FOI) خارج النطاق المقبول.",
+    "troubleshooting_steps": [
+      "Recalibrate Kcos Coefficient for Harmonic Phase 1 (FOI). Check reference."
+    ],
+    "created_at": "2026-06-08T06:37:36.928639+00:00",
+    "title_ar": "خطأ - التحقق من Kcos التوافقي الطور 1 FOI",
+    "title_en": "Error - Verify Kcos Coefficient Harmonic Phase 1 FOI Out of Range"
+  },
+  {
+    "code": "-802",
+    "stage_id": "STG-04",
+    "description": "قيمة Ksin للتيار التوافقي في الطور 1 (FOI) خارج النطاق المقبول.",
+    "troubleshooting_steps": [
+      "Recalibrate Ksin Coefficient for Harmonic Phase 1 (FOI). Check reference."
+    ],
+    "created_at": "2026-06-08T06:37:36.928639+00:00",
+    "title_ar": "خطأ - التحقق من Ksin التوافقي الطور 1 FOI",
+    "title_en": "Error - Verify Ksin Coefficient Harmonic Phase 1 FOI Out of Range"
+  },
+  {
+    "code": "-803",
+    "stage_id": "STG-04",
+    "description": "قيمة انزياح الطور IP للتيار التوافقي في الطور 1 (FOI) خارج النطاق المقبول.",
+    "troubleshooting_steps": [
+      "Recalibrate Phase Shift DecalIP for Harmonic Phase 1 (FOI). Check reference."
+    ],
+    "created_at": "2026-06-08T06:37:36.928639+00:00",
+    "title_ar": "خطأ - التحقق من انزياح الطور IP التوافقي الطور 1 FOI",
+    "title_en": "Error - Verify Phase Shift DecalIP Harmonic Phase 1 FOI Out of Range"
+  },
+  {
+    "code": "-804",
+    "stage_id": "STG-04",
+    "description": "قيمة معامل الجهد Ku للتيار التوافقي في الطور 1 (FOI) خارج النطاق المقبول.",
+    "troubleshooting_steps": [
+      "Recalibrate Voltage Coefficient Ku for Harmonic Phase 1 (FOI). Check reference."
+    ],
+    "created_at": "2026-06-08T06:37:36.928639+00:00",
+    "title_ar": "خطأ - التحقق من معامل الجهد Ku التوافقي الطور 1 FOI",
+    "title_en": "Error - Verify Voltage Coefficient Ku Harmonic Phase 1 FOI Out of Range"
+  },
+  {
+    "code": "-805",
+    "stage_id": "STG-04",
+    "description": "قيمة معامل التيار Ki للتيار التوافقي في الطور 1 (FOI) خارج النطاق المقبول.",
+    "troubleshooting_steps": [
+      "Recalibrate Current Coefficient Ki for Harmonic Phase 1 (FOI). Check reference."
+    ],
+    "created_at": "2026-06-08T06:37:36.928639+00:00",
+    "title_ar": "خطأ - التحقق من معامل التيار Ki التوافقي الطور 1 FOI",
+    "title_en": "Error - Verify Current Coefficient Ki Harmonic Phase 1 FOI Out of Range"
+  },
+  {
+    "code": "-806",
+    "stage_id": "STG-04",
+    "description": "قيمة ضوضاء الجهد KuNoise للتيار التوافقي في الطور 1 (FOI) خارج النطاق المقبول.",
+    "troubleshooting_steps": [
+      "Recalibrate Voltage Noise KuNoise for Harmonic Phase 1 (FOI). Check reference."
+    ],
+    "created_at": "2026-06-08T06:37:36.928639+00:00",
+    "title_ar": "خطأ - التحقق من ضوضاء الجهد KuNoise التوافقي الطور 1 FOI",
+    "title_en": "Error - Verify Voltage Noise KuNoise Harmonic Phase 1 FOI Out of Range"
+  },
+  {
+    "code": "-807",
+    "stage_id": "STG-04",
+    "description": "قيمة ضوضاء التيار KiNoise للتيار التوافقي في الطور 1 (FOI) خارج النطاق المقبول.",
+    "troubleshooting_steps": [
+      "Recalibrate Current Noise KiNoise for Harmonic Phase 1 (FOI). Check reference."
+    ],
+    "created_at": "2026-06-08T06:37:36.928639+00:00",
+    "title_ar": "خطأ - التحقق من ضوضاء التيار KiNoise التوافقي الطور 1 FOI",
+    "title_en": "Error - Verify Current Noise KiNoise Harmonic Phase 1 FOI Out of Range"
+  },
+  {
+    "code": "-808",
+    "stage_id": "STG-04",
+    "description": "قيمة ضوضاء Kcos للتيار التوافقي في الطور 1 (FOI) خارج النطاق المقبول.",
+    "troubleshooting_steps": [
+      "Recalibrate Kcos Noise for Harmonic Phase 1 (FOI). Check reference."
+    ],
+    "created_at": "2026-06-08T06:37:36.928639+00:00",
+    "title_ar": "خطأ - التحقق من ضوضاء Kcos التوافقي الطور 1 FOI",
+    "title_en": "Error - Verify Kcos Noise Harmonic Phase 1 FOI Out of Range"
+  },
+  {
+    "code": "-809",
+    "stage_id": "STG-04",
+    "description": "قيمة ضوضاء Ksin للتيار التوافقي في الطور 1 (FOI) خارج النطاق المقبول.",
+    "troubleshooting_steps": [
+      "Recalibrate Ksin Noise for Harmonic Phase 1 (FOI). Check reference."
+    ],
+    "created_at": "2026-06-08T06:37:36.928639+00:00",
+    "title_ar": "خطأ - التحقق من ضوضاء Ksin التوافقي الطور 1 FOI",
+    "title_en": "Error - Verify Ksin Noise Harmonic Phase 1 FOI Out of Range"
+  },
+  {
+    "code": "-810",
+    "stage_id": "STG-04",
+    "description": "قيمة Kcos للتيار التوافقي في المحايد (FOI) خارج النطاق المقبول.",
+    "troubleshooting_steps": [
+      "Recalibrate Kcos Coefficient for Harmonic Neutral (FOI). Check reference."
+    ],
+    "created_at": "2026-06-08T06:37:36.928639+00:00",
+    "title_ar": "خطأ - التحقق من Kcos التوافقي المحايد FOI",
+    "title_en": "Error - Verify Kcos Coefficient Harmonic Neutral FOI Out of Range"
+  },
+  {
+    "code": "-811",
+    "stage_id": "STG-04",
+    "description": "قيمة Ksin للتيار التوافقي في المحايد (FOI) خارج النطاق المقبول.",
+    "troubleshooting_steps": [
+      "Recalibrate Ksin Coefficient for Harmonic Neutral (FOI). Check reference."
+    ],
+    "created_at": "2026-06-08T06:37:36.928639+00:00",
+    "title_ar": "خطأ - التحقق من Ksin التوافقي المحايد FOI",
+    "title_en": "Error - Verify Ksin Coefficient Harmonic Neutral FOI Out of Range"
+  },
+  {
+    "code": "-812",
+    "stage_id": "STG-04",
+    "description": "قيمة انزياح الطور IP للتيار التوافقي في المحايد (FOI) خارج النطاق المقبول.",
+    "troubleshooting_steps": [
+      "Recalibrate Phase Shift DecalIP for Harmonic Neutral (FOI). Check reference."
+    ],
+    "created_at": "2026-06-08T06:37:36.928639+00:00",
+    "title_ar": "خطأ - التحقق من انزياح الطور IP التوافقي المحايد FOI",
+    "title_en": "Error - Verify Phase Shift DecalIP Harmonic Neutral FOI Out of Range"
+  },
+  {
+    "code": "-813",
+    "stage_id": "STG-04",
+    "description": "قيمة معامل الجهد Ku للتيار التوافقي في المحايد (FOI) خارج النطاق المقبول.",
+    "troubleshooting_steps": [
+      "Recalibrate Voltage Coefficient Ku for Harmonic Neutral (FOI). Check reference."
+    ],
+    "created_at": "2026-06-08T06:37:36.928639+00:00",
+    "title_ar": "خطأ - التحقق من معامل الجهد Ku التوافقي المحايد FOI",
+    "title_en": "Error - Verify Voltage Coefficient Ku Harmonic Neutral FOI Out of Range"
+  },
+  {
+    "code": "-814",
+    "stage_id": "STG-04",
+    "description": "قيمة معامل التيار Ki للتيار التوافقي في المحايد (FOI) خارج النطاق المقبول.",
+    "troubleshooting_steps": [
+      "Recalibrate Current Coefficient Ki for Harmonic Neutral (FOI). Check reference."
+    ],
+    "created_at": "2026-06-08T06:37:36.928639+00:00",
+    "title_ar": "خطأ - التحقق من معامل التيار Ki التوافقي المحايد FOI",
+    "title_en": "Error - Verify Current Coefficient Ki Harmonic Neutral FOI Out of Range"
+  },
+  {
+    "code": "-815",
+    "stage_id": "STG-04",
+    "description": "قيمة ضوضاء الجهد KuNoise للتيار التوافقي في المحايد (FOI) خارج النطاق المقبول.",
+    "troubleshooting_steps": [
+      "Recalibrate Voltage Noise KuNoise for Harmonic Neutral (FOI). Check reference."
+    ],
+    "created_at": "2026-06-08T06:37:36.928639+00:00",
+    "title_ar": "خطأ - التحقق من ضوضاء الجهد KuNoise التوافقي المحايد FOI",
+    "title_en": "Error - Verify Voltage Noise KuNoise Harmonic Neutral FOI Out of Range"
+  },
+  {
+    "code": "-816",
+    "stage_id": "STG-04",
+    "description": "قيمة ضوضاء التيار KiNoise للتيار التوافقي في المحايد (FOI) خارج النطاق المقبول.",
+    "troubleshooting_steps": [
+      "Recalibrate Current Noise KiNoise for Harmonic Neutral (FOI). Check reference."
+    ],
+    "created_at": "2026-06-08T06:37:36.928639+00:00",
+    "title_ar": "خطأ - التحقق من ضوضاء التيار KiNoise التوافقي المحايد FOI",
+    "title_en": "Error - Verify Current Noise KiNoise Harmonic Neutral FOI Out of Range"
+  },
+  {
+    "code": "-817",
+    "stage_id": "STG-04",
+    "description": "قيمة ضوضاء Kcos للتيار التوافقي في المحايد (FOI) خارج النطاق المقبول.",
+    "troubleshooting_steps": [
+      "Recalibrate Kcos Noise for Harmonic Neutral (FOI). Check reference."
+    ],
+    "created_at": "2026-06-08T06:37:36.928639+00:00",
+    "title_ar": "خطأ - التحقق من ضوضاء Kcos التوافقي المحايد FOI",
+    "title_en": "Error - Verify Kcos Noise Harmonic Neutral FOI Out of Range"
+  },
+  {
+    "code": "-818",
+    "stage_id": "STG-04",
+    "description": "ضوضاء معامل Ksin للتيار التوافقي للمحايد (FOI) خارج الحد.",
+    "troubleshooting_steps": [
+      "Recalibrate Ksin Noise for Harmonic Neutral FOI."
+    ],
+    "created_at": "2026-06-08T06:37:36.928639+00:00",
+    "title_ar": "خطأ - ضوضاء Ksin التوافقي المحايد FOI",
+    "title_en": "Error - Ksin Noise Harmonic Neutral FOI Out of Range"
+  },
+  {
+    "code": "-819",
+    "stage_id": "STG-04",
+    "description": "قيمة Kcos للتيار الأساسي في الطور 1 (FOI) خارج النطاق المقبول.",
+    "troubleshooting_steps": [
+      "Recalibrate Kcos Coefficient for Fundamental Phase 1 (FOI). Check reference."
+    ],
+    "created_at": "2026-06-08T06:37:36.928639+00:00",
+    "title_ar": "خطأ - التحقق من Kcos الأساسي الطور 1 FOI",
+    "title_en": "Error - Verify Kcos Coefficient Fundamental Phase 1 FOI Out of Range"
+  },
+  {
+    "code": "-820",
+    "stage_id": "STG-04",
+    "description": "قيمة Ksin للتيار الأساسي في الطور 1 (FOI) خارج النطاق المقبول.",
+    "troubleshooting_steps": [
+      "Recalibrate Ksin Coefficient for Fundamental Phase 1 (FOI). Check reference."
+    ],
+    "created_at": "2026-06-08T06:37:36.928639+00:00",
+    "title_ar": "خطأ - التحقق من Ksin الأساسي الطور 1 FOI",
+    "title_en": "Error - Verify Ksin Coefficient Fundamental Phase 1 FOI Out of Range"
+  },
+  {
+    "code": "-821",
+    "stage_id": "STG-04",
+    "description": "قيمة انزياح الطور IP للتيار الأساسي في الطور 1 (FOI) خارج النطاق المقبول.",
+    "troubleshooting_steps": [
+      "Recalibrate Phase Shift DecalIP for Fundamental Phase 1 (FOI). Check reference."
+    ],
+    "created_at": "2026-06-08T06:37:36.928639+00:00",
+    "title_ar": "خطأ - التحقق من انزياح الطور IP الأساسي الطور 1 FOI",
+    "title_en": "Error - Verify Phase Shift DecalIP Fundamental Phase 1 FOI Out of Range"
+  },
+  {
+    "code": "-822",
+    "stage_id": "STG-04",
+    "description": "قيمة معامل الجهد Ku للتيار الأساسي في الطور 1 (FOI) خارج النطاق المقبول.",
+    "troubleshooting_steps": [
+      "Recalibrate Voltage Coefficient Ku for Fundamental Phase 1 (FOI). Check reference."
+    ],
+    "created_at": "2026-06-08T06:37:36.928639+00:00",
+    "title_ar": "خطأ - التحقق من معامل الجهد Ku الأساسي الطور 1 FOI",
+    "title_en": "Error - Verify Voltage Coefficient Ku Fundamental Phase 1 FOI Out of Range"
+  },
+  {
+    "code": "-823",
+    "stage_id": "STG-04",
+    "description": "قيمة معامل التيار Ki للتيار الأساسي في الطور 1 (FOI) خارج النطاق المقبول.",
+    "troubleshooting_steps": [
+      "Recalibrate Current Coefficient Ki for Fundamental Phase 1 (FOI). Check reference."
+    ],
+    "created_at": "2026-06-08T06:37:36.928639+00:00",
+    "title_ar": "خطأ - التحقق من معامل التيار Ki الأساسي الطور 1 FOI",
+    "title_en": "Error - Verify Current Coefficient Ki Fundamental Phase 1 FOI Out of Range"
+  },
+  {
+    "code": "-824",
+    "stage_id": "STG-04",
+    "description": "قيمة ضوضاء الجهد KuNoise للتيار الأساسي في الطور 1 (FOI) خارج النطاق المقبول.",
+    "troubleshooting_steps": [
+      "Recalibrate Voltage Noise KuNoise for Fundamental Phase 1 (FOI). Check reference."
+    ],
+    "created_at": "2026-06-08T06:37:36.928639+00:00",
+    "title_ar": "خطأ - التحقق من ضوضاء الجهد KuNoise الأساسي الطور 1 FOI",
+    "title_en": "Error - Verify Voltage Noise KuNoise Fundamental Phase 1 FOI Out of Range"
+  },
+  {
+    "code": "-825",
+    "stage_id": "STG-04",
+    "description": "قيمة ضوضاء التيار KiNoise للتيار الأساسي في الطور 1 (FOI) خارج النطاق المقبول.",
+    "troubleshooting_steps": [
+      "Recalibrate Current Noise KiNoise for Fundamental Phase 1 (FOI). Check reference."
+    ],
+    "created_at": "2026-06-08T06:37:36.928639+00:00",
+    "title_ar": "خطأ - التحقق من ضوضاء التيار KiNoise الأساسي الطور 1 FOI",
+    "title_en": "Error - Verify Current Noise KiNoise Fundamental Phase 1 FOI Out of Range"
+  },
+  {
+    "code": "-826",
+    "stage_id": "STG-04",
+    "description": "قيمة ضوضاء Kcos للتيار الأساسي في الطور 1 (FOI) خارج النطاق المقبول.",
+    "troubleshooting_steps": [
+      "Recalibrate Kcos Noise for Fundamental Phase 1 (FOI). Check reference."
+    ],
+    "created_at": "2026-06-08T06:37:36.928639+00:00",
+    "title_ar": "خطأ - التحقق من ضوضاء Kcos الأساسي الطور 1 FOI",
+    "title_en": "Error - Verify Kcos Noise Fundamental Phase 1 FOI Out of Range"
+  },
+  {
+    "code": "-827",
+    "stage_id": "STG-04",
+    "description": "قيمة ضوضاء Ksin للتيار الأساسي في الطور 1 (FOI) خارج النطاق المقبول.",
+    "troubleshooting_steps": [
+      "Recalibrate Ksin Noise for Fundamental Phase 1 (FOI). Check reference."
+    ],
+    "created_at": "2026-06-08T06:37:36.928639+00:00",
+    "title_ar": "خطأ - التحقق من ضوضاء Ksin الأساسي الطور 1 FOI",
+    "title_en": "Error - Verify Ksin Noise Fundamental Phase 1 FOI Out of Range"
+  },
+  {
+    "code": "-828",
+    "stage_id": "STG-04",
+    "description": "قيمة Kcos للتيار الأساسي في المحايد (FOI) خارج النطاق المقبول.",
+    "troubleshooting_steps": [
+      "Recalibrate Kcos Coefficient for Fundamental Neutral (FOI). Check reference."
+    ],
+    "created_at": "2026-06-08T06:37:36.928639+00:00",
+    "title_ar": "خطأ - التحقق من Kcos الأساسي المحايد FOI",
+    "title_en": "Error - Verify Kcos Coefficient Fundamental Neutral FOI Out of Range"
+  },
+  {
+    "code": "-829",
+    "stage_id": "STG-04",
+    "description": "قيمة Ksin للتيار الأساسي في المحايد (FOI) خارج النطاق المقبول.",
+    "troubleshooting_steps": [
+      "Recalibrate Ksin Coefficient for Fundamental Neutral (FOI). Check reference."
+    ],
+    "created_at": "2026-06-08T06:37:36.928639+00:00",
+    "title_ar": "خطأ - التحقق من Ksin الأساسي المحايد FOI",
+    "title_en": "Error - Verify Ksin Coefficient Fundamental Neutral FOI Out of Range"
+  },
+  {
+    "code": "-830",
+    "stage_id": "STG-04",
+    "description": "قيمة انزياح الطور IP للتيار الأساسي في المحايد (FOI) خارج النطاق المقبول.",
+    "troubleshooting_steps": [
+      "Recalibrate Phase Shift DecalIP for Fundamental Neutral (FOI). Check reference."
+    ],
+    "created_at": "2026-06-08T06:37:36.928639+00:00",
+    "title_ar": "خطأ - التحقق من انزياح الطور IP الأساسي المحايد FOI",
+    "title_en": "Error - Verify Phase Shift DecalIP Fundamental Neutral FOI Out of Range"
+  },
+  {
+    "code": "-831",
+    "stage_id": "STG-04",
+    "description": "قيمة معامل الجهد Ku للتيار الأساسي في المحايد (FOI) خارج النطاق المقبول.",
+    "troubleshooting_steps": [
+      "Recalibrate Voltage Coefficient Ku for Fundamental Neutral (FOI). Check reference."
+    ],
+    "created_at": "2026-06-08T06:37:36.928639+00:00",
+    "title_ar": "خطأ - التحقق من معامل الجهد Ku الأساسي المحايد FOI",
+    "title_en": "Error - Verify Voltage Coefficient Ku Fundamental Neutral FOI Out of Range"
+  },
+  {
+    "code": "-832",
+    "stage_id": "STG-04",
+    "description": "قيمة معامل التيار Ki للتيار الأساسي في المحايد (FOI) خارج النطاق المقبول.",
+    "troubleshooting_steps": [
+      "Recalibrate Current Coefficient Ki for Fundamental Neutral (FOI). Check reference."
+    ],
+    "created_at": "2026-06-08T06:37:36.928639+00:00",
+    "title_ar": "خطأ - التحقق من معامل التيار Ki الأساسي المحايد FOI",
+    "title_en": "Error - Verify Current Coefficient Ki Fundamental Neutral FOI Out of Range"
+  },
+  {
+    "code": "-833",
+    "stage_id": "STG-04",
+    "description": "قيمة ضوضاء الجهد KuNoise للتيار الأساسي في المحايد (FOI) خارج النطاق المقبول.",
+    "troubleshooting_steps": [
+      "Recalibrate Voltage Noise KuNoise for Fundamental Neutral (FOI). Check reference."
+    ],
+    "created_at": "2026-06-08T06:37:36.928639+00:00",
+    "title_ar": "خطأ - التحقق من ضوضاء الجهد KuNoise الأساسي المحايد FOI",
+    "title_en": "Error - Verify Voltage Noise KuNoise Fundamental Neutral FOI Out of Range"
+  },
+  {
+    "code": "-834",
+    "stage_id": "STG-04",
+    "description": "قيمة ضوضاء التيار KiNoise للتيار الأساسي في المحايد (FOI) خارج النطاق المقبول.",
+    "troubleshooting_steps": [
+      "Recalibrate Current Noise KiNoise for Fundamental Neutral (FOI). Check reference."
+    ],
+    "created_at": "2026-06-08T06:37:36.928639+00:00",
+    "title_ar": "خطأ - التحقق من ضوضاء التيار KiNoise الأساسي المحايد FOI",
+    "title_en": "Error - Verify Current Noise KiNoise Fundamental Neutral FOI Out of Range"
+  },
+  {
+    "code": "-835",
+    "stage_id": "STG-04",
+    "description": "قيمة ضوضاء Kcos للتيار الأساسي في المحايد (FOI) خارج النطاق المقبول.",
+    "troubleshooting_steps": [
+      "Recalibrate Kcos Noise for Fundamental Neutral (FOI). Check reference."
+    ],
+    "created_at": "2026-06-08T06:37:36.928639+00:00",
+    "title_ar": "خطأ - التحقق من ضوضاء Kcos الأساسي المحايد FOI",
+    "title_en": "Error - Verify Kcos Noise Fundamental Neutral FOI Out of Range"
+  },
+  {
+    "code": "-836",
+    "stage_id": "STG-04",
+    "description": "قيمة ضوضاء Ksin للتيار الأساسي في المحايد (FOI) خارج النطاق المقبول.",
+    "troubleshooting_steps": [
+      "Recalibrate Ksin Noise for Fundamental Neutral (FOI). Check reference."
+    ],
+    "created_at": "2026-06-08T06:37:36.928639+00:00",
+    "title_ar": "خطأ - التحقق من ضوضاء Ksin الأساسي المحايد FOI",
+    "title_en": "Error - Verify Ksin Noise Fundamental Neutral FOI Out of Range"
+  },
+  {
+    "code": "-837",
+    "stage_id": "STG-04",
+    "description": "قيمة Kcos للتيار التوافقي في الطور 1 (FAI) خارج النطاق المقبول.",
+    "troubleshooting_steps": [
+      "Recalibrate Kcos Coefficient for Harmonic Phase 1 (FAI). Check reference."
+    ],
+    "created_at": "2026-06-08T06:37:36.928639+00:00",
+    "title_ar": "خطأ - التحقق من Kcos التوافقي الطور 1 FAI",
+    "title_en": "Error - Verify Kcos Coefficient Harmonic Phase 1 FAI Out of Range"
+  },
+  {
+    "code": "-838",
+    "stage_id": "STG-04",
+    "description": "قيمة Ksin للتيار التوافقي في الطور 1 (FAI) خارج النطاق المقبول.",
+    "troubleshooting_steps": [
+      "Recalibrate Ksin Coefficient for Harmonic Phase 1 (FAI). Check reference."
+    ],
+    "created_at": "2026-06-08T06:37:36.928639+00:00",
+    "title_ar": "خطأ - التحقق من Ksin التوافقي الطور 1 FAI",
+    "title_en": "Error - Verify Ksin Coefficient Harmonic Phase 1 FAI Out of Range"
+  },
+  {
+    "code": "-839",
+    "stage_id": "STG-04",
+    "description": "قيمة انزياح الطور IP للتيار التوافقي في الطور 1 (FAI) خارج النطاق المقبول.",
+    "troubleshooting_steps": [
+      "Recalibrate Phase Shift DecalIP for Harmonic Phase 1 (FAI). Check reference."
+    ],
+    "created_at": "2026-06-08T06:37:36.928639+00:00",
+    "title_ar": "خطأ - التحقق من انزياح الطور IP التوافقي الطور 1 FAI",
+    "title_en": "Error - Verify Phase Shift DecalIP Harmonic Phase 1 FAI Out of Range"
+  },
+  {
+    "code": "-840",
+    "stage_id": "STG-04",
+    "description": "قيمة معامل الجهد Ku للتيار التوافقي في الطور 1 (FAI) خارج النطاق المقبول.",
+    "troubleshooting_steps": [
+      "Recalibrate Voltage Coefficient Ku for Harmonic Phase 1 (FAI). Check reference."
+    ],
+    "created_at": "2026-06-08T06:37:36.928639+00:00",
+    "title_ar": "خطأ - التحقق من معامل الجهد Ku التوافقي الطور 1 FAI",
+    "title_en": "Error - Verify Voltage Coefficient Ku Harmonic Phase 1 FAI Out of Range"
+  },
+  {
+    "code": "-841",
+    "stage_id": "STG-04",
+    "description": "قيمة معامل التيار Ki للتيار التوافقي في الطور 1 (FAI) خارج النطاق المقبول.",
+    "troubleshooting_steps": [
+      "Recalibrate Current Coefficient Ki for Harmonic Phase 1 (FAI). Check reference."
+    ],
+    "created_at": "2026-06-08T06:37:36.928639+00:00",
+    "title_ar": "خطأ - التحقق من معامل التيار Ki التوافقي الطور 1 FAI",
+    "title_en": "Error - Verify Current Coefficient Ki Harmonic Phase 1 FAI Out of Range"
+  },
+  {
+    "code": "-842",
+    "stage_id": "STG-04",
+    "description": "قيمة ضوضاء الجهد KuNoise للتيار التوافقي في الطور 1 (FAI) خارج النطاق المقبول.",
+    "troubleshooting_steps": [
+      "Recalibrate Voltage Noise KuNoise for Harmonic Phase 1 (FAI). Check reference."
+    ],
+    "created_at": "2026-06-08T06:37:36.928639+00:00",
+    "title_ar": "خطأ - التحقق من ضوضاء الجهد KuNoise التوافقي الطور 1 FAI",
+    "title_en": "Error - Verify Voltage Noise KuNoise Harmonic Phase 1 FAI Out of Range"
+  },
+  {
+    "code": "-62",
+    "stage_id": "STG-04",
+    "description": "فشل استرداد معلومات التصنيع من نظام SFC.",
+    "troubleshooting_steps": [
+      "Check network connection to SFC server."
+    ],
+    "created_at": "2026-06-08T06:37:36.928639+00:00",
+    "title_ar": "خطأ - استرداد معلومات SFC",
+    "title_en": "Error - Retrieve SFC Info Failed"
+  },
+  {
+    "code": "-843",
+    "stage_id": "STG-04",
+    "description": "قيمة ضوضاء التيار KiNoise للتيار التوافقي في الطور 1 (FAI) خارج النطاق المقبول.",
+    "troubleshooting_steps": [
+      "Recalibrate Current Noise KiNoise for Harmonic Phase 1 (FAI). Check reference."
+    ],
+    "created_at": "2026-06-08T06:37:36.928639+00:00",
+    "title_ar": "خطأ - التحقق من ضوضاء التيار KiNoise التوافقي الطور 1 FAI",
+    "title_en": "Error - Verify Current Noise KiNoise Harmonic Phase 1 FAI Out of Range"
+  },
+  {
+    "code": "-844",
+    "stage_id": "STG-04",
+    "description": "قيمة ضوضاء Kcos للتيار التوافقي في الطور 1 (FAI) خارج النطاق المقبول.",
+    "troubleshooting_steps": [
+      "Recalibrate Kcos Noise for Harmonic Phase 1 (FAI). Check reference."
+    ],
+    "created_at": "2026-06-08T06:37:36.928639+00:00",
+    "title_ar": "خطأ - التحقق من ضوضاء Kcos التوافقي الطور 1 FAI",
+    "title_en": "Error - Verify Kcos Noise Harmonic Phase 1 FAI Out of Range"
+  },
+  {
+    "code": "-845",
+    "stage_id": "STG-04",
+    "description": "قيمة ضوضاء Ksin للتيار التوافقي في الطور 1 (FAI) خارج النطاق المقبول.",
+    "troubleshooting_steps": [
+      "Recalibrate Ksin Noise for Harmonic Phase 1 (FAI). Check reference."
+    ],
+    "created_at": "2026-06-08T06:37:36.928639+00:00",
+    "title_ar": "خطأ - التحقق من ضوضاء Ksin التوافقي الطور 1 FAI",
+    "title_en": "Error - Verify Ksin Noise Harmonic Phase 1 FAI Out of Range"
+  },
+  {
+    "code": "-846",
+    "stage_id": "STG-04",
+    "description": "قيمة Kcos للتيار التوافقي في المحايد (FAI) خارج النطاق المقبول.",
+    "troubleshooting_steps": [
+      "Recalibrate Kcos Coefficient for Harmonic Neutral (FAI). Check reference."
+    ],
+    "created_at": "2026-06-08T06:37:36.928639+00:00",
+    "title_ar": "خطأ - التحقق من Kcos التوافقي المحايد FAI",
+    "title_en": "Error - Verify Kcos Coefficient Harmonic Neutral FAI Out of Range"
+  },
+  {
+    "code": "-847",
+    "stage_id": "STG-04",
+    "description": "قيمة Ksin للتيار التوافقي في المحايد (FAI) خارج النطاق المقبول.",
+    "troubleshooting_steps": [
+      "Recalibrate Ksin Coefficient for Harmonic Neutral (FAI). Check reference."
+    ],
+    "created_at": "2026-06-08T06:37:36.928639+00:00",
+    "title_ar": "خطأ - التحقق من Ksin التوافقي المحايد FAI",
+    "title_en": "Error - Verify Ksin Coefficient Harmonic Neutral FAI Out of Range"
+  },
+  {
+    "code": "-848",
+    "stage_id": "STG-04",
+    "description": "قيمة انزياح الطور IP للتيار التوافقي في المحايد (FAI) خارج النطاق المقبول.",
+    "troubleshooting_steps": [
+      "Recalibrate Phase Shift DecalIP for Harmonic Neutral (FAI). Check reference."
+    ],
+    "created_at": "2026-06-08T06:37:36.928639+00:00",
+    "title_ar": "خطأ - التحقق من انزياح الطور IP التوافقي المحايد FAI",
+    "title_en": "Error - Verify Phase Shift DecalIP Harmonic Neutral FAI Out of Range"
+  },
+  {
+    "code": "-849",
+    "stage_id": "STG-04",
+    "description": "قيمة معامل الجهد Ku للتيار التوافقي في المحايد (FAI) خارج النطاق المقبول.",
+    "troubleshooting_steps": [
+      "Recalibrate Voltage Coefficient Ku for Harmonic Neutral (FAI). Check reference."
+    ],
+    "created_at": "2026-06-08T06:37:36.928639+00:00",
+    "title_ar": "خطأ - التحقق من معامل الجهد Ku التوافقي المحايد FAI",
+    "title_en": "Error - Verify Voltage Coefficient Ku Harmonic Neutral FAI Out of Range"
+  },
+  {
+    "code": "-850",
+    "stage_id": "STG-04",
+    "description": "قيمة معامل التيار Ki للتيار التوافقي في المحايد (FAI) خارج النطاق المقبول.",
+    "troubleshooting_steps": [
+      "Recalibrate Current Coefficient Ki for Harmonic Neutral (FAI). Check reference."
+    ],
+    "created_at": "2026-06-08T06:37:36.928639+00:00",
+    "title_ar": "خطأ - التحقق من معامل التيار Ki التوافقي المحايد FAI",
+    "title_en": "Error - Verify Current Coefficient Ki Harmonic Neutral FAI Out of Range"
+  },
+  {
+    "code": "-851",
+    "stage_id": "STG-04",
+    "description": "قيمة ضوضاء الجهد KuNoise للتيار التوافقي في المحايد (FAI) خارج النطاق المقبول.",
+    "troubleshooting_steps": [
+      "Recalibrate Voltage Noise KuNoise for Harmonic Neutral (FAI). Check reference."
+    ],
+    "created_at": "2026-06-08T06:37:36.928639+00:00",
+    "title_ar": "خطأ - التحقق من ضوضاء الجهد KuNoise التوافقي المحايد FAI",
+    "title_en": "Error - Verify Voltage Noise KuNoise Harmonic Neutral FAI Out of Range"
+  },
+  {
+    "code": "-852",
+    "stage_id": "STG-04",
+    "description": "قيمة ضوضاء التيار KiNoise للتيار التوافقي في المحايد (FAI) خارج النطاق المقبول.",
+    "troubleshooting_steps": [
+      "Recalibrate Current Noise KiNoise for Harmonic Neutral (FAI). Check reference."
+    ],
+    "created_at": "2026-06-08T06:37:36.928639+00:00",
+    "title_ar": "خطأ - التحقق من ضوضاء التيار KiNoise التوافقي المحايد FAI",
+    "title_en": "Error - Verify Current Noise KiNoise Harmonic Neutral FAI Out of Range"
+  },
+  {
+    "code": "-853",
+    "stage_id": "STG-04",
+    "description": "ضوضاء معامل Kcos للتيار التوافقي للمحايد (FAI) خارج الحد.",
+    "troubleshooting_steps": [
+      "Recalibrate Kcos Noise for Harmonic Neutral FAI."
+    ],
+    "created_at": "2026-06-08T06:37:36.928639+00:00",
+    "title_ar": "خطأ - ضوضاء Kcos التوافقي المحايد FAI",
+    "title_en": "Error - Kcos Noise Harmonic Neutral FAI Out of Range"
+  },
+  {
+    "code": "-854",
+    "stage_id": "STG-04",
+    "description": "ضوضاء معامل Ksin للتيار التوافقي للمحايد (FAI) خارج الحد.",
+    "troubleshooting_steps": [
+      "Recalibrate Ksin Noise for Harmonic Neutral FAI."
+    ],
+    "created_at": "2026-06-08T06:37:36.928639+00:00",
+    "title_ar": "خطأ - ضوضاء Ksin التوافقي المحايد FAI",
+    "title_en": "Error - Ksin Noise Harmonic Neutral FAI Out of Range"
+  },
+  {
+    "code": "-855",
+    "stage_id": "STG-04",
+    "description": "قيمة Kcos للتيار الأساسي في الطور 1 (FAI) خارج النطاق المقبول.",
+    "troubleshooting_steps": [
+      "Recalibrate Kcos Coefficient for Fundamental Phase 1 (FAI). Check reference."
+    ],
+    "created_at": "2026-06-08T06:37:36.928639+00:00",
+    "title_ar": "خطأ - التحقق من Kcos الأساسي الطور 1 FAI",
+    "title_en": "Error - Verify Kcos Coefficient Fundamental Phase 1 FAI Out of Range"
+  },
+  {
+    "code": "-856",
+    "stage_id": "STG-04",
+    "description": "قيمة Ksin للتيار الأساسي في الطور 1 (FAI) خارج النطاق المقبول.",
+    "troubleshooting_steps": [
+      "Recalibrate Ksin Coefficient for Fundamental Phase 1 (FAI). Check reference."
+    ],
+    "created_at": "2026-06-08T06:37:36.928639+00:00",
+    "title_ar": "خطأ - التحقق من Ksin الأساسي الطور 1 FAI",
+    "title_en": "Error - Verify Ksin Coefficient Fundamental Phase 1 FAI Out of Range"
+  },
+  {
+    "code": "-857",
+    "stage_id": "STG-04",
+    "description": "قيمة انزياح الطور IP للتيار الأساسي في الطور 1 (FAI) خارج النطاق المقبول.",
+    "troubleshooting_steps": [
+      "Recalibrate Phase Shift DecalIP for Fundamental Phase 1 (FAI). Check reference."
+    ],
+    "created_at": "2026-06-08T06:37:36.928639+00:00",
+    "title_ar": "خطأ - التحقق من انزياح الطور IP الأساسي الطور 1 FAI",
+    "title_en": "Error - Verify Phase Shift DecalIP Fundamental Phase 1 FAI Out of Range"
+  },
+  {
+    "code": "-858",
+    "stage_id": "STG-04",
+    "description": "قيمة معامل الجهد Ku للتيار الأساسي في الطور 1 (FAI) خارج النطاق المقبول.",
+    "troubleshooting_steps": [
+      "Recalibrate Voltage Coefficient Ku for Fundamental Phase 1 (FAI). Check reference."
+    ],
+    "created_at": "2026-06-08T06:37:36.928639+00:00",
+    "title_ar": "خطأ - التحقق من معامل الجهد Ku الأساسي الطور 1 FAI",
+    "title_en": "Error - Verify Voltage Coefficient Ku Fundamental Phase 1 FAI Out of Range"
+  },
+  {
+    "code": "-859",
+    "stage_id": "STG-04",
+    "description": "قيمة معامل التيار Ki للتيار الأساسي في الطور 1 (FAI) خارج النطاق المقبول.",
+    "troubleshooting_steps": [
+      "Recalibrate Current Coefficient Ki for Fundamental Phase 1 (FAI). Check reference."
+    ],
+    "created_at": "2026-06-08T06:37:36.928639+00:00",
+    "title_ar": "خطأ - التحقق من معامل التيار Ki الأساسي الطور 1 FAI",
+    "title_en": "Error - Verify Current Coefficient Ki Fundamental Phase 1 FAI Out of Range"
+  },
+  {
+    "code": "-860",
+    "stage_id": "STG-04",
+    "description": "قيمة ضوضاء الجهد KuNoise للتيار الأساسي في الطور 1 (FAI) خارج النطاق المقبول.",
+    "troubleshooting_steps": [
+      "Recalibrate Voltage Noise KuNoise for Fundamental Phase 1 (FAI). Check reference."
+    ],
+    "created_at": "2026-06-08T06:37:36.928639+00:00",
+    "title_ar": "خطأ - التحقق من ضوضاء الجهد KuNoise الأساسي الطور 1 FAI",
+    "title_en": "Error - Verify Voltage Noise KuNoise Fundamental Phase 1 FAI Out of Range"
+  },
+  {
+    "code": "-861",
+    "stage_id": "STG-04",
+    "description": "قيمة ضوضاء التيار KiNoise للتيار الأساسي في الطور 1 (FAI) خارج النطاق المقبول.",
+    "troubleshooting_steps": [
+      "Recalibrate Current Noise KiNoise for Fundamental Phase 1 (FAI). Check reference."
+    ],
+    "created_at": "2026-06-08T06:37:36.928639+00:00",
+    "title_ar": "خطأ - التحقق من ضوضاء التيار KiNoise الأساسي الطور 1 FAI",
+    "title_en": "Error - Verify Current Noise KiNoise Fundamental Phase 1 FAI Out of Range"
+  },
+  {
+    "code": "-862",
+    "stage_id": "STG-04",
+    "description": "قيمة ضوضاء Kcos للتيار الأساسي في الطور 1 (FAI) خارج النطاق المقبول.",
+    "troubleshooting_steps": [
+      "Recalibrate Kcos Noise for Fundamental Phase 1 (FAI). Check reference."
+    ],
+    "created_at": "2026-06-08T06:37:36.928639+00:00",
+    "title_ar": "خطأ - التحقق من ضوضاء Kcos الأساسي الطور 1 FAI",
+    "title_en": "Error - Verify Kcos Noise Fundamental Phase 1 FAI Out of Range"
+  },
+  {
+    "code": "-863",
+    "stage_id": "STG-04",
+    "description": "قيمة ضوضاء Ksin للتيار الأساسي في الطور 1 (FAI) خارج النطاق المقبول.",
+    "troubleshooting_steps": [
+      "Recalibrate Ksin Noise for Fundamental Phase 1 (FAI). Check reference."
+    ],
+    "created_at": "2026-06-08T06:37:36.928639+00:00",
+    "title_ar": "خطأ - التحقق من ضوضاء Ksin الأساسي الطور 1 FAI",
+    "title_en": "Error - Verify Ksin Noise Fundamental Phase 1 FAI Out of Range"
+  },
+  {
+    "code": "-864",
+    "stage_id": "STG-04",
+    "description": "قيمة Kcos للتيار الأساسي في المحايد (FAI) خارج النطاق المقبول.",
+    "troubleshooting_steps": [
+      "Recalibrate Kcos Coefficient for Fundamental Neutral (FAI). Check reference."
+    ],
+    "created_at": "2026-06-08T06:37:36.928639+00:00",
+    "title_ar": "خطأ - التحقق من Kcos الأساسي المحايد FAI",
+    "title_en": "Error - Verify Kcos Coefficient Fundamental Neutral FAI Out of Range"
+  },
+  {
+    "code": "-865",
+    "stage_id": "STG-04",
+    "description": "قيمة Ksin للتيار الأساسي في المحايد (FAI) خارج النطاق المقبول.",
+    "troubleshooting_steps": [
+      "Recalibrate Ksin Coefficient for Fundamental Neutral (FAI). Check reference."
+    ],
+    "created_at": "2026-06-08T06:37:36.928639+00:00",
+    "title_ar": "خطأ - التحقق من Ksin الأساسي المحايد FAI",
+    "title_en": "Error - Verify Ksin Coefficient Fundamental Neutral FAI Out of Range"
+  },
+  {
+    "code": "-866",
+    "stage_id": "STG-04",
+    "description": "قيمة انزياح الطور IP للتيار الأساسي في المحايد (FAI) خارج النطاق المقبول.",
+    "troubleshooting_steps": [
+      "Recalibrate Phase Shift DecalIP for Fundamental Neutral (FAI). Check reference."
+    ],
+    "created_at": "2026-06-08T06:37:36.928639+00:00",
+    "title_ar": "خطأ - التحقق من انزياح الطور IP الأساسي المحايد FAI",
+    "title_en": "Error - Verify Phase Shift DecalIP Fundamental Neutral FAI Out of Range"
+  },
+  {
+    "code": "-867",
+    "stage_id": "STG-04",
+    "description": "قيمة معامل الجهد Ku للتيار الأساسي في المحايد (FAI) خارج النطاق المقبول.",
+    "troubleshooting_steps": [
+      "Recalibrate Voltage Coefficient Ku for Fundamental Neutral (FAI). Check reference."
+    ],
+    "created_at": "2026-06-08T06:37:36.928639+00:00",
+    "title_ar": "خطأ - التحقق من معامل الجهد Ku الأساسي المحايد FAI",
+    "title_en": "Error - Verify Voltage Coefficient Ku Fundamental Neutral FAI Out of Range"
+  },
+  {
+    "code": "-868",
+    "stage_id": "STG-04",
+    "description": "قيمة معامل التيار Ki للتيار الأساسي في المحايد (FAI) خارج النطاق المقبول.",
+    "troubleshooting_steps": [
+      "Recalibrate Current Coefficient Ki for Fundamental Neutral (FAI). Check reference."
+    ],
+    "created_at": "2026-06-08T06:37:36.928639+00:00",
+    "title_ar": "خطأ - التحقق من معامل التيار Ki الأساسي المحايد FAI",
+    "title_en": "Error - Verify Current Coefficient Ki Fundamental Neutral FAI Out of Range"
+  },
+  {
+    "code": "-869",
+    "stage_id": "STG-04",
+    "description": "قيمة ضوضاء الجهد KuNoise للتيار الأساسي في المحايد (FAI) خارج النطاق المقبول.",
+    "troubleshooting_steps": [
+      "Recalibrate Voltage Noise KuNoise for Fundamental Neutral (FAI). Check reference."
+    ],
+    "created_at": "2026-06-08T06:37:36.928639+00:00",
+    "title_ar": "خطأ - التحقق من ضوضاء الجهد KuNoise الأساسي المحايد FAI",
+    "title_en": "Error - Verify Voltage Noise KuNoise Fundamental Neutral FAI Out of Range"
+  },
+  {
+    "code": "-870",
+    "stage_id": "STG-04",
+    "description": "قيمة ضوضاء التيار KiNoise للتيار الأساسي في المحايد (FAI) خارج النطاق المقبول.",
+    "troubleshooting_steps": [
+      "Recalibrate Current Noise KiNoise for Fundamental Neutral (FAI). Check reference."
+    ],
+    "created_at": "2026-06-08T06:37:36.928639+00:00",
+    "title_ar": "خطأ - التحقق من ضوضاء التيار KiNoise الأساسي المحايد FAI",
+    "title_en": "Error - Verify Current Noise KiNoise Fundamental Neutral FAI Out of Range"
+  },
+  {
+    "code": "-871",
+    "stage_id": "STG-04",
+    "description": "قيمة ضوضاء Kcos للتيار الأساسي في المحايد (FAI) خارج النطاق المقبول.",
+    "troubleshooting_steps": [
+      "Recalibrate Kcos Noise for Fundamental Neutral (FAI). Check reference."
+    ],
+    "created_at": "2026-06-08T06:37:36.928639+00:00",
+    "title_ar": "خطأ - التحقق من ضوضاء Kcos الأساسي المحايد FAI",
+    "title_en": "Error - Verify Kcos Noise Fundamental Neutral FAI Out of Range"
+  },
+  {
+    "code": "-872",
+    "stage_id": "STG-04",
+    "description": "قيمة ضوضاء Ksin للتيار الأساسي في المحايد (FAI) خارج النطاق المقبول.",
+    "troubleshooting_steps": [
+      "Recalibrate Ksin Noise for Fundamental Neutral (FAI). Check reference."
+    ],
+    "created_at": "2026-06-08T06:37:36.928639+00:00",
+    "title_ar": "خطأ - التحقق من ضوضاء Ksin الأساسي المحايد FAI",
+    "title_en": "Error - Verify Ksin Noise Fundamental Neutral FAI Out of Range"
+  },
+  {
+    "code": "-900",
+    "stage_id": "STG-04",
+    "description": "فشل ضبط الوقت والتاريخ في العداد.",
+    "troubleshooting_steps": [
+      "Sync meter clock. Verify time configuration."
+    ],
+    "created_at": "2026-06-08T06:37:36.928639+00:00",
+    "title_ar": "خطأ - ضبط الوقت",
+    "title_en": "Error - Set Time Failed"
+  },
+  {
+    "code": "0",
+    "stage_id": "STG-04",
+    "description": "العملية مكتملة بنجاح دون أي خطأ.",
+    "troubleshooting_steps": [
+      "N/A"
+    ],
+    "created_at": "2026-06-08T06:37:36.928639+00:00",
+    "title_ar": "لا يوجد خطأ",
+    "title_en": "No Error"
+  },
+  {
+    "code": "-5",
+    "stage_id": "STG-04",
+    "description": "فشل بدء عملية SAPME في نظام التشغيل.",
+    "troubleshooting_steps": [
+      "Verify SAPME system is available."
+    ],
+    "created_at": "2026-06-08T06:37:36.928639+00:00",
+    "title_ar": "خطأ - بدء عملية SAPME",
+    "title_en": "Error - Start SAPME Operation Failed"
+  },
+  {
+    "code": "-50",
+    "stage_id": "STG-04",
+    "description": "فشل التحقق من وجود الرقم في مخزون SFC.",
+    "troubleshooting_steps": [
+      "Check SFC inventory records."
+    ],
+    "created_at": "2026-06-08T06:37:36.928639+00:00",
+    "title_ar": "خطأ - التحقق من SFC في المخزون",
+    "title_en": "Error - Verify SFC In Stock Failed"
+  },
+  {
+    "code": "-51",
+    "stage_id": "STG-04",
+    "description": "فشل بدء نظام إدارة التكوين CMS.",
+    "troubleshooting_steps": [
+      "Verify CMS service is running."
+    ],
+    "created_at": "2026-06-08T06:37:36.928639+00:00",
+    "title_ar": "خطأ - بدء نظام CMS",
+    "title_en": "Error - Start CMS Failed"
+  },
+  {
+    "code": "-52",
+    "stage_id": "STG-04",
+    "description": "فشل إنهاء جلسة نظام CMS.",
+    "troubleshooting_steps": [
+      "Check CMS connection. Force close session."
+    ],
+    "created_at": "2026-06-08T06:37:36.928639+00:00",
+    "title_ar": "خطأ - إنهاء جلسة CMS",
+    "title_en": "Error - End CMS Session Failed"
+  },
+  {
+    "code": "-53",
+    "stage_id": "STG-04",
+    "description": "فشل استرداد بيانات SFC من نظام CPS.",
+    "troubleshooting_steps": [
+      "Verify CPS connection and data availability."
+    ],
+    "created_at": "2026-06-08T06:37:36.928639+00:00",
+    "title_ar": "خطأ - استرداد SFC من CPS",
+    "title_en": "Error - Retrieve SFC From CPS Failed"
+  },
+  {
+    "code": "-54",
+    "stage_id": "STG-04",
+    "description": "فشل التحقق من دفعة المقاييس في نظام المترولوجيا.",
+    "troubleshooting_steps": [
+      "Check metrology system. Verify batch parameters."
+    ],
+    "created_at": "2026-06-08T06:37:36.928639+00:00",
+    "title_ar": "خطأ - التحكم في دفعة المترولوجيا",
+    "title_en": "Error - Metrology Batch Control Failed"
+  },
+  {
+    "code": "-55",
+    "stage_id": "STG-04",
+    "description": "فشل بدء إجراء المعايرة.",
+    "troubleshooting_steps": [
+      "Verify calibration bench is ready and connected."
+    ],
+    "created_at": "2026-06-08T06:37:36.928639+00:00",
+    "title_ar": "خطأ - بدء المعايرة",
+    "title_en": "Error - Start Calibration Failed"
+  },
+  {
+    "code": "-56",
+    "stage_id": "STG-04",
+    "description": "فشل تسجيل نتيجة المعايرة الناجحة في العداد.",
+    "troubleshooting_steps": [
+      "Check calibration result recording system."
+    ],
+    "created_at": "2026-06-08T06:37:36.928639+00:00",
+    "title_ar": "خطأ - عداد المعايرة الناجح",
+    "title_en": "Error - Calibration OK Counter Failed"
+  },
+  {
+    "code": "-57",
+    "stage_id": "STG-04",
+    "description": "فشل معالجة أمر العمل في نظام SAPME.",
+    "troubleshooting_steps": [
+      "Verify work order is valid in SAPME."
+    ],
+    "created_at": "2026-06-08T06:37:36.928639+00:00",
+    "title_ar": "خطأ - أمر عمل SAPME",
+    "title_en": "Error - SAPME Work Order Failed"
+  },
+  {
+    "code": "-58",
+    "stage_id": "STG-04",
+    "description": "فشل تسجيل عداد انتظار الصيانة.",
+    "troubleshooting_steps": [
+      "Check maintenance tracking system."
+    ],
+    "created_at": "2026-06-08T06:37:36.928639+00:00",
+    "title_ar": "خطأ - عداد انتظار الإصلاح",
+    "title_en": "Error - Repair Wait Counter Failed"
+  },
+  {
+    "code": "-59",
+    "stage_id": "STG-04",
+    "description": "فشل إدارة تدفق الإنتاج في النظام.",
+    "troubleshooting_steps": [
+      "Verify flow control settings. Check system state."
+    ],
+    "created_at": "2026-06-08T06:37:36.928639+00:00",
+    "title_ar": "خطأ - إدارة تدفق الإنتاج",
+    "title_en": "Error - Production Flow Management Failed"
+  },
+  {
+    "code": "-63",
+    "stage_id": "STG-04",
+    "description": "فشل استرداد خصائص المنتج من نظام SFC.",
+    "troubleshooting_steps": [
+      "Verify SFC property definitions."
+    ],
+    "created_at": "2026-06-08T06:37:36.928639+00:00",
+    "title_ar": "خطأ - استرداد خصائص SFC",
+    "title_en": "Error - Retrieve SFC Properties Failed"
+  },
+  {
+    "code": "-64",
+    "stage_id": "STG-04",
+    "description": "فشل استرداد بيانات الصنف من قاعدة البيانات.",
+    "troubleshooting_steps": [
+      "Check article master data in the system."
+    ],
+    "created_at": "2026-06-08T06:37:36.928639+00:00",
+    "title_ar": "خطأ - استرداد بيانات الصنف",
+    "title_en": "Error - Retrieve Article Data Failed"
+  },
+  {
+    "code": "-65",
+    "stage_id": "STG-04",
+    "description": "فشل توليد رقم SFC انطلاقاً من أمر العمل.",
+    "troubleshooting_steps": [
+      "Verify work order is active and valid."
+    ],
+    "created_at": "2026-06-08T06:37:36.928639+00:00",
+    "title_ar": "خطأ - توليد SFC من أمر العمل",
+    "title_en": "Error - Generate SFC From Work Order Failed"
+  },
+  {
+    "code": "-66",
+    "stage_id": "STG-04",
+    "description": "حدث خطأ أثناء تنفيذ عملية التجميع.",
+    "troubleshooting_steps": [
+      "Check assembly station. Review operation logs."
+    ],
+    "created_at": "2026-06-08T06:37:36.928639+00:00",
+    "title_ar": "خطأ - عملية التجميع",
+    "title_en": "Error - Assembly Operation Failed"
+  },
+  {
+    "code": "-10",
+    "stage_id": "STG-04",
+    "description": "فشل إنهاء عملية SAPME.",
+    "troubleshooting_steps": [
+      "Verify SAPME system status. Force close if needed."
+    ],
+    "created_at": "2026-06-08T06:37:36.928639+00:00",
+    "title_ar": "خطأ - إنهاء عملية SAPME",
+    "title_en": "Error - End SAPME Operation Failed"
+  },
+  {
+    "code": "-15",
+    "stage_id": "STG-04",
+    "description": "فشل رفع بيانات العملية إلى نظام MES.",
+    "troubleshooting_steps": [
+      "Check MES server connectivity. Retry upload."
+    ],
+    "created_at": "2026-06-08T06:37:36.928639+00:00",
+    "title_ar": "خطأ - رفع البيانات إلى MES",
+    "title_en": "Error - Upload Data to MES Failed"
+  },
+  {
+    "code": "-100",
+    "stage_id": "STG-04",
+    "description": "فشل الاتصال مع العداد أثناء المعايرة.",
+    "troubleshooting_steps": [
+      "Check serial cable. Verify COM port settings."
+    ],
+    "created_at": "2026-06-08T06:37:36.928639+00:00",
+    "title_ar": "خطأ - اتصال العداد",
+    "title_en": "Error - Meter Communication Failed"
+  },
+  {
+    "code": "-109",
+    "stage_id": "STG-04",
+    "description": "فشل بدء تشغيل العداد في إجراء المعايرة.",
+    "troubleshooting_steps": [
+      "Power cycle meter. Verify startup sequence."
+    ],
+    "created_at": "2026-06-08T06:37:36.928639+00:00",
+    "title_ar": "خطأ - بدء تشغيل العداد",
+    "title_en": "Error - Meter Startup Failed"
+  },
+  {
+    "code": "-110",
+    "stage_id": "STG-04",
+    "description": "فشل قراءة الرقم التسلسلي من العداد.",
+    "troubleshooting_steps": [
+      "Check meter communication. Verify data format."
+    ],
+    "created_at": "2026-06-08T06:37:36.928639+00:00",
+    "title_ar": "خطأ - قراءة الرقم التسلسلي",
+    "title_en": "Error - Read Serial Number Failed"
+  },
+  {
+    "code": "-111",
+    "stage_id": "STG-04",
+    "description": "فشل إغلاق القاطع الكهربائي في محطة المعايرة.",
+    "troubleshooting_steps": [
+      "Inspect breaker mechanism. Check control signal."
+    ],
+    "created_at": "2026-06-08T06:37:36.928639+00:00",
+    "title_ar": "خطأ - إغلاق القاطع الكهربائي",
+    "title_en": "Error - Close Breaker Failed"
+  },
+  {
+    "code": "-112",
+    "stage_id": "STG-04",
+    "description": "فشل إرسال معاملات الطاقة إلى العداد.",
+    "troubleshooting_steps": [
+      "Verify parameter values. Check meter communication."
+    ],
+    "created_at": "2026-06-08T06:37:36.928639+00:00",
+    "title_ar": "خطأ - إرسال معاملات الطاقة",
+    "title_en": "Error - Send Power Parameters Failed"
+  },
+  {
+    "code": "-113",
+    "stage_id": "STG-04",
+    "description": "جهد مصدر الطاقة الاحتياطي خارج النطاق المطلوب.",
+    "troubleshooting_steps": [
+      "Check backup power supply. Verify voltage levels."
+    ],
+    "created_at": "2026-06-08T06:37:36.928639+00:00",
+    "title_ar": "خطأ - اختبار الجهد الاحتياطي",
+    "title_en": "Error - Backup Voltage Test Failed"
+  },
+  {
+    "code": "-300",
+    "stage_id": "STG-04",
+    "description": "فشل الاتصال مع جهاز القياس المرجعي.",
+    "troubleshooting_steps": [
+      "Check RS232 cable. Verify reference meter is powered."
+    ],
+    "created_at": "2026-06-08T06:37:36.928639+00:00",
+    "title_ar": "خطأ - اتصال الجهاز المرجعي",
+    "title_en": "Error - Reference Meter Communication Failed"
+  },
+  {
+    "code": "-200",
+    "stage_id": "STG-04",
+    "description": "فشل الاتصال مع مولد الاختبار.",
+    "troubleshooting_steps": [
+      "Check COM port and cable to generator."
+    ],
+    "created_at": "2026-06-08T06:37:36.928639+00:00",
+    "title_ar": "خطأ - اتصال مولد الاختبار",
+    "title_en": "Error - Generator Communication Failed"
+  },
+  {
+    "code": "-400",
+    "stage_id": "STG-04",
+    "description": "فشل الاتصال مع وحدة التحكم ACU.",
+    "troubleshooting_steps": [
+      "Check ACU power and communication cable."
+    ],
+    "created_at": "2026-06-08T06:37:36.928639+00:00",
+    "title_ar": "خطأ - اتصال وحدة التحكم ACU",
+    "title_en": "Error - ACU Communication Failed"
+  },
+  {
+    "code": "-310",
+    "stage_id": "STG-04",
+    "description": "فشل تهيئة جهاز القياس المرجعي.",
+    "troubleshooting_steps": [
+      "Power cycle reference meter. Verify settings."
+    ],
+    "created_at": "2026-06-08T06:37:36.928639+00:00",
+    "title_ar": "خطأ - تهيئة الجهاز المرجعي",
+    "title_en": "Error - Initialize Reference Meter Failed"
+  },
+  {
+    "code": "-210",
+    "stage_id": "STG-04",
+    "description": "فشل تهيئة مولد الاختبار.",
+    "troubleshooting_steps": [
+      "Power cycle generator. Check initialization sequence."
+    ],
+    "created_at": "2026-06-08T06:37:36.928639+00:00",
+    "title_ar": "خطأ - تهيئة مولد الاختبار",
+    "title_en": "Error - Initialize Generator Failed"
+  },
+  {
+    "code": "-104",
+    "stage_id": "STG-06",
+    "description": "فشل بدء جلسة الاتصال مع نظام TracaCOM.",
+    "troubleshooting_steps": [
+      "Verify TracaCOM service is running and accessible."
+    ],
+    "created_at": "2026-06-08T06:37:36.928639+00:00",
+    "title_ar": "خطأ - بدء اتصال TracaCOM",
+    "title_en": "Error - Start TracaCOM Failed"
+  },
+  {
+    "code": "-600",
+    "stage_id": "STG-06",
+    "description": "فشل استرداد الرقم التسلسلي CSN من الوحدة.",
+    "troubleshooting_steps": [
+      "Check meter communication. Verify CSN provisioning."
+    ],
+    "created_at": "2026-06-08T06:37:36.928639+00:00",
+    "title_ar": "خطأ - استرداد الرقم CSN",
+    "title_en": "Error - CSN Recovery Failed"
+  },
+  {
+    "code": "-612",
+    "stage_id": "STG-06",
+    "description": "فشل إرسال أمر GN في مرحلة التخصيص.",
+    "troubleshooting_steps": [
+      "Check meter communication port. Retry command."
+    ],
+    "created_at": "2026-06-08T06:37:36.928639+00:00",
+    "title_ar": "خطأ - أمر توليد الرقم GN",
+    "title_en": "Error - GN Command Failed"
+  },
+  {
+    "code": "-613",
+    "stage_id": "STG-06",
+    "description": "الرقم التسلسلي CSN لا يطابق القيمة المتوقعة.",
+    "troubleshooting_steps": [
+      "Verify CSN in database. Re-provision if needed."
+    ],
+    "created_at": "2026-06-08T06:37:36.928639+00:00",
+    "title_ar": "خطأ - عدم تطابق CSN",
+    "title_en": "Error - CSN Verification Failed"
+  },
+  {
+    "code": "-617",
+    "stage_id": "STG-06",
+    "description": "فشل إرسال أمر GR في مرحلة التخصيص.",
+    "troubleshooting_steps": [
+      "Check command format. Verify meter readiness."
+    ],
+    "created_at": "2026-06-08T06:37:36.928639+00:00",
+    "title_ar": "خطأ - أمر GR",
+    "title_en": "Error - GR Command Failed"
+  },
+  {
+    "code": "-618",
+    "stage_id": "STG-06",
+    "description": "التاريخ المقروء من العداد لا يطابق التاريخ المتوقع.",
+    "troubleshooting_steps": [
+      "Sync meter clock. Verify date configuration."
+    ],
+    "created_at": "2026-06-08T06:37:36.928639+00:00",
+    "title_ar": "خطأ - عدم تطابق التاريخ",
+    "title_en": "Error - Date Verification Failed"
+  },
+  {
+    "code": "-667",
+    "stage_id": "STG-06",
+    "description": "فشل إجراء التهيئة الأولية للمصنع.",
+    "troubleshooting_steps": [
+      "Check factory init parameters. Verify meter state."
+    ],
+    "created_at": "2026-06-08T06:37:36.928639+00:00",
+    "title_ar": "خطأ - التهيئة الأولية للمصنع",
+    "title_en": "Error - Factory Initialization Failed"
+  },
+  {
+    "code": "-671",
+    "stage_id": "STG-06",
+    "description": "فشل مسح قائمة الإنذارات من العداد.",
+    "troubleshooting_steps": [
+      "Check meter communication. Retry alarm clear command."
+    ],
+    "created_at": "2026-06-08T06:37:36.928639+00:00",
+    "title_ar": "خطأ - مسح الإنذارات",
+    "title_en": "Error - Clear Alarms Failed"
+  },
+  {
+    "code": "-675",
+    "stage_id": "STG-06",
+    "description": "فشل التحقق من وحدة القياس الكهربائي ME.",
+    "troubleshooting_steps": [
+      "Verify ME module is functional and connected."
+    ],
+    "created_at": "2026-06-08T06:37:36.928639+00:00",
+    "title_ar": "خطأ - التحقق من وحدة القياس ME",
+    "title_en": "Error - Metering Element Verification Failed"
+  },
+  {
+    "code": "-677",
+    "stage_id": "STG-06",
+    "description": "فشل رفع عنوان MAC إلى نظام SFC.",
+    "troubleshooting_steps": [
+      "Check SFC connectivity. Verify MAC address format."
+    ],
+    "created_at": "2026-06-08T06:37:36.928639+00:00",
+    "title_ar": "خطأ - رفع عنوان MAC",
+    "title_en": "Error - Upload MAC Address Failed"
+  },
+  {
+    "code": "-678",
+    "stage_id": "STG-06",
+    "description": "فشل إخراج العداد من وضع التصنيع.",
+    "troubleshooting_steps": [
+      "Send correct exit command. Verify meter response."
+    ],
+    "created_at": "2026-06-08T06:37:36.928639+00:00",
+    "title_ar": "خطأ - الخروج من وضع المصنع",
+    "title_en": "Error - Exit Factory Mode Failed"
+  },
+  {
+    "code": "-679",
+    "stage_id": "STG-06",
+    "description": "العداد لم يدخل وضع العميل بشكل صحيح.",
+    "troubleshooting_steps": [
+      "Resend mode change command. Verify meter state."
+    ],
+    "created_at": "2026-06-08T06:37:36.928639+00:00",
+    "title_ar": "خطأ - التحقق من وضع العميل",
+    "title_en": "Error - Customer Mode Verification Failed"
+  },
+  {
+    "code": "-933",
+    "stage_id": "STG-06",
+    "description": "فشل التحقق من وجود قاعدة العداد أو سلامة التوصيل.",
+    "troubleshooting_steps": [
+      "Inspect meter base connection. Verify socket integrity."
+    ],
+    "created_at": "2026-06-08T06:37:36.928639+00:00",
+    "title_ar": "خطأ - التحقق من قاعدة التثبيت",
+    "title_en": "Error - Meter Base/Socket Check Failed"
+  }
+]

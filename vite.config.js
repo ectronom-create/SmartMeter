@@ -9,8 +9,8 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.svg', 'icons/*.png'],
       manifest: {
-        name: 'ECTRON PLS — نظام إدارة الإنتاج',
-        short_name: 'ECTRON PLS',
+        name: 'ECTRON — نظام إدارة الإنتاج',
+        short_name: 'ECTRON',
         description: 'نظام إدارة خط الإنتاج',
         theme_color: '#1a7f37',
         background_color: '#f0f2f5',
