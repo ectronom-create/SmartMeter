@@ -29,7 +29,7 @@ export default function DefectsPage() {
   const { 
     defectiveMeters, currentUser, updateMeterStatus, 
     getErrorByCode, addDefectiveMeter, addDefectiveMetersBulk, currentStage, errorCodes, language,
-    defectLogs
+    defectLogs, getUserById
   } = useApp();
 
   const isRtl = language === "ar";
@@ -39,7 +39,8 @@ export default function DefectsPage() {
   const [filterStatus, setFilterStatus] = useState("all");
   const [submitMsg, setSubmitMsg] = useState(null);
   const [importStatus, setImportStatus] = useState(null);
-  
+
+
   // Searchable Code logic
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedErrorCode, setSelectedErrorCode] = useState(null);
@@ -232,6 +233,8 @@ export default function DefectsPage() {
         const trans = err ? translateError(err, isRtl) : null;
         const statusText = STATUS_CONFIG[m.status]?.label || m.status;
         const stageText = stageNames[m.stage_found] || m.stage_found;
+        const reporterName = getUserById(m.reported_by)?.full_name || m.reported_by || "—";
+        const resolverName = getUserById(m.resolved_by)?.full_name || m.resolved_by || "—";
         
         if (isRtl) {
           return {
@@ -239,9 +242,11 @@ export default function DefectsPage() {
             "رمز العطل": m.error_code || "—",
             "وصف العطل": trans?.title || m.custom_description || "—",
             "المرحلة": stageText || "—",
-            "المُبلِّغ": m.reported_by || "—",
+            "المُبلِّغ": reporterName,
             "الحالة": statusText || "—",
-            "تاريخ البلاغ": formatDate(m.created_at)
+            "تاريخ البلاغ": formatDate(m.created_at),
+            "المُعدِّل / المعالج": resolverName,
+            "تاريخ آخر تعديل": m.resolved_at ? formatDate(m.resolved_at) : "—"
           };
         } else {
           return {
@@ -249,9 +254,11 @@ export default function DefectsPage() {
             "Error Code": m.error_code || "—",
             "Error Title": trans?.title || m.custom_description || "—",
             "Stage Found": stageText || "—",
-            "Reported By": m.reported_by || "—",
+            "Reported By": reporterName,
             "Status": statusText || "—",
-            "Date Reported": formatDate(m.created_at)
+            "Date Reported": formatDate(m.created_at),
+            "Modified By": resolverName,
+            "Date Modified": m.resolved_at ? formatDate(m.resolved_at) : "—"
           };
         }
       });
@@ -278,10 +285,12 @@ export default function DefectsPage() {
     return list.filter(m => m.serial_number.includes(reviewSearch.trim().toUpperCase()));
   }, [defectiveMeters, reviewSearch]);
 
-  const handleUpdateStatus = (id, status) => {
+  const handleStatusChange = (id, status, fromModal = false) => {
     updateMeterStatus(id, status);
-    setConfirmingId(null);
-    setNewStatus("");
+    if (fromModal) {
+      setConfirmingId(null);
+      setNewStatus("");
+    }
   };
 
   const filteredCodes = useMemo(() => {
@@ -632,15 +641,17 @@ export default function DefectsPage() {
                   <th style={{ textAlign: isRtl ? "right" : "left" }}>{isRtl ? "كود العطل" : "Fault Code"}</th>
                   <th style={{ textAlign: isRtl ? "right" : "left" }}>{isRtl ? "المرحلة" : "Stage"}</th>
                   <th style={{ textAlign: isRtl ? "right" : "left" }}>{isRtl ? "الوصف" : "Description"}</th>
+                  <th style={{ textAlign: isRtl ? "right" : "left" }}>{isRtl ? "المُبلِّغ" : "Reported By"}</th>
                   <th style={{ textAlign: isRtl ? "right" : "left" }}>{isRtl ? "الوقت" : "Time"}</th>
                   <th style={{ textAlign: isRtl ? "right" : "left" }}>{isRtl ? "الحالة" : "Status"}</th>
+                  <th style={{ textAlign: isRtl ? "right" : "left" }}>{isRtl ? "المُعدِّل / المعالج" : "Modified By"}</th>
                   {["supervisor", "quality_management", "admin"].includes(currentUser.role) && <th style={{ textAlign: isRtl ? "right" : "left" }}>{isRtl ? "تغيير الحالة" : "Change Status"}</th>}
                 </tr>
               </thead>
               <tbody>
                 {allMeters.length === 0 ? (
                   <tr>
-                    <td colSpan={7} style={{ textAlign: "center", padding: "40px", color: "var(--text-muted)" }}>
+                    <td colSpan={9} style={{ textAlign: "center", padding: "40px", color: "var(--text-muted)" }}>
                       {isRtl ? "لا توجد سجلات مطابقة" : "No matching records found"}
                     </td>
                   </tr>
@@ -657,14 +668,26 @@ export default function DefectsPage() {
                       </td>
                       <td>
                         {m.error_code ? (
-                          <span className="badge badge-amber" style={{ fontFamily: "monospace" }}>{m.error_code}</span>
+                           <span className="badge badge-amber" style={{ fontFamily: "monospace" }}>{m.error_code}</span>
                         ) : <span className="badge badge-gray">—</span>}
                       </td>
                       <td>
                         <span className="badge badge-gray">{stageNames[m.stage_found] || m.stage_found}</span>
                       </td>
-                      <td style={{ maxWidth: 220, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                        {trans?.title ? trans.title : (m.custom_description ? <TranslateText text={m.custom_description} targetLang={isRtl ? "ar" : "en"} /> : "—")}
+                      <td style={{ maxWidth: 250 }}>
+                        <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+                          <span style={{ fontWeight: 600 }}>{trans?.title || m.error_code || "—"}</span>
+                          {m.custom_description && (
+                            <span style={{ fontSize: "0.78rem", color: "var(--text-muted)", whiteSpace: "normal", wordBreak: "break-word" }}>
+                              💬 <TranslateText text={m.custom_description} targetLang={isRtl ? "ar" : "en"} />
+                            </span>
+                          )}
+                        </div>
+                      </td>
+                      <td>
+                        <span style={{ fontSize: "0.85rem" }}>
+                          {getUserById(m.reported_by)?.full_name || m.reported_by || "—"}
+                        </span>
                       </td>
                       <td style={{ fontSize: "0.8rem", color: "var(--text-muted)", whiteSpace: "nowrap" }}>
                         {formatDate(m.created_at)}
@@ -675,13 +698,22 @@ export default function DefectsPage() {
                           <CountdownTimer resolvedAt={m.resolved_at} isRtl={isRtl} />
                         )}
                       </td>
+                      <td>
+                        {m.resolved_by ? (
+                          <span style={{ fontSize: "0.85rem", fontWeight: 500 }}>
+                            👤 {getUserById(m.resolved_by)?.full_name || m.resolved_by}
+                          </span>
+                        ) : (
+                          <span style={{ color: "var(--text-muted)", fontSize: "0.85rem" }}>—</span>
+                        )}
+                      </td>
                       {["supervisor", "quality_management", "admin"].includes(currentUser.role) && (
                         <td>
                           <select
                             className="input"
                             style={{ padding: "4px 8px", fontSize: "0.8rem" }}
                             value={m.status}
-                            onChange={e => updateMeterStatus(m.id, e.target.value)}
+                            onChange={e => handleStatusChange(m.id, e.target.value)}
                           >
                             <option value="reported">{isRtl ? "بلاغ جديد" : "New Report"}</option>
                             <option value="pending">{isRtl ? "قيد الانتظار" : "Pending Review"}</option>
@@ -729,6 +761,11 @@ export default function DefectsPage() {
                     <span className="badge badge-gray">{stageNames[m.stage_found] || m.stage_found}</span>
                   </div>
                   
+                  <div className="defect-card-field">
+                    <span>{isRtl ? "المُبلِّغ:" : "Reported By:"}</span>
+                    <span style={{ fontWeight: 600 }}>{getUserById(m.reported_by)?.full_name || m.reported_by || "—"}</span>
+                  </div>
+                  
                   <div className="defect-card-field" style={{ fontSize: "0.8rem", color: "var(--text-muted)" }}>
                     <span>{isRtl ? "الوقت:" : "Time:"}</span>
                     <span>{formatDate(m.created_at)}</span>
@@ -739,7 +776,10 @@ export default function DefectsPage() {
                   </div>
                   
                   {m.status === "resolved" && (
-                    <div style={{ marginTop: 4 }}>
+                    <div style={{ marginTop: 8, display: "flex", flexDirection: "column", gap: 6 }}>
+                      <div className="defect-card-desc" style={{ background: "rgba(16, 185, 129, 0.08)", border: "1px solid rgba(16, 185, 129, 0.2)", padding: 8, borderRadius: 6, margin: 0 }}>
+                        <strong>{isRtl ? "المعالج:" : "Resolved By:"}</strong> {getUserById(m.resolved_by)?.full_name || m.resolved_by || "System"}
+                      </div>
                       <CountdownTimer resolvedAt={m.resolved_at} isRtl={isRtl} />
                     </div>
                   )}
@@ -751,7 +791,7 @@ export default function DefectsPage() {
                     <select
                       className="input"
                       value={m.status}
-                      onChange={e => updateMeterStatus(m.id, e.target.value)}
+                      onChange={e => handleStatusChange(m.id, e.target.value)}
                       style={{ padding: "8px 10px", fontSize: "0.85rem" }}
                     >
                       <option value="reported">{isRtl ? "بلاغ جديد" : "New Report"}</option>
@@ -937,7 +977,7 @@ export default function DefectsPage() {
                               {isRtl ? "تغيير الحالة إلى:" : "Change state to:"} <span className={`badge ${STATUS_CONFIG[newStatus].class}`}>{STATUS_CONFIG[newStatus].label}</span>?
                             </span>
                             <div style={{ display: "flex", gap: 8 }}>
-                              <button className="btn btn-primary btn-sm" onClick={() => handleUpdateStatus(m.id, newStatus)}>{isRtl ? "تأكيد وحفظ" : "Confirm & Save"}</button>
+                              <button className="btn btn-primary btn-sm" onClick={() => handleStatusChange(m.id, newStatus, true)}>{isRtl ? "تأكيد وحفظ" : "Confirm & Save"}</button>
                               <button className="btn btn-secondary btn-sm" onClick={() => setConfirmingId(null)}>{isRtl ? "إلغاء" : "Cancel"}</button>
                             </div>
                           </div>
@@ -973,6 +1013,7 @@ export default function DefectsPage() {
           </div>
         </div>
       )}
+
     </div>
   );
 }

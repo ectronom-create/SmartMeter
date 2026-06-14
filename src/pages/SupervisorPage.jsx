@@ -29,6 +29,8 @@ export default function SupervisorPage() {
   } = useApp();
 
   const [searchQuery, setSearchQuery] = useState("");
+  const [selectedEduStage, setSelectedEduStage] = useState("STG-01");
+  const [showEduModal, setShowEduModal] = useState(false);
   const isRtl = language === "ar";
   const today = getTodayString();
 
@@ -55,37 +57,20 @@ export default function SupervisorPage() {
       <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
         
         {/* Header */}
-        <div className="supervisor-header">
+        <div className="supervisor-header" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", borderBottom: "1px solid var(--border-subtle)", paddingBottom: 16, flexWrap: "wrap", gap: 16 }}>
           <div className="supervisor-title-section">
-            <h1 className="supervisor-title">{isRtl ? "لوحة إشراف الإنتاج" : "Production Supervision Panel"}</h1>
-            <div className="supervisor-meta-pill">
-              <span>{isRtl ? "شفت" : "Shift"} {currentShift?.name}</span>
+            <h1 className="supervisor-title" style={{ fontSize: "1.6rem", fontWeight: 800 }}>{isRtl ? "لوحة إشراف الإنتاج" : "Production Supervision Panel"}</h1>
+            <div className="supervisor-meta-pill" style={{ display: "flex", gap: 8, alignItems: "center", fontSize: "0.85rem", color: "var(--text-secondary)", flexWrap: "wrap" }}>
+              <span className="badge badge-amber">{isRtl ? "شفت" : "Shift"} {currentShift?.name}</span>
               <span className="supervisor-meta-divider">·</span>
               <span>{today}</span>
               <span className="supervisor-meta-divider">·</span>
               <span>{isRtl ? "إشراف مباشر على خط الإنتاج" : "Direct line supervision"}</span>
             </div>
           </div>
-          <div className="supervisor-actions-grid">
-            <button className="btn btn-primary" onClick={() => navigate("/start-production")} style={{ background: "linear-gradient(135deg, #0284c7, #0369a1)", border: "none" }}>
-              <ClipboardList size={16} /> {isRtl ? "تحقق بداية الإنتاج (SOP)" : "Start of Production (SOP)"}
-            </button>
-            <button className="btn btn-secondary" onClick={() => navigate("/defects")}>
-              <ExternalLink size={16} /> {isRtl ? "إدارة العدادات المعطوبة" : "Defect Management"}
-            </button>
-            <button className="btn btn-secondary" onClick={() => navigate("/fpy-overview")}>
-              <BarChart2 size={16} /> {t("fpyOverview")}
-            </button>
-            <button className="btn btn-secondary" onClick={() => navigate("/maintenance")}>
-              <Wrench size={16} /> {t("maintenance")}
-            </button>
-            <button className="btn btn-secondary" onClick={() => navigate("/knowledge")}>
-              <BookOpen size={16} /> {t("faultGuide")}
-            </button>
-            <button className="btn btn-ghost" onClick={() => navigate("/dashboard")}>
-              <ArrowRight size={16} style={{ transform: isRtl ? "none" : "rotate(180deg)" }} /> {isRtl ? "العودة للرئيسية" : "Back to Home"}
-            </button>
-          </div>
+          <button className="btn btn-secondary btn-sm" onClick={() => navigate("/dashboard")} style={{ display: "flex", alignItems: "center", gap: 6, margin: 0 }}>
+            <ArrowRight size={15} style={{ transform: isRtl ? "none" : "rotate(180deg)" }} /> {isRtl ? "العودة للرئيسية" : "Back to Home"}
+          </button>
         </div>
 
         {/* Real-time Stats */}
@@ -116,6 +101,108 @@ export default function SupervisorPage() {
             <div>
               <div className="stat-value">{defectiveMeters.filter(m => m.status === "resolved").length}</div>
               <div className="stat-label">{isRtl ? "عادت لخط الإنتاج" : "Returned to Line"}</div>
+            </div>
+          </div>
+        </div>
+
+        {/* Supervisor Quick Navigation Panel */}
+        <div className="animate-fade">
+          <h3 style={{ marginBottom: 12, fontWeight: 800 }}>
+            {isRtl ? "بوابات التحكم والمتابعة والتثقيف" : "Supervisor Control & Navigation Board"}
+          </h3>
+          <div style={{ 
+            display: "grid", 
+            gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", 
+            gap: 16 
+          }}>
+            {/* 1. SOP */}
+            <div className="card interactive" onClick={() => navigate("/start-production")} style={{ display: "flex", gap: 16, cursor: "pointer", alignItems: "center" }}>
+              <div style={{ width: 48, height: 48, borderRadius: "var(--radius-md)", background: "rgba(2,132,199,0.12)", color: "#0284c7", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                <ClipboardList size={22} />
+              </div>
+              <div style={{ flex: 1, textAlign: isRtl ? "right" : "left" }}>
+                <h4 style={{ margin: "0 0 4px 0", fontWeight: 700, fontSize: "0.95rem" }}>
+                  {isRtl ? "بداية الإنتاج (SOP)" : "Start of Production (SOP)"}
+                </h4>
+                <p style={{ margin: 0, fontSize: "0.78rem", color: "var(--text-secondary)" }}>
+                  {isRtl ? "تحضير ومطابقة محطات العمل والخطوات" : "Verify workstation setup and sign reports."}
+                </p>
+              </div>
+            </div>
+
+            {/* 2. Defect Management */}
+            <div className="card interactive" onClick={() => navigate("/defects")} style={{ display: "flex", gap: 16, cursor: "pointer", alignItems: "center" }}>
+              <div style={{ width: 48, height: 48, borderRadius: "var(--radius-md)", background: "rgba(239,68,68,0.12)", color: "var(--red)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                <AlertTriangle size={22} />
+              </div>
+              <div style={{ flex: 1, textAlign: isRtl ? "right" : "left" }}>
+                <h4 style={{ margin: "0 0 4px 0", fontWeight: 700, fontSize: "0.95rem" }}>
+                  {isRtl ? "إدارة المعطوبات" : "Defective Meters Manager"}
+                </h4>
+                <p style={{ margin: 0, fontSize: "0.78rem", color: "var(--text-secondary)" }}>
+                  {isRtl ? "إحالة ومراجعة تقارير الأعطال والتأكيد" : "Review floor defects and verify repairs."}
+                </p>
+              </div>
+            </div>
+
+            {/* 3. FPY Dashboard */}
+            <div className="card interactive" onClick={() => navigate("/fpy-overview")} style={{ display: "flex", gap: 16, cursor: "pointer", alignItems: "center" }}>
+              <div style={{ width: 48, height: 48, borderRadius: "var(--radius-md)", background: "rgba(130,80,223,0.12)", color: "var(--purple)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                <BarChart2 size={22} />
+              </div>
+              <div style={{ flex: 1, textAlign: isRtl ? "right" : "left" }}>
+                <h4 style={{ margin: "0 0 4px 0", fontWeight: 700, fontSize: "0.95rem" }}>
+                  {isRtl ? "لوحة مؤشرات FPY" : "Yield & Metrics Dashboard"}
+                </h4>
+                <p style={{ margin: 0, fontSize: "0.78rem", color: "var(--text-secondary)" }}>
+                  {isRtl ? "متابعة كفاءة وجودة خط الإنتاج" : "Monitor First Pass Yield and line quality."}
+                </p>
+              </div>
+            </div>
+
+            {/* 4. Maintenance */}
+            <div className="card interactive" onClick={() => navigate("/maintenance")} style={{ display: "flex", gap: 16, cursor: "pointer", alignItems: "center" }}>
+              <div style={{ width: 48, height: 48, borderRadius: "var(--radius-md)", background: "rgba(16,185,129,0.12)", color: "var(--accent)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                <Wrench size={22} />
+              </div>
+              <div style={{ flex: 1, textAlign: isRtl ? "right" : "left" }}>
+                <h4 style={{ margin: "0 0 4px 0", fontWeight: 700, fontSize: "0.95rem" }}>
+                  {isRtl ? "مهام الصيانة" : "Maintenance Planner"}
+                </h4>
+                <p style={{ margin: 0, fontSize: "0.78rem", color: "var(--text-secondary)" }}>
+                  {isRtl ? "إدارة وتتبع الصيانة الدورية للأجهزة" : "Track weekly schedules and device maintenance."}
+                </p>
+              </div>
+            </div>
+
+            {/* 5. Fault Guide */}
+            <div className="card interactive" onClick={() => navigate("/knowledge")} style={{ display: "flex", gap: 16, cursor: "pointer", alignItems: "center" }}>
+              <div style={{ width: 48, height: 48, borderRadius: "var(--radius-md)", background: "rgba(245,158,11,0.12)", color: "var(--amber)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                <BookOpen size={22} />
+              </div>
+              <div style={{ flex: 1, textAlign: isRtl ? "right" : "left" }}>
+                <h4 style={{ margin: "0 0 4px 0", fontWeight: 700, fontSize: "0.95rem" }}>
+                  {isRtl ? "دليل الأعطال الفنية" : "Fault Troubleshooting Guide"}
+                </h4>
+                <p style={{ margin: 0, fontSize: "0.78rem", color: "var(--text-secondary)" }}>
+                  {isRtl ? "فهرس أكواد الخطأ وحلولها المعتمدة" : "Look up floor codes and quick solutions."}
+                </p>
+              </div>
+            </div>
+
+            {/* 6. Stations Educational Info */}
+            <div className="card interactive" onClick={() => setShowEduModal(true)} style={{ display: "flex", gap: 16, cursor: "pointer", alignItems: "center", border: "1px solid var(--accent)" }}>
+              <div style={{ width: 48, height: 48, borderRadius: "var(--radius-md)", background: "var(--accent-glow)", color: "var(--accent)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                <Info size={22} />
+              </div>
+              <div style={{ flex: 1, textAlign: isRtl ? "right" : "left" }}>
+                <h4 style={{ margin: "0 0 4px 0", fontWeight: 800, fontSize: "0.95rem", color: "var(--accent)" }}>
+                  {isRtl ? "معلومات وتثقيف المحطات" : "Workstations Info & Training"}
+                </h4>
+                <p style={{ margin: 0, fontSize: "0.78rem", color: "var(--text-secondary)" }}>
+                  {isRtl ? "شرح خطوات العمل وأهميتها للتثقيف" : "General info, importance, and station duties."}
+                </p>
+              </div>
             </div>
           </div>
         </div>
@@ -266,6 +353,154 @@ export default function SupervisorPage() {
         </div>
 
       </div>
+
+      {/* General Information & Training Modal for Supervisor */}
+      {showEduModal && (
+        <div className="modal-overlay animate-fade" onClick={() => setShowEduModal(false)}>
+          <div 
+            className="modal-content animate-scale" 
+            onClick={e => e.stopPropagation()} 
+            style={{ 
+              maxWidth: 700, 
+              borderTop: `5px solid var(--accent)`, 
+              boxShadow: "var(--shadow-lg)", 
+              borderRadius: "var(--radius-xl)" 
+            }}
+          >
+            <div className="modal-header" style={{ padding: "20px 24px" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                <span style={{ fontSize: "1.6rem" }}>📖</span>
+                <div style={{ textAlign: isRtl ? "right" : "left" }}>
+                  <h3 style={{ margin: 0, fontSize: "1.2rem", fontWeight: 800 }}>
+                    {isRtl ? "دليل محطات العمل وتثقيف الموظفين" : "Workstations Guide & Training Manual"}
+                  </h3>
+                  <span style={{ fontSize: "0.78rem", color: "var(--text-muted)", fontWeight: 700 }}>
+                    {isRtl ? "عرض تفاصيل وشرح كل خطوة في خط الإنتاج" : "View general information and duties for all production stages"}
+                  </span>
+                </div>
+              </div>
+              <button 
+                type="button" 
+                className="btn-close" 
+                onClick={() => setShowEduModal(false)}
+                style={{ fontSize: "1.6rem", margin: isRtl ? "0 auto 0 0" : "0 0 0 auto" }}
+              >
+                &times;
+              </button>
+            </div>
+
+            {/* Stage Selector Tabs */}
+            <div style={{ 
+              display: "flex", 
+              gap: 6, 
+              padding: "12px 20px", 
+              background: "var(--bg-elevated)", 
+              borderBottom: "1px solid var(--border-subtle)",
+              overflowX: "auto",
+              whiteSpace: "nowrap",
+              flexDirection: isRtl ? "row" : "row-reverse"
+            }}>
+              {production_stages.filter(s => s.stage_id !== "GLOBAL" && s.stage_id !== "SUPERVISION").map(stage => {
+                const isSelected = selectedEduStage === stage.stage_id;
+                const stageColors = {
+                  "STG-01": "#f97316", "STG-02": "#4f46e5",
+                  "STG-03": "#06b6d4", "STG-04": "#10b981", "STG-05": "#8b5cf6", "STG-06": "#ec4899"
+                };
+                const color = stageColors[stage.stage_id] || "var(--accent)";
+                return (
+                  <button
+                    key={stage.stage_id}
+                    onClick={() => setSelectedEduStage(stage.stage_id)}
+                    style={{
+                      padding: "8px 14px",
+                      borderRadius: "30px",
+                      border: "1px solid",
+                      borderColor: isSelected ? color : "var(--border)",
+                      background: isSelected ? `${color}11` : "var(--bg-surface)",
+                      color: isSelected ? color : "var(--text-secondary)",
+                      fontWeight: isSelected ? 800 : 600,
+                      fontSize: "0.82rem",
+                      cursor: "pointer",
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 6,
+                      fontFamily: "Cairo, sans-serif",
+                      transition: "all 0.2s"
+                    }}
+                  >
+                    <span>{stage.icon}</span>
+                    <span>{isRtl ? stage.short_name : stage.stage_id}</span>
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Stage Description Content */}
+            <div style={{ padding: "24px", display: "flex", flexDirection: "column", gap: 20, maxHeight: "50vh", overflowY: "auto", textAlign: isRtl ? "right" : "left" }}>
+              {(() => {
+                const edu = t("stageEducations")?.[selectedEduStage];
+                const stageColors = {
+                  "STG-01": "#f97316", "STG-02": "#4f46e5",
+                  "STG-03": "#06b6d4", "STG-04": "#10b981", "STG-05": "#8b5cf6", "STG-06": "#ec4899"
+                };
+                const color = stageColors[selectedEduStage] || "var(--accent)";
+
+                if (!edu) return <p style={{ textAlign: "center", color: "var(--text-muted)" }}>{isRtl ? "لا تتوفر تفاصيل لهذه المرحلة" : "No details available"}</p>;
+
+                return (
+                  <>
+                    <div>
+                      <h4 style={{ color: color, marginBottom: 6, fontSize: "0.95rem", fontWeight: 800, textTransform: "uppercase", display: "flex", alignItems: "center", gap: 6, justifyContent: isRtl ? "flex-start" : "flex-end", flexDirection: isRtl ? "row" : "row-reverse" }}>
+                        <Info size={15} /> <span>{t("stageOverviewTitle")}</span>
+                      </h4>
+                      <p style={{ fontSize: "0.92rem", lineHeight: 1.6, color: "var(--text-primary)" }}>
+                        {edu.overview}
+                      </p>
+                    </div>
+
+                    <div style={{ background: "rgba(99,102,241,0.04)", border: "1px solid rgba(99,102,241,0.12)", borderRadius: 12, padding: 16 }}>
+                      <h4 style={{ color: "var(--blue)", marginBottom: 6, fontSize: "0.95rem", fontWeight: 800, textTransform: "uppercase", display: "flex", alignItems: "center", gap: 6, justifyContent: isRtl ? "flex-start" : "flex-end", flexDirection: isRtl ? "row" : "row-reverse" }}>
+                        <span>💡</span> <span>{t("stageImportanceTitle")}</span>
+                      </h4>
+                      <p style={{ fontSize: "0.9rem", lineHeight: 1.6, color: "var(--text-secondary)" }}>
+                        {edu.importance}
+                      </p>
+                    </div>
+
+                    <div>
+                      <h4 style={{ color: "var(--accent)", marginBottom: 10, fontSize: "0.95rem", fontWeight: 800, textTransform: "uppercase", display: "flex", alignItems: "center", gap: 6, justifyContent: isRtl ? "flex-start" : "flex-end", flexDirection: isRtl ? "row" : "row-reverse" }}>
+                        <span>⚙️</span> <span>{t("stageFunctionsTitle")}</span>
+                      </h4>
+                      <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                        {edu.functions.map((func, idx) => (
+                          <div key={idx} style={{ display: "flex", gap: 10, alignItems: "flex-start", background: "var(--bg-elevated)", padding: "10px 14px", borderRadius: 8, border: "1px solid var(--border-subtle)", flexDirection: isRtl ? "row" : "row-reverse" }}>
+                            <span style={{ 
+                              background: color + "22", 
+                              color: color, 
+                              width: 22, height: 22, borderRadius: "50%", 
+                              display: "flex", alignItems: "center", justifyContent: "center",
+                              fontSize: "0.75rem", fontWeight: 800, flexShrink: 0
+                            }}>
+                              {idx + 1}
+                            </span>
+                            <span style={{ fontSize: "0.88rem", color: "var(--text-primary)", flex: 1 }}>{func}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </>
+                );
+              })()}
+            </div>
+
+            <div style={{ padding: "16px 24px", background: "var(--bg-elevated)", borderTop: "1px solid var(--border-subtle)", display: "flex", justifyContent: isRtl ? "flex-start" : "flex-end" }}>
+              <button className="btn btn-secondary btn-sm" onClick={() => setShowEduModal(false)}>
+                {isRtl ? "إغلاق" : "Close"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

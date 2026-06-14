@@ -14,11 +14,15 @@ function StageModal({ stage, onClose }) {
     icon: "⚙️",
     color: "#6366f1",
     instructions: [],
-    troubleshooting: []
+    troubleshooting: [],
+    overview: "",
+    importance: "",
+    functions: []
   });
 
   const [newInst, setNewInst] = useState("");
   const [newProb, setNewProb] = useState({ problem: "", solution: "" });
+  const [newFunc, setNewFunc] = useState("");
   const [done, setDone] = useState(false);
 
   const handle = (e) => setForm(p => ({ ...p, [e.target.name]: e.target.value }));
@@ -129,6 +133,46 @@ function StageModal({ stage, onClose }) {
                     <div style={{ color: "var(--green)", fontWeight: 600 }}>✅ {isRtl ? "الحل:" : "Fix:"} {item.solution}</div>
                   </div>
                 ))}
+              </div>
+            </div>
+
+            <div className="divider" />
+
+            {/* Educational Info */}
+            <div style={{ background: "rgba(99,102,241,0.02)", padding: 16, borderRadius: 12, border: "1px solid var(--border-subtle)", display: "flex", flexDirection: "column", gap: 14 }}>
+              <h4 style={{ color: "var(--accent)", margin: 0, display: "flex", alignItems: "center", gap: 6, justifyContent: isRtl ? "flex-start" : "flex-end", flexDirection: isRtl ? "row" : "row-reverse", fontSize: "0.95rem", fontWeight: 800 }}>
+                <Info size={16} /> <span>{isRtl ? "معلومات التثقيف والتدريب (المشغل)" : "Training & Educational Info (Operator)"}</span>
+              </h4>
+              
+              <div className="input-group">
+                <label className="input-label" style={{ textAlign: isRtl ? "right" : "left", fontWeight: 700 }}>{isRtl ? "نبذة عن المحطة (Overview)" : "Stage Overview"}</label>
+                <textarea className="input" name="overview" value={form.overview || ""} onChange={handle} placeholder={isRtl ? "اكتب نبذة تثقيفية عن المحطة..." : "Enter stage overview..."} rows={2} style={{ textAlign: isRtl ? "right" : "left", resize: "none" }} />
+              </div>
+
+              <div className="input-group">
+                <label className="input-label" style={{ textAlign: isRtl ? "right" : "left", fontWeight: 700 }}>{isRtl ? "أهمية المحطة (Importance)" : "Stage Importance"}</label>
+                <textarea className="input" name="importance" value={form.importance || ""} onChange={handle} placeholder={isRtl ? "اكتب لماذا هذه المحطة مهمة..." : "Enter stage importance..."} rows={2} style={{ textAlign: isRtl ? "right" : "left", resize: "none" }} />
+              </div>
+
+              <div className="input-group">
+                <label className="input-label" style={{ textAlign: isRtl ? "right" : "left", fontWeight: 700 }}>{isRtl ? "مهام المحطة الأساسية (Functions)" : "Stage Primary Functions"}</label>
+                <div style={{ display: "flex", gap: 8, marginBottom: 10, flexDirection: isRtl ? "row" : "row-reverse" }}>
+                  <input className="input" placeholder={isRtl ? "أضف مهمة/وظيفة..." : "Add function/duty..."} value={newFunc} onChange={e => setNewFunc(e.target.value)} style={{ textAlign: isRtl ? "right" : "left" }} />
+                  <button type="button" className="btn btn-secondary" onClick={() => {
+                    if (!newFunc.trim()) return;
+                    setForm(p => ({ ...p, functions: [...(p.functions || []), newFunc] }));
+                    setNewFunc("");
+                  }}>{isRtl ? "إضافة" : "Add"}</button>
+                </div>
+                <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                  {(form.functions || []).map((func, i) => (
+                    <div key={i} style={{ display: "flex", alignItems: "center", gap: 10, background: "white", padding: "8px 12px", borderRadius: 8, fontSize: "0.85rem", border: "1px solid var(--border-subtle)", flexDirection: isRtl ? "row" : "row-reverse" }}>
+                      <span style={{ fontWeight: 800, color: "var(--accent)" }}>{i + 1}</span>
+                      <span style={{ flex: 1, textAlign: isRtl ? "right" : "left" }}>{func}</span>
+                      <button type="button" className="btn btn-ghost btn-icon btn-sm" onClick={() => setForm(p => ({ ...p, functions: p.functions.filter((_, idx) => idx !== i) }))}><Trash2 size={13} /></button>
+                    </div>
+                  ))}
+                </div>
               </div>
             </div>
 

@@ -95,6 +95,73 @@ export const translations = {
     sopReportsTab: "📋 تقارير بداية الإنتاج",
     fpyOverview: "لوحة التحكم",
     maintenance: "الصيانة",
+    homePage: "الصفحة الرئيسية",
+    generalInfoBtn: "المعلومات العامة والتثقيفية",
+    infoModalTitle: "معلومات عامة وتثقيفية عن المحطة",
+    stageOverviewTitle: "نبذة عن المحطة",
+    stageImportanceTitle: "أهمية المحطة",
+    stageFunctionsTitle: "المهام والوظائف الأساسية",
+    stageEducations: {
+      "STG-01": {
+        title: "محطة التجميع (Assembly Bench)",
+        overview: "تضمن هذه الخطوة التركيب الفيزيائي الأولي لمكونات العداد الذكي، ودمج الهيكل الخارجي، وحجرة البطارية، واللوحات الإلكترونية.",
+        importance: "الدقة العالية في هذه المرحلة تمنع أي تداخل أو محاذاة خاطئة للمكونات أو تراخي البراغي، مما يضمن السلامة الهيكلية ومتانة العداد قبل دخوله مرحلة الفحوصات الكهربائية.",
+        functions: [
+          "فحص الهيكل الخارجي بحثًا عن أي عيوب أو شروخ دقيقة.",
+          "تركيب حامل البطاريات وتوجيه الكابلات الداخلية بشكل صحيح.",
+          "تثبيت البراغي بدقة باستخدام عزم الدوران المحدد."
+        ]
+      },
+      "STG-02": {
+        title: "اختبار العزل الكهربائي (Insulation Test)",
+        overview: "تخضع هذه المرحلة العداد لجهد كهربائي عالٍ للتحقق من جودة العزل وسلامة المكونات الداخلية.",
+        importance: "تضمن سلامة العداد للاستخدام والتركيب، وتمنع حدوث أي تسريب للتيار أو التماسات كهربائية، مما يحمي المستخدم النهائي والفنيين من الصعق الكهربائي.",
+        functions: [
+          "فحص قوة العزل في ظروف الجهد العالي (Hi-Pot).",
+          "قياس تيارات التسريب للتأكد من أنها ضمن النطاق الميكرو-أمبيري الآمن."
+        ]
+      },
+      "STG-03": {
+        title: "فحص الترددات اللاسلكية (Radio Frequency Test)",
+        overview: "تقوم هذه المحطة باختبار أداء الاتصال اللاسلكي للعداد الذكي الخلوي بنسبة 100% باستخدام شريحة اتصال (SIM) أثناء عملية التصنيع.",
+        importance: "يضمن استقرار الاتصال اللاسلكي البعيد للعداد (إرسال واستقبال البيانات)، وهو أمر أساسي لعمليات القراءة التلقائية للعدادات (AMR) والاتصال بشبكات الجوال.",
+        functions: [
+          "إجراء اختبارات الإرسال والاستقبال (Tx/Rx) لشبكات الجيل الرابع (LTE).",
+          "إجراء اختبارات الإرسال والاستقبال (Tx/Rx) لبروتوكول Wireless Mbus.",
+          "قياس قوة وجودة إشارة الاتصال (RSSI)."
+        ]
+      },
+      "STG-04": {
+        title: "مرحلة المعايرة (Calibration Test)",
+        overview: "تُستخدم هذه المنصة لمعايرة عدادات الكهرباء لضمان أعلى مستويات الدقة في القياس.",
+        importance: "تقوم بحساب وحفظ معاملات التصحيح مباشرة في ذاكرة العداد لضمان أن قياسات الطاقة والقدرة تقع ضمن الدقة المطلوبة (+/-1%)، مما يمنع أخطاء الفوترة لشركة الكهرباء والمستهلكين.",
+        functions: [
+          "حساب وحفظ معاملات التصحيح الرقمية اللازمة لقياس القدرة والطاقة بدقة (+/-1%).",
+          "إجراء اختبارات التحقق من المعايرة عند مستويات تيار منخفضة ومرتفعة لضمان التتبع والتوثيق.",
+          "استخدام مولد مرجعي ذكي بواجهات معيارية لدعم معايرة العدادات الأحادية والثلاثية الطور."
+        ]
+      },
+      "STG-05": {
+        title: "الاختبار الوظيفي الشامل (Multi-Function Test)",
+        overview: "دورة فحص مؤتمتة متكاملة للتحقق من جميع الوظائف البرمجية للعداد وشاشته وذاكرته وأجهزة استشعار منع التلاعب.",
+        importance: "تكشف عن أي عيوب برمجية غير ظاهرة، وتتحقق من سلامة البطارية، وجودة الشاشة، وعمل مستشعر الاختراق والتلاعب لضمان سلامة المنتج النهائية.",
+        functions: [
+          "اختبار سلامة ذاكرة العداد وعرض الشاشة بالكامل دون عيوب.",
+          "اختبار حساسية مستشعر منع التلاعب وحماية العداد من السرقة أو الاختراق.",
+          "تشغيل دورة فحص عامة متزامنة مع قراءات وهمية."
+        ]
+      },
+      "STG-06": {
+        title: "التخصيص والتعبئة النهائية (Personalization & Packaging Bench)",
+        overview: "المرحلة النهائية لكتابة بيانات العميل المشفرة، وإغلاق منافذ الاتصال التشخيصي، وإجراء الفحص النهائي للمنتج وتعبئته.",
+        importance: "خطوة أمنية حرجة؛ حيث يتم نقل العداد إلى 'وضع العميل' لإغلاق منافذ التعديل للأبد. وتضمن التعبئة حماية المنتج وصناديق التجميع للشحن الآمن.",
+        functions: [
+          "كتابة وحقن بيانات العميل، والتسعيرة، والمفاتيح الأمنية للعداد.",
+          "تحويل العداد إلى وضع التشغيل الفعلي (بعدها يتم قفل منافذ الاتصال والتعديل نهائيًا).",
+          "الفحص الظاهري النهائي، طباعة ملصق الباركود، وتعبئة العداد في الصناديق الفردية والجماعية."
+        ]
+      }
+    }
   },
   en: {
     // Auth & Navigation
@@ -192,5 +259,72 @@ export const translations = {
     sopReportsTab: "📋 SOP Reports Log",
     fpyOverview: "Dashboard",
     maintenance: "Maintenance",
+    homePage: "Home Page",
+    generalInfoBtn: "General & Educational Info",
+    infoModalTitle: "Station General Information & Training",
+    stageOverviewTitle: "Station Overview",
+    stageImportanceTitle: "Station Importance",
+    stageFunctionsTitle: "Core Functions & Duties",
+    stageEducations: {
+      "STG-01": {
+        title: "Assembly Bench",
+        overview: "This step ensures the initial physical assembly of the smart meter components, integrating the main housing, battery compartment, and electronic boards.",
+        importance: "High precision at this stage prevents physical misalignments, loose screws, or internal wire interference, ensuring the structural integrity and durability of the meter before entering electrical testing.",
+        functions: [
+          "Checking the outer shell for defects or micro-cracks.",
+          "Installing the battery holder and routing internal cables properly.",
+          "Securing screws according to the specified torque limit."
+        ]
+      },
+      "STG-02": {
+        title: "Insulation Test (Hi-Pot)",
+        overview: "This stage subjects the meter to high voltage limits (dielectric strength testing) to verify the quality of insulation and safety of components.",
+        importance: "Guarantees that the meter is safe for installation, preventing current leakage or electrical short circuits, and protecting end consumers and operators from electrical hazards.",
+        functions: [
+          "Testing insulation integrity under high-voltage conditions (Hi-Pot).",
+          "Monitoring leakage currents to verify they are within acceptable micro-ampere ranges."
+        ]
+      },
+      "STG-03": {
+        title: "Radio Frequency Test (RF)",
+        overview: "This bench is to test 100% of the radio performances of the cellular smart meter using a SIM card during meter manufacturing.",
+        importance: "Ensures stable remote communication of the meter (transmission and reception), which is critical for automatic meter reading (AMR) and cellular network connection.",
+        functions: [
+          "Perform radiated tests Tx/Rx for LTE.",
+          "Perform radiated tests Tx/Rx for Wireless Mbus.",
+          "Measure Signal Strength (RSSI) and link stability."
+        ]
+      },
+      "STG-04": {
+        title: "Calibration Test",
+        overview: "This bench is used to calibrate electricity meters to guarantee high measurement accuracy.",
+        importance: "It calculates and saves calibration factors directly to the meter, ensuring that power and energy measurements are within the declared accuracy standards (+/-1%), avoiding billing errors for the utility and consumers.",
+        functions: [
+          "Calculate and save the numerical correction coefficients necessary for the meter to measure powers and energies with the declared accuracy (+/-1%).",
+          "Perform secondary verification tests at selected load points (low/high currents) to guarantee traceability.",
+          "Utilize standard reference generators with modular interface systems for support of single/three-phase meters."
+        ]
+      },
+      "STG-05": {
+        title: "Multi-Function Test",
+        overview: "A comprehensive automated test cycle checking all internal software features, display, memory components, and anti-tamper sensors.",
+        importance: "Detects any latent software or firmware defects, battery status issues, display segments corruption, or anti-tamper alerts malfunction before the product gets finalized.",
+        functions: [
+          "Verifying display segment completeness and memory chip write/read functions.",
+          "Testing the anti-tamper sensor response to magnetic or mechanical intrusion.",
+          "Running overall system checks under simulated active load conditions."
+        ]
+      },
+      "STG-06": {
+        title: "Personalization & Packaging Bench",
+        overview: "The final stage to write secure customer credentials onto the meter, lock communication interfaces, perform a final QC check, and pack the meter.",
+        importance: "Crucial for security; switching the meter to 'customer mode' locks the diagnostic port forever. Packaging ensures products are secured in individual and collective boxes to reach the customer in perfect condition.",
+        functions: [
+          "Writing specific customer profile, tariff models, and keys.",
+          "Switching the meter to customer mode (after this test, external debug communication is blocked).",
+          "Final quality control, barcode scanning, printing labels, and packaging individual and collective boxes."
+        ]
+      }
+    }
   }
 };

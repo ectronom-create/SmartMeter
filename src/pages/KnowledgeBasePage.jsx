@@ -3,7 +3,7 @@ import { useApp } from "../context/AppContext";
 import { useNavigate } from "react-router-dom";
 import {
   Search, BookOpen, ArrowRight, AlertCircle,
-  ChevronDown, ChevronUp, X
+  ChevronDown, ChevronUp, X, Info
 } from "lucide-react";
 import * as XLSX from "xlsx";
 
@@ -254,6 +254,7 @@ export default function KnowledgeBasePage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [openCode, setOpenCode] = useState(null);
   const [importStatus, setImportStatus] = useState(null);
+  const [selectedStageInfo, setSelectedStageInfo] = useState(null);
 
   const isRtl = language === "ar";
 
@@ -526,12 +527,23 @@ export default function KnowledgeBasePage() {
                 }}>
                   {stage.icon}
                 </div>
-                <div style={{ textAlign: isRtl ? "right" : "left" }}>
+                <div style={{ textAlign: isRtl ? "right" : "left", flex: 1 }}>
                   <h2 style={{ margin: 0, fontSize: "1rem", color }}>
                     {isRtl ? stage.stage_name : (stage.stage_name.match(/\(([^)]+)\)/)?.[1] || stage.stage_name)}
                   </h2>
-                  <span style={{ fontSize: "0.78rem", color: "var(--text-muted)" }}>
-                    {codes.length} {isRtl ? "أكواد أعطال" : "fault codes"}
+                  <span style={{ fontSize: "0.78rem", color: "var(--text-muted)", display: "flex", alignItems: "center", gap: 10, justifyContent: isRtl ? "flex-start" : "flex-end", flexDirection: isRtl ? "row" : "row-reverse" }}>
+                    <span>{codes.length} {isRtl ? "أكواد أعطال" : "fault codes"}</span>
+                    &middot;
+                    <button 
+                      onClick={() => setSelectedStageInfo(stage)}
+                      style={{ 
+                        background: "none", border: "none", padding: 0, color: "var(--accent)", fontWeight: 700, cursor: "pointer", fontSize: "0.78rem",
+                        display: "flex", alignItems: "center", gap: 4
+                      }}
+                    >
+                      <Info size={12} />
+                      {isRtl ? "معلومات المحطة وتثقيفها" : "Stage Info & Training"}
+                    </button>
                   </span>
                 </div>
                 <span className="badge" style={{
@@ -561,6 +573,152 @@ export default function KnowledgeBasePage() {
         })}
 
       </div>
+
+      {selectedStageInfo && (
+        <div className="modal-overlay animate-fade" onClick={() => setSelectedStageInfo(null)}>
+          <div 
+            className="modal-content animate-scale" 
+            onClick={e => e.stopPropagation()} 
+            style={{ 
+              maxWidth: 650, 
+              borderTop: `5px solid ${selectedStageInfo.color || "var(--accent)"}`, 
+              boxShadow: "var(--shadow-lg)", 
+              borderRadius: "var(--radius-xl)" 
+            }}
+          >
+            <div className="modal-header" style={{ padding: "20px 24px" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                <span style={{ fontSize: "1.8rem" }}>{selectedStageInfo.icon}</span>
+                <div style={{ textAlign: isRtl ? "right" : "left" }}>
+                  <h3 style={{ margin: 0, fontSize: "1.2rem", fontWeight: 800 }}>
+                    {t("infoModalTitle")}
+                  </h3>
+                  <span style={{ fontSize: "0.78rem", color: "var(--text-muted)", fontWeight: 700 }}>
+                    {selectedStageInfo.stage_id} · {selectedStageInfo.stage_name}
+                  </span>
+                </div>
+              </div>
+              <button 
+                type="button" 
+                className="btn-close" 
+                onClick={() => setSelectedStageInfo(null)}
+                style={{ fontSize: "1.6rem", margin: isRtl ? "0 auto 0 0" : "0 0 0 auto" }}
+              >
+                &times;
+              </button>
+            </div>
+
+            <div style={{ padding: "24px", display: "flex", flexDirection: "column", gap: 20, maxHeight: "65vh", overflowY: "auto", textAlign: isRtl ? "right" : "left" }}>
+              {(selectedStageInfo.overview || selectedStageInfo.importance || (selectedStageInfo.functions && selectedStageInfo.functions.length > 0)) ? (
+                <>
+                  {selectedStageInfo.overview && (
+                    <div>
+                      <h4 style={{ color: selectedStageInfo.color || "var(--accent)", marginBottom: 6, fontSize: "0.95rem", fontWeight: 800, textTransform: "uppercase", display: "flex", alignItems: "center", gap: 6, justifyContent: isRtl ? "flex-start" : "flex-end", flexDirection: isRtl ? "row" : "row-reverse" }}>
+                        <Info size={15} /> <span>{t("stageOverviewTitle")}</span>
+                      </h4>
+                      <p style={{ fontSize: "0.92rem", lineHeight: 1.6, color: "var(--text-primary)" }}>
+                        <TranslateText text={selectedStageInfo.overview} targetLang={isRtl ? "ar" : "en"} />
+                      </p>
+                    </div>
+                  )}
+
+                  {selectedStageInfo.importance && (
+                    <div style={{ background: "rgba(99,102,241,0.04)", border: "1px solid rgba(99,102,241,0.12)", borderRadius: 12, padding: 16 }}>
+                      <h4 style={{ color: "var(--blue)", marginBottom: 6, fontSize: "0.95rem", fontWeight: 800, textTransform: "uppercase", display: "flex", alignItems: "center", gap: 6, justifyContent: isRtl ? "flex-start" : "flex-end", flexDirection: isRtl ? "row" : "row-reverse" }}>
+                        <span>💡</span> <span>{t("stageImportanceTitle")}</span>
+                      </h4>
+                      <p style={{ fontSize: "0.9rem", lineHeight: 1.6, color: "var(--text-secondary)" }}>
+                        <TranslateText text={selectedStageInfo.importance} targetLang={isRtl ? "ar" : "en"} />
+                      </p>
+                    </div>
+                  )}
+
+                  {selectedStageInfo.functions && selectedStageInfo.functions.length > 0 && (
+                    <div>
+                      <h4 style={{ color: "var(--accent)", marginBottom: 10, fontSize: "0.95rem", fontWeight: 800, textTransform: "uppercase", display: "flex", alignItems: "center", gap: 6, justifyContent: isRtl ? "flex-start" : "flex-end", flexDirection: isRtl ? "row" : "row-reverse" }}>
+                        <span>⚙️</span> <span>{t("stageFunctionsTitle")}</span>
+                      </h4>
+                      <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                        <TranslateSteps
+                          steps={selectedStageInfo.functions}
+                          targetLang={isRtl ? "ar" : "en"}
+                          renderStep={(func, idx) => (
+                            <div key={idx} style={{ display: "flex", gap: 10, alignItems: "flex-start", background: "var(--bg-elevated)", padding: "10px 14px", borderRadius: 8, border: "1px solid var(--border-subtle)", flexDirection: isRtl ? "row" : "row-reverse" }}>
+                              <span style={{ 
+                                background: (selectedStageInfo.color || "var(--accent)") + "22", 
+                                color: selectedStageInfo.color || "var(--accent)", 
+                                width: 22, height: 22, borderRadius: "50%", 
+                                display: "flex", alignItems: "center", justifyContent: "center",
+                                fontSize: "0.75rem", fontWeight: 800, flexShrink: 0
+                              }}>
+                                {idx + 1}
+                              </span>
+                              <span style={{ fontSize: "0.88rem", color: "var(--text-primary)", flex: 1 }}>{func}</span>
+                            </div>
+                          )}
+                        />
+                      </div>
+                    </div>
+                  )}
+                </>
+              ) : t("stageEducations")?.[selectedStageInfo.stage_id] ? (
+                <>
+                  <div>
+                    <h4 style={{ color: selectedStageInfo.color || "var(--accent)", marginBottom: 6, fontSize: "0.95rem", fontWeight: 800, textTransform: "uppercase", display: "flex", alignItems: "center", gap: 6, justifyContent: isRtl ? "flex-start" : "flex-end", flexDirection: isRtl ? "row" : "row-reverse" }}>
+                      <Info size={15} /> <span>{t("stageOverviewTitle")}</span>
+                    </h4>
+                    <p style={{ fontSize: "0.92rem", lineHeight: 1.6, color: "var(--text-primary)" }}>
+                      {t("stageEducations")[selectedStageInfo.stage_id].overview}
+                    </p>
+                  </div>
+
+                  <div style={{ background: "rgba(99,102,241,0.04)", border: "1px solid rgba(99,102,241,0.12)", borderRadius: 12, padding: 16 }}>
+                    <h4 style={{ color: "var(--blue)", marginBottom: 6, fontSize: "0.95rem", fontWeight: 800, textTransform: "uppercase", display: "flex", alignItems: "center", gap: 6, justifyContent: isRtl ? "flex-start" : "flex-end", flexDirection: isRtl ? "row" : "row-reverse" }}>
+                      <span>💡</span> <span>{t("stageImportanceTitle")}</span>
+                    </h4>
+                    <p style={{ fontSize: "0.9rem", lineHeight: 1.6, color: "var(--text-secondary)" }}>
+                      {t("stageEducations")[selectedStageInfo.stage_id].importance}
+                    </p>
+                  </div>
+
+                  <div>
+                    <h4 style={{ color: "var(--accent)", marginBottom: 10, fontSize: "0.95rem", fontWeight: 800, textTransform: "uppercase", display: "flex", alignItems: "center", gap: 6, justifyContent: isRtl ? "flex-start" : "flex-end", flexDirection: isRtl ? "row" : "row-reverse" }}>
+                      <span>⚙️</span> <span>{t("stageFunctionsTitle")}</span>
+                    </h4>
+                    <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                      {t("stageEducations")[selectedStageInfo.stage_id].functions.map((func, idx) => (
+                        <div key={idx} style={{ display: "flex", gap: 10, alignItems: "flex-start", background: "var(--bg-elevated)", padding: "10px 14px", borderRadius: 8, border: "1px solid var(--border-subtle)", flexDirection: isRtl ? "row" : "row-reverse" }}>
+                          <span style={{ 
+                            background: (selectedStageInfo.color || "var(--accent)") + "22", 
+                            color: selectedStageInfo.color || "var(--accent)", 
+                            width: 22, height: 22, borderRadius: "50%", 
+                            display: "flex", alignItems: "center", justifyContent: "center",
+                            fontSize: "0.75rem", fontWeight: 800, flexShrink: 0
+                          }}>
+                            {idx + 1}
+                          </span>
+                          <span style={{ fontSize: "0.88rem", color: "var(--text-primary)", flex: 1 }}>{func}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </>
+              ) : (
+                <p style={{ textAlign: "center", color: "var(--text-muted)", padding: "20px 0" }}>
+                  {isRtl ? "لا تتوفر معلومات تفصيلية لهذه الخطوة حالياً." : "No educational details available for this step yet."}
+                </p>
+              )}
+            </div>
+
+            <div style={{ padding: "16px 24px", background: "var(--bg-elevated)", borderTop: "1px solid var(--border-subtle)", display: "flex", justifyContent: isRtl ? "flex-start" : "flex-end" }}>
+              <button className="btn btn-secondary btn-sm" onClick={() => setSelectedStageInfo(null)}>
+                {isRtl ? "إغلاق" : "Close"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 }

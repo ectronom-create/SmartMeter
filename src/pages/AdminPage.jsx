@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useApp } from "../context/AppContext";
-import { Users, Calendar, AlertTriangle, BarChart2, Shield, BookOpen, ChevronRight, CheckCircle, Clock, Layers, X, Search, ClipboardList, Wrench, Package } from "lucide-react";
+import { Users, Calendar, AlertTriangle, BarChart2, Shield, BookOpen, ChevronRight, CheckCircle, Clock, Layers, X, Search, ClipboardList, Wrench, Package, Plus } from "lucide-react";
 import MaintenancePage from "./MaintenancePage";
 import { AssetsPanel } from "./AssetsPage";
 import UsersPanel from "../components/UsersPanel";
@@ -31,7 +31,7 @@ function DefectsPanel() {
   const [confirmingId, setConfirmingId] = useState(null);
   const [newStatus, setNewStatus] = useState("");
 
-  const isRtl = language === "ar";
+const isRtl = language === "ar";
 
   const handleExportExcel = () => {
     try {
@@ -67,6 +67,8 @@ function DefectsPanel() {
         const stageText = stageNames[m.stage_found] || m.stage_found;
         const rep = getUserById(m.reported_by);
         const reporterName = rep?.full_name || m.reported_by || "—";
+        const res = getUserById(m.resolved_by);
+        const resolverName = res?.full_name || m.resolved_by || "—";
         
         if (isRtl) {
           return {
@@ -76,7 +78,9 @@ function DefectsPanel() {
             "المرحلة": stageText || "—",
             "المُبلِّغ": reporterName,
             "الحالة": statusText || "—",
-            "تاريخ البلاغ": formatDate(m.created_at)
+            "تاريخ البلاغ": formatDate(m.created_at),
+            "المُعدِّل / المعالج": resolverName,
+            "تاريخ آخر تعديل": m.resolved_at ? formatDate(m.resolved_at) : "—"
           };
         } else {
           return {
@@ -86,7 +90,9 @@ function DefectsPanel() {
             "Stage Found": stageText || "—",
             "Reported By": reporterName,
             "Status": statusText || "—",
-            "Date Reported": formatDate(m.created_at)
+            "Date Reported": formatDate(m.created_at),
+            "Modified By": resolverName,
+            "Date Modified": m.resolved_at ? formatDate(m.resolved_at) : "—"
           };
         }
       });
@@ -101,6 +107,7 @@ function DefectsPanel() {
   };
 
   const STATUS = {
+    reported: { label: isRtl ? "بلاغ جديد" : "New Report",           cls: "badge-blue",  icon: <Plus size={12} /> },
     pending:  { label: isRtl ? "قيد الانتظار" : "Pending Review",           cls: "badge-amber", icon: <Clock size={12} /> },
     verified: { label: isRtl ? "تم التحقق (معطوب)" : "Verified Defective",     cls: "badge-red",   icon: <AlertTriangle size={12} /> },
     resolved: { label: isRtl ? "يعود لخط الانتاج" : "Returned to Line",       cls: "badge-green", icon: <CheckCircle size={12} /> },
@@ -111,10 +118,12 @@ function DefectsPanel() {
     m.serial_number.includes(reviewSearch.trim().toUpperCase())
   );
 
-  const handleUpdate = (id, status) => {
+  const handleStatusChange = (id, status, fromModal = false) => {
     updateMeterStatus(id, status);
-    setConfirmingId(null);
-    setNewStatus("");
+    if (fromModal) {
+      setConfirmingId(null);
+      setNewStatus("");
+    }
   };
 
   return (
@@ -158,15 +167,18 @@ function DefectsPanel() {
                 <th style={{ textAlign: isRtl ? "right" : "left" }}>{isRtl ? "السيريال نمبر" : "Serial Number"}</th>
                 <th style={{ textAlign: isRtl ? "right" : "left" }}>{isRtl ? "الكود" : "Code"}</th>
                 <th style={{ textAlign: isRtl ? "right" : "left" }}>{isRtl ? "المرحلة" : "Stage"}</th>
+                <th style={{ textAlign: isRtl ? "right" : "left" }}>{isRtl ? "الوصف" : "Description"}</th>
                 <th style={{ textAlign: isRtl ? "right" : "left" }}>{isRtl ? "المُبلِّغ" : "Reported By"}</th>
                 <th style={{ textAlign: isRtl ? "right" : "left" }}>{isRtl ? "التاريخ" : "Date"}</th>
                 <th style={{ textAlign: isRtl ? "right" : "left" }}>{isRtl ? "الحالة" : "Status"}</th>
+                <th style={{ textAlign: isRtl ? "right" : "left" }}>{isRtl ? "المُعدِّل / المعالج" : "Modified By"}</th>
                 <th style={{ textAlign: isRtl ? "right" : "left" }}>{isRtl ? "تغيير الحالة" : "Change Status"}</th>
               </tr>
             </thead>
             <tbody>
               {defectiveMeters.map(m=>{
                 const err=m.error_code?getErrorByCode(m.error_code):null;
+                const trans = err ? translateError(err, isRtl) : null;
                 const rep=getUserById(m.reported_by);
                 const sc=STATUS[m.status]||STATUS.pending;
                 const stage=getStageById(m.stage_found);
@@ -180,6 +192,16 @@ function DefectsPanel() {
                         {stage?.icon} {stageDisplay}
                       </span>
                     </td>
+                    <td style={{ maxWidth: 250 }}>
+                      <div style={{ display: "flex", flexDirection: "column", gap: 2, textAlign: isRtl ? "right" : "left" }}>
+                        <span style={{ fontWeight: 600 }}>{trans?.title || m.error_code || "—"}</span>
+                        {m.custom_description && (
+                          <span style={{ fontSize: "0.78rem", color: "var(--text-muted)", whiteSpace: "normal", wordBreak: "break-word" }}>
+                            💬 <TranslateText text={m.custom_description} targetLang={isRtl ? "ar" : "en"} />
+                          </span>
+                        )}
+                      </div>
+                    </td>
                     <td style={{fontSize:"0.85rem"}}>{rep?.full_name||m.reported_by}</td>
                     <td style={{fontSize:"0.78rem",color:"var(--text-muted)"}}>
                       {isRtl ? new Date(m.created_at).toLocaleDateString("ar-SA") : new Date(m.created_at).toLocaleDateString("en-US")}
@@ -191,7 +213,17 @@ function DefectsPanel() {
                       )}
                     </td>
                     <td>
-                      <select className="input" style={{padding:"4px 8px",fontSize:"0.8rem",width:"auto"}} value={m.status} onChange={e=>updateMeterStatus(m.id,e.target.value)}>
+                      {m.resolved_by ? (
+                        <span style={{ fontSize: "0.85rem", fontWeight: 500 }}>
+                          👤 {getUserById(m.resolved_by)?.full_name || m.resolved_by}
+                        </span>
+                      ) : (
+                        <span style={{ color: "var(--text-muted)", fontSize: "0.85rem" }}>—</span>
+                      )}
+                    </td>
+                    <td>
+                      <select className="input" style={{padding:"4px 8px",fontSize:"0.8rem",width:"auto"}} value={m.status} onChange={e=>handleStatusChange(m.id,e.target.value)}>
+                        <option value="reported">{isRtl ? "بلاغ جديد" : "New Report"}</option>
                         <option value="pending">{isRtl ? "قيد الانتظار" : "Pending Review"}</option>
                         <option value="verified">{isRtl ? "تم التحقق (معطوب)" : "Verified Defective"}</option>
                         <option value="resolved">{isRtl ? "يعود لخط الانتاج" : "Returned to Line"}</option>
@@ -276,7 +308,7 @@ function DefectsPanel() {
                               {isRtl ? "تأكيد النقل إلى:" : "Confirm state to:"} <span className={`badge ${STATUS[newStatus].cls}`}>{STATUS[newStatus].label}</span>?
                             </span>
                             <div style={{ display: "flex", gap: 6 }}>
-                              <button className="btn btn-primary btn-sm" onClick={() => handleUpdate(m.id, newStatus)}>{isRtl ? "حفظ" : "Save"}</button>
+                              <button className="btn btn-primary btn-sm" onClick={() => handleStatusChange(m.id, newStatus, true)}>{isRtl ? "حفظ" : "Save"}</button>
                               <button className="btn btn-secondary btn-sm" onClick={() => setConfirmingId(null)}>{isRtl ? "إلغاء" : "Cancel"}</button>
                             </div>
                           </div>

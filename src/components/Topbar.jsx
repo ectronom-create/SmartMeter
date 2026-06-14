@@ -1,6 +1,6 @@
 import { useNavigate, useLocation } from "react-router-dom";
 import { useApp } from "../context/AppContext";
-import { LogOut, Shield, LayoutDashboard, BookOpen, Package, BarChart2, Wrench } from "lucide-react";
+import { LogOut, Shield, LayoutDashboard, BookOpen, Package, BarChart2, Wrench, Home } from "lucide-react";
 
 
 
@@ -69,32 +69,58 @@ export default function Topbar() {
             <LayoutDashboard size={14} /> <span className="btn-text">{t("adminPanel")}</span>
           </button>
         )}
-        {isSupervisor && location.pathname !== "/supervisor" && (
-          <button className="btn btn-secondary btn-sm topbar-nav-btn" onClick={() => navigate("/supervisor")}>
+
+        {/* Home Page Shortcut (Supervisor & Operator) */}
+        {(isSupervisor || currentUser?.role === "operator") && (
+          <button 
+            className={`btn ${location.pathname === "/dashboard" ? "btn-secondary" : "btn-ghost"} btn-sm topbar-nav-btn`} 
+            onClick={() => navigate("/dashboard")}
+            title={t("homePage")}
+          >
+            <Home size={14} /> <span className="btn-text">{t("homePage")}</span>
+          </button>
+        )}
+
+        {/* Supervisor Panel (Only Supervisor) */}
+        {isSupervisor && (
+          <button 
+            className={`btn ${location.pathname === "/supervisor" ? "btn-secondary" : "btn-ghost"} btn-sm topbar-nav-btn`} 
+            onClick={() => navigate("/supervisor")}
+            title={t("supervisorPanel")}
+          >
             <LayoutDashboard size={14} /> <span className="btn-text">{t("supervisorPanel")}</span>
           </button>
         )}
-        {isQuality && location.pathname !== "/defects" && (
-          <button className="btn btn-secondary btn-sm topbar-nav-btn" onClick={() => navigate("/defects")}>
+
+        {/* Quality Defects Toggle (Quality Only) */}
+        {isQuality && (
+          <button 
+            className={`btn ${location.pathname === "/defects" ? "btn-secondary" : "btn-ghost"} btn-sm topbar-nav-btn`} 
+            onClick={() => navigate("/defects")}
+            title={language === "ar" ? "العدادات المعطوبة" : "Defective Meters"}
+          >
             <LayoutDashboard size={14} /> <span className="btn-text">{language === "ar" ? "العدادات المعطوبة" : "Defective Meters"}</span>
-          </button>
-        )}
-        {isSupervisor && location.pathname === "/supervisor" && (
-          <button className="btn btn-secondary btn-sm topbar-nav-btn" onClick={() => navigate("/dashboard")}>
-            <LayoutDashboard size={14} /> <span className="btn-text">{language === "ar" ? "الشاشة الرئيسية" : "Main Dashboard"}</span>
           </button>
         )}
 
         {/* FPY Overview Shortcut (All Logged-in Users except Admin) */}
         {currentUser && !isAdmin && (
-          <button className="btn btn-ghost btn-sm topbar-nav-btn" onClick={() => navigate("/fpy-overview")} title={t("fpyOverview")}>
+          <button 
+            className={`btn ${location.pathname === "/fpy-overview" ? "btn-secondary" : "btn-ghost"} btn-sm topbar-nav-btn`} 
+            onClick={() => navigate("/fpy-overview")} 
+            title={t("fpyOverview")}
+          >
             <BarChart2 size={15} /> <span className="btn-text" style={{ fontSize: "0.8rem" }}>{t("fpyOverview")}</span>
           </button>
         )}
 
         {/* Maintenance Shortcut (All Logged-in Users except Admin) */}
         {currentUser && !isAdmin && (
-          <button className="btn btn-ghost btn-sm topbar-nav-btn" onClick={() => navigate("/maintenance")} title={t("maintenance")}>
+          <button 
+            className={`btn ${location.pathname === "/maintenance" ? "btn-secondary" : "btn-ghost"} btn-sm topbar-nav-btn`} 
+            onClick={() => navigate("/maintenance")} 
+            title={t("maintenance")}
+          >
             <Wrench size={15} /> <span className="btn-text" style={{ fontSize: "0.8rem" }}>{t("maintenance")}</span>
           </button>
         )}

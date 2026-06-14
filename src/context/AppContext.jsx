@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useCallback, useEffect } from "react";
+import { createContext, useContext, useState, useCallback, useEffect, useMemo } from "react";
 import { translations } from "../utils/translations";
 import { supabase } from "../supabaseClient";
 
@@ -352,6 +352,16 @@ export function AppProvider({ children }) {
         : shiftTypes.find(s => s.shift_id === getCurrentShift()))
     : null;
 
+  const effectiveUser = useMemo(() => {
+    if (!currentUser) return null;
+    if (currentUser.role === "supervisor") {
+      if (todaySchedule && todaySchedule.stage_id !== "SUPERVISION") {
+        return { ...currentUser, role: "operator" };
+      }
+    }
+    return currentUser;
+  }, [currentUser, todaySchedule]);
+
   // ── Rotation schedule generator ───────────────────────
   const generateRotationSchedule = useCallback(({
     shift_id, startDate, numDays, initialAssignments, rotationOffset, teamLeaders, shiftSupervisor
@@ -462,6 +472,9 @@ export function AppProvider({ children }) {
       color: stageData.color || "#6366f1",
       instructions: stageData.instructions || [],
       troubleshooting: stageData.troubleshooting || [],
+      overview: stageData.overview || "",
+      importance: stageData.importance || "",
+      functions: stageData.functions || [],
     };
 
     try {
@@ -644,8 +657,8 @@ export function AppProvider({ children }) {
   }, [defectiveMeters, errorCodes, addDefectLog, currentUser]);
 
   const updateMeterStatus = useCallback(async (id, status) => {
-    const resolved_at = status === "resolved" ? new Date().toISOString() : null;
-    const resolved_by = status === "resolved" ? currentUser?.employee_id : null;
+    const resolved_at = new Date().toISOString();
+    const resolved_by = currentUser?.employee_id || null;
     const oldMeter = defectiveMeters.find(m => m.id === id);
     const oldStatus = oldMeter ? oldMeter.status : null;
     const serialNumber = oldMeter ? oldMeter.serial_number : "UNKNOWN";
@@ -932,7 +945,7 @@ export function AppProvider({ children }) {
   }
 
   const value = {
-    currentUser, login, logout, loginError, changePassword,
+    currentUser: effectiveUser, login, logout, loginError, changePassword,
     users, addUser, updateUserRole, deleteUser, updateUser,
     schedules, todaySchedule, upcomingSchedule, currentStage, currentShift,
     generateRotationSchedule, saveGeneratedSchedule,

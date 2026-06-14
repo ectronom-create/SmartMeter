@@ -2,10 +2,10 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useApp } from "../context/AppContext";
 import { supabase } from "../supabaseClient";
-import { TranslateText } from "./KnowledgeBasePage";
+import { TranslateText, TranslateSteps } from "./KnowledgeBasePage";
 import {
   Play, Calendar, Star, Clock, ChevronLeft,
-  AlertTriangle, CheckCircle, Layers, BookOpen, BarChart2, Wrench
+  AlertTriangle, CheckCircle, BookOpen, BarChart2, Wrench, Info
 } from "lucide-react";
 
 
@@ -32,11 +32,14 @@ export default function EmployeeDashboard() {
     getScheduleWithDetails,
     defectiveMeters,
     language,
+    productionStages,
     t
   } = useApp();
 
   const isRtl = language === "ar";
   const [myMaintenanceShift, setMyMaintenanceShift] = useState(null);
+  const [showEduModal, setShowEduModal] = useState(false);
+  const [selectedEduStage, setSelectedEduStage] = useState("STG-01");
 
   useEffect(() => {
     if (!currentUser) return;
@@ -148,19 +151,7 @@ export default function EmployeeDashboard() {
               &nbsp;·&nbsp;{currentUser.employee_id}
             </p>
           </div>
-          <div style={{ display: "flex", gap: 8, ...(isRtl ? { marginRight: "auto" } : { marginLeft: "auto" }) }}>
-            {currentUser.role === "supervisor" && (
-              <button className="btn btn-secondary btn-sm" onClick={() => navigate("/supervisor")}>
-                <Layers size={15} /> {t("supervisorPanel")}
-              </button>
-            )}
-            <button className="btn btn-secondary btn-sm" onClick={() => navigate("/fpy-overview")} style={{ gap: 6 }}>
-              <BarChart2 size={15} /> {t("fpyOverview")}
-            </button>
-            <button className="btn btn-secondary btn-sm" onClick={() => navigate("/maintenance")} style={{ gap: 6 }}>
-              <Wrench size={15} /> {t("maintenance")}
-            </button>
-          </div>
+
         </div>
 
         {/* Maintenance Alert Notification Banner */}
@@ -364,6 +355,25 @@ export default function EmployeeDashboard() {
           </div>
         )}
 
+        {/* ── Workstations Guide & Training Manual Card ── */}
+        <div 
+          className="card interactive animate-fade" 
+          onClick={() => setShowEduModal(true)} 
+          style={{ display: "flex", gap: 16, cursor: "pointer", alignItems: "center", border: "1px solid var(--accent)", padding: "20px 24px" }}
+        >
+          <div style={{ width: 48, height: 48, borderRadius: "var(--radius-md)", background: "rgba(99,102,241,0.12)", color: "var(--accent)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+            <BookOpen size={24} />
+          </div>
+          <div style={{ flex: 1, textAlign: isRtl ? "right" : "left" }}>
+            <h3 style={{ margin: "0 0 6px 0", fontWeight: 800, fontSize: "1.1rem", color: "var(--accent)" }}>
+              {isRtl ? "دليل محطات العمل وتثقيف الموظفين" : "Workstations Guide & Training"}
+            </h3>
+            <p style={{ margin: 0, fontSize: "0.85rem", color: "var(--text-secondary)" }}>
+              {isRtl ? "عرض تفاصيل وشرح كل خطوة في خط الإنتاج" : "View general information and duties for all production stages"}
+            </p>
+          </div>
+        </div>
+
         {/* ── Upcoming schedule ── */}
         <div className="card animate-fade">
           <div className="card-header">
@@ -423,6 +433,214 @@ export default function EmployeeDashboard() {
         </div>
 
       </div>
+
+      {showEduModal && (
+        <div className="modal-overlay animate-fade" onClick={() => setShowEduModal(false)}>
+          <div 
+            className="modal-content animate-scale" 
+            onClick={e => e.stopPropagation()} 
+            style={{ 
+              maxWidth: 700, 
+              borderTop: `5px solid var(--accent)`, 
+              boxShadow: "var(--shadow-lg)", 
+              borderRadius: "var(--radius-xl)" 
+            }}
+          >
+            <div className="modal-header" style={{ padding: "20px 24px" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                <span style={{ fontSize: "1.6rem" }}>📖</span>
+                <div style={{ textAlign: isRtl ? "right" : "left" }}>
+                  <h3 style={{ margin: 0, fontSize: "1.2rem", fontWeight: 800 }}>
+                    {isRtl ? "دليل محطات العمل وتثقيف الموظفين" : "Workstations Guide & Training Manual"}
+                  </h3>
+                  <span style={{ fontSize: "0.78rem", color: "var(--text-muted)", fontWeight: 700 }}>
+                    {isRtl ? "عرض تفاصيل وشرح كل خطوة في خط الإنتاج" : "View general information and duties for all production stages"}
+                  </span>
+                </div>
+              </div>
+              <button 
+                type="button" 
+                className="btn-close" 
+                onClick={() => setShowEduModal(false)}
+                style={{ fontSize: "1.6rem", margin: isRtl ? "0 auto 0 0" : "0 0 0 auto" }}
+              >
+                &times;
+              </button>
+            </div>
+
+            {/* Stage Selector Tabs */}
+            <div style={{ 
+              display: "flex", 
+              gap: 6, 
+              padding: "12px 20px", 
+              background: "var(--bg-elevated)", 
+              borderBottom: "1px solid var(--border-subtle)",
+              overflowX: "auto",
+              whiteSpace: "nowrap",
+              flexDirection: isRtl ? "row" : "row-reverse"
+            }}>
+              {productionStages.filter(s => s.stage_id !== "GLOBAL" && s.stage_id !== "SUPERVISION").map(stage => {
+                const isSelected = selectedEduStage === stage.stage_id;
+                const stageColors = {
+                  "STG-01": "#f97316", "STG-02": "#4f46e5",
+                  "STG-03": "#06b6d4", "STG-04": "#10b981", "STG-05": "#8b5cf6", "STG-06": "#ec4899"
+                };
+                const color = stageColors[stage.stage_id] || "var(--accent)";
+                return (
+                  <button
+                    key={stage.stage_id}
+                    onClick={() => setSelectedEduStage(stage.stage_id)}
+                    style={{
+                      padding: "8px 14px",
+                      borderRadius: "30px",
+                      border: "1px solid",
+                      borderColor: isSelected ? color : "var(--border)",
+                      background: isSelected ? `${color}11` : "var(--bg-surface)",
+                      color: isSelected ? color : "var(--text-secondary)",
+                      fontWeight: isSelected ? 800 : 600,
+                      fontSize: "0.82rem",
+                      cursor: "pointer",
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 6,
+                      transition: "all 0.2s"
+                    }}
+                  >
+                    <span>{stage.icon}</span>
+                    <span>{isRtl ? stage.short_name : stage.stage_id}</span>
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Stage Description Content */}
+            <div style={{ padding: "24px", display: "flex", flexDirection: "column", gap: 20, maxHeight: "50vh", overflowY: "auto", textAlign: isRtl ? "right" : "left" }}>
+              {(() => {
+                const activeStageData = productionStages.find(s => s.stage_id === selectedEduStage);
+                const eduStatic = t("stageEducations")?.[selectedEduStage];
+                const stageColors = {
+                  "STG-01": "#f97316", "STG-02": "#4f46e5",
+                  "STG-03": "#06b6d4", "STG-04": "#10b981", "STG-05": "#8b5cf6", "STG-06": "#ec4899"
+                };
+                const color = stageColors[selectedEduStage] || "var(--accent)";
+
+                if (!activeStageData) return <p style={{ textAlign: "center", color: "var(--text-muted)" }}>{isRtl ? "لا تتوفر تفاصيل لهذه المرحلة" : "No details available"}</p>;
+
+                const hasDbContent = activeStageData.overview || activeStageData.importance || (activeStageData.functions && activeStageData.functions.length > 0);
+
+                if (hasDbContent) {
+                  return (
+                    <>
+                      {activeStageData.overview && (
+                        <div>
+                          <h4 style={{ color: color, marginBottom: 6, fontSize: "0.95rem", fontWeight: 800, textTransform: "uppercase", display: "flex", alignItems: "center", gap: 6, justifyContent: isRtl ? "flex-start" : "flex-end", flexDirection: isRtl ? "row" : "row-reverse" }}>
+                            <Info size={15} /> <span>{t("stageOverviewTitle")}</span>
+                          </h4>
+                          <p style={{ fontSize: "0.92rem", lineHeight: 1.6, color: "var(--text-primary)" }}>
+                            <TranslateText text={activeStageData.overview} targetLang={isRtl ? "ar" : "en"} />
+                          </p>
+                        </div>
+                      )}
+
+                      {activeStageData.importance && (
+                        <div style={{ background: "rgba(99,102,241,0.04)", border: "1px solid rgba(99,102,241,0.12)", borderRadius: 12, padding: 16 }}>
+                          <h4 style={{ color: "var(--blue)", marginBottom: 6, fontSize: "0.95rem", fontWeight: 800, textTransform: "uppercase", display: "flex", alignItems: "center", gap: 6, justifyContent: isRtl ? "flex-start" : "flex-end", flexDirection: isRtl ? "row" : "row-reverse" }}>
+                            <span>💡</span> <span>{t("stageImportanceTitle")}</span>
+                          </h4>
+                          <p style={{ fontSize: "0.9rem", lineHeight: 1.6, color: "var(--text-secondary)" }}>
+                            <TranslateText text={activeStageData.importance} targetLang={isRtl ? "ar" : "en"} />
+                          </p>
+                        </div>
+                      )}
+
+                      {activeStageData.functions && activeStageData.functions.length > 0 && (
+                        <div>
+                          <h4 style={{ color: "var(--accent)", marginBottom: 10, fontSize: "0.95rem", fontWeight: 800, textTransform: "uppercase", display: "flex", alignItems: "center", gap: 6, justifyContent: isRtl ? "flex-start" : "flex-end", flexDirection: isRtl ? "row" : "row-reverse" }}>
+                            <span>⚙️</span> <span>{t("stageFunctionsTitle")}</span>
+                          </h4>
+                          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                            <TranslateSteps
+                              steps={activeStageData.functions}
+                              targetLang={isRtl ? "ar" : "en"}
+                              renderStep={(func, idx) => (
+                                <div key={idx} style={{ display: "flex", gap: 10, alignItems: "flex-start", background: "var(--bg-elevated)", padding: "10px 14px", borderRadius: 8, border: "1px solid var(--border-subtle)", flexDirection: isRtl ? "row" : "row-reverse" }}>
+                                  <span style={{ 
+                                    background: color + "22", 
+                                    color: color, 
+                                    width: 22, height: 22, borderRadius: "50%", 
+                                    display: "flex", alignItems: "center", justifyContent: "center",
+                                    fontSize: "0.75rem", fontWeight: 800, flexShrink: 0
+                                  }}>
+                                    {idx + 1}
+                                  </span>
+                                  <span style={{ fontSize: "0.88rem", color: "var(--text-primary)", flex: 1 }}>{func}</span>
+                                </div>
+                              )}
+                            />
+                          </div>
+                        </div>
+                      )}
+                    </>
+                  );
+                } else if (eduStatic) {
+                  return (
+                    <>
+                      <div>
+                        <h4 style={{ color: color, marginBottom: 6, fontSize: "0.95rem", fontWeight: 800, textTransform: "uppercase", display: "flex", alignItems: "center", gap: 6, justifyContent: isRtl ? "flex-start" : "flex-end", flexDirection: isRtl ? "row" : "row-reverse" }}>
+                          <Info size={15} /> <span>{t("stageOverviewTitle")}</span>
+                        </h4>
+                        <p style={{ fontSize: "0.92rem", lineHeight: 1.6, color: "var(--text-primary)" }}>
+                          {eduStatic.overview}
+                        </p>
+                      </div>
+
+                      <div style={{ background: "rgba(99,102,241,0.04)", border: "1px solid rgba(99,102,241,0.12)", borderRadius: 12, padding: 16 }}>
+                        <h4 style={{ color: "var(--blue)", marginBottom: 6, fontSize: "0.95rem", fontWeight: 800, textTransform: "uppercase", display: "flex", alignItems: "center", gap: 6, justifyContent: isRtl ? "flex-start" : "flex-end", flexDirection: isRtl ? "row" : "row-reverse" }}>
+                          <span>💡</span> <span>{t("stageImportanceTitle")}</span>
+                        </h4>
+                        <p style={{ fontSize: "0.9rem", lineHeight: 1.6, color: "var(--text-secondary)" }}>
+                          {eduStatic.importance}
+                        </p>
+                      </div>
+
+                      <div>
+                        <h4 style={{ color: "var(--accent)", marginBottom: 10, fontSize: "0.95rem", fontWeight: 800, textTransform: "uppercase", display: "flex", alignItems: "center", gap: 6, justifyContent: isRtl ? "flex-start" : "flex-end", flexDirection: isRtl ? "row" : "row-reverse" }}>
+                          <span>⚙️</span> <span>{t("stageFunctionsTitle")}</span>
+                        </h4>
+                        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                          {eduStatic.functions.map((func, idx) => (
+                            <div key={idx} style={{ display: "flex", gap: 10, alignItems: "flex-start", background: "var(--bg-elevated)", padding: "10px 14px", borderRadius: 8, border: "1px solid var(--border-subtle)", flexDirection: isRtl ? "row" : "row-reverse" }}>
+                              <span style={{ 
+                                background: color + "22", 
+                                color: color, 
+                                width: 22, height: 22, borderRadius: "50%", 
+                                display: "flex", alignItems: "center", justifyContent: "center",
+                                fontSize: "0.75rem", fontWeight: 800, flexShrink: 0
+                              }}>
+                                {idx + 1}
+                              </span>
+                              <span style={{ fontSize: "0.88rem", color: "var(--text-primary)", flex: 1 }}>{func}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </>
+                  );
+                } else {
+                  return <p style={{ textAlign: "center", color: "var(--text-muted)" }}>{isRtl ? "لا تتوفر تفاصيل لهذه المرحلة" : "No details available"}</p>;
+                }
+              })()}
+            </div>
+
+            <div style={{ padding: "16px 24px", background: "var(--bg-elevated)", borderTop: "1px solid var(--border-subtle)", display: "flex", justifyContent: isRtl ? "flex-start" : "flex-end" }}>
+              <button className="btn btn-secondary btn-sm" onClick={() => setShowEduModal(false)}>
+                {isRtl ? "إغلاق" : "Close"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 }
