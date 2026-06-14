@@ -226,6 +226,9 @@ INSERT INTO production_stages (stage_id, stage_name, short_name, icon, color, in
  '[{"problem": "خطأ في البيانات المكتوبة", "solution": "تأكد من ملف التخصيص (Perso file) الصحيح."}]'::jsonb),
 ('GLOBAL', 'عام (General)', 'عام', '🌐', '#6366f1', 
  ARRAY[]::TEXT[], 
+ '[]'::jsonb),
+('SUPERVISION', 'الإشراف (Supervision)', 'الإشراف', '👑', '#166534', 
+ ARRAY[]::TEXT[], 
  '[]'::jsonb);
 
 -- Seed Error Codes
