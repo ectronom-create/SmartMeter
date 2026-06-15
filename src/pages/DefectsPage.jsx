@@ -526,7 +526,7 @@ export default function DefectsPage() {
                 )}
               </div>
               
-              <div className="input-group" style={{ position: "relative" }}>
+              <div className="input-group" style={{ position: "relative", zIndex: 99 }}>
                 <label className="input-label">{isRtl ? "بحث واختيار الكود *" : "Search & Select Code *"}</label>
                 <div style={{ position: "relative" }}>
                   <input 
@@ -534,7 +534,19 @@ export default function DefectsPage() {
                     placeholder={isRtl ? "ابحث بالكود أو اسم العطل..." : "Search by code or description..."} 
                     value={selectedErrorCode ? `${selectedErrorCode.code} - ${translateError(selectedErrorCode, isRtl).title}` : searchQuery}
                     onChange={(e) => {
-                      setSearchQuery(e.target.value);
+                      const val = e.target.value;
+                      if (selectedErrorCode) {
+                        const oldVal = `${selectedErrorCode.code} - ${translateError(selectedErrorCode, isRtl).title}`;
+                        if (val.length < oldVal.length) {
+                          setSearchQuery("");
+                        } else if (val.startsWith(oldVal)) {
+                          setSearchQuery(val.slice(oldVal.length));
+                        } else {
+                          setSearchQuery(val);
+                        }
+                      } else {
+                        setSearchQuery(val);
+                      }
                       setSelectedErrorCode(null);
                       setShowResults(true);
                     }}
@@ -576,7 +588,7 @@ export default function DefectsPage() {
                         const trans = translateError(err, isRtl);
                         return (
                           <div 
-                            key={err.code} 
+                            key={`${err.code}__${err.stage_id}`} 
                             onClick={() => {
                               setSelectedErrorCode(err);
                               setShowResults(false);
