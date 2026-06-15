@@ -418,27 +418,35 @@ export function AppProvider({ children }) {
   }, [productionStages]);
 
   const saveGeneratedSchedule = useCallback(async (entries) => {
-    if (entries.length === 0) return;
+    if (entries.length === 0) return { success: true };
     
     const newKeys = new Set(entries.map(e => `${e.schedule_date}__${e.shift_id}`));
+    const dates = [...new Set(entries.map(e => e.schedule_date))];
+    const shiftIds = [...new Set(entries.map(e => e.shift_id))];
     
     try {
-      for (const entry of entries) {
-        await supabase.from("schedules")
-          .delete()
-          .eq("schedule_date", entry.schedule_date)
-          .eq("shift_id", entry.shift_id)
-          .eq("employee_id", entry.employee_id);
-          
-        await supabase.from("schedules").insert([entry]);
-      }
+      // 1. Delete all existing schedule entries for these dates and shifts in batch
+      const { error: deleteError } = await supabase.from("schedules")
+        .delete()
+        .in("schedule_date", dates)
+        .in("shift_id", shiftIds);
+        
+      if (deleteError) throw deleteError;
+
+      // 2. Insert all new entries in a single batch insert query
+      const { error: insertError } = await supabase.from("schedules")
+        .insert(entries);
+        
+      if (insertError) throw insertError;
       
       setSchedules(prev => {
         const filtered = prev.filter(s => !newKeys.has(`${s.schedule_date}__${s.shift_id}`));
         return [...filtered, ...entries];
       });
+      return { success: true };
     } catch (err) {
       console.error("Supabase schedules insert error:", err);
+      return { success: false, error: err };
     }
   }, []);
 

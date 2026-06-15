@@ -66,6 +66,7 @@ export default function ScheduleBuilderPanel() {
   // Step 2 state
   const [preview, setPreview]           = useState([]);
   const [saved, setSaved]               = useState(false);
+  const [isSaving, setIsSaving]         = useState(false);
 
   const operators = users.filter(u => u.role !== "admin");
   const supervisors = users.filter(u => u.role === "supervisor");
@@ -117,9 +118,15 @@ export default function ScheduleBuilderPanel() {
     setSaved(false);
   };
 
-  const handleSave = () => {
-    saveGeneratedSchedule(preview);
-    setSaved(true);
+  const handleSave = async () => {
+    setIsSaving(true);
+    const res = await saveGeneratedSchedule(preview);
+    setIsSaving(false);
+    if (res && res.success) {
+      setSaved(true);
+    } else {
+      alert(isRtl ? "فشل حفظ الجدول في قاعدة البيانات. يرجى التحقق من الاتصال." : "Failed to save the roster plan to the database. Please check your connection.");
+    }
   };
 
   const grouped = useMemo(() => {
@@ -443,12 +450,12 @@ export default function ScheduleBuilderPanel() {
             </div>
 
             <div style={{ display: "flex", gap: 10, flexDirection: isRtl ? "row" : "row-reverse" }}>
-              <button className="btn btn-secondary" onClick={() => setStep(1)}>{isRtl ? "← تعديل" : "← Edit"}</button>
-              <button className="btn btn-ghost" onClick={() => { setStep(0); setAssignments({}); setPreview([]); setSaved(false); }}>
+              <button className="btn btn-secondary" onClick={() => setStep(1)} disabled={isSaving}>{isRtl ? "← تعديل" : "← Edit"}</button>
+              <button className="btn btn-ghost" onClick={() => { setStep(0); setAssignments({}); setPreview([]); setSaved(false); }} disabled={isSaving}>
                 <RefreshCw size={14} /> {isRtl ? "بدء من جديد" : "Reset & Start Over"}
               </button>
-              <button className="btn btn-primary" onClick={handleSave} disabled={saved}>
-                <Save size={14} /> {saved ? (isRtl ? "تم الحفظ" : "Saved") : (isRtl ? "حفظ الجدول" : "Save Roster Plan")}
+              <button className="btn btn-primary" onClick={handleSave} disabled={saved || isSaving}>
+                <Save size={14} /> {isSaving ? (isRtl ? "جاري الحفظ..." : "Saving...") : (saved ? (isRtl ? "تم الحفظ" : "Saved") : (isRtl ? "حفظ الجدول" : "Save Roster Plan"))}
               </button>
             </div>
           </div>
