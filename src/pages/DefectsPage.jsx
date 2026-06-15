@@ -39,6 +39,7 @@ export default function DefectsPage() {
   const [filterStatus, setFilterStatus] = useState("all");
   const [submitMsg, setSubmitMsg] = useState(null);
   const [importStatus, setImportStatus] = useState(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
 
   // Searchable Code logic
@@ -326,6 +327,8 @@ export default function DefectsPage() {
 
   const handleQuickSubmit = async (e) => {
     e.preventDefault();
+    if (isSubmitting) return;
+    
     const fd = new FormData(e.target);
     const sn = serialNumber.trim().toUpperCase();
     
@@ -357,6 +360,7 @@ export default function DefectsPage() {
       }
     }
 
+    setIsSubmitting(true);
     const result = await addDefectiveMeter({
       serial_number: sn,
       error_code: selectedErrorCode.code,
@@ -364,6 +368,7 @@ export default function DefectsPage() {
       custom_description: fd.get("desc").trim(),
       reported_by: currentUser.employee_id
     });
+    setIsSubmitting(false);
 
     if (!result.success) {
       setSubmitMsg({ type: "error", text: result.message });
@@ -617,8 +622,8 @@ export default function DefectsPage() {
                 <label className="input-label">{isRtl ? "ملاحظات إضافية" : "Optional Comments"}</label>
                 <input className="input" name="desc" placeholder={isRtl ? "ملاحظات اختيارية..." : "Add details..."} style={{ background: "white" }} />
               </div>
-              <button type="submit" className="btn btn-danger" style={{ height: 42 }}>
-                <Plus size={16} /> {isRtl ? "تسجيل العطل" : "Register Defect"}
+              <button type="submit" className="btn btn-danger" style={{ height: 42 }} disabled={isSubmitting}>
+                <Plus size={16} /> {isSubmitting ? (isRtl ? "جاري التسجيل..." : "Registering...") : (isRtl ? "تسجيل العطل" : "Register Defect")}
               </button>
               {showResults && !selectedErrorCode && (
                 <div style={{ position: "fixed", inset: 0, zIndex: 98 }} onClick={() => setShowResults(false)} />

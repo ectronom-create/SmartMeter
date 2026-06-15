@@ -92,6 +92,7 @@ export default function WorkspacePage() {
   const [selectedCode, setSelectedCode] = useState("");
   const [customDesc, setCustomDesc]     = useState("");
   const [submitMsg, setSubmitMsg]       = useState(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const serialRef = useRef(null);
 
   // Barcode scan validation state
@@ -177,6 +178,7 @@ export default function WorkspacePage() {
 
   const handleSubmitDefect = async (e) => {
     e.preventDefault();
+    if (isSubmitting) return;
     if (!serialNumber.trim() || !selectedCode) return;
 
     // Validate that the error code belongs to the operator's current stage or is a global/general error
@@ -196,30 +198,42 @@ export default function WorkspacePage() {
     }
     
     const selectedErrObj = errorCodes.find(err => err.code === selectedCode);
-    const result = await addDefectiveMeter({
-      serial_number: serialNumber.trim().toUpperCase(),
-      error_code: selectedCode,
-      stage_found: selectedErrObj?.stage_id || currentStage?.stage_id || null,
-      custom_description: customDesc,
-      reported_by: currentUser.employee_id,
-    });
+    setIsSubmitting(true);
+    try {
+      const result = await addDefectiveMeter({
+        serial_number: serialNumber.trim().toUpperCase(),
+        error_code: selectedCode,
+        stage_found: selectedErrObj?.stage_id || currentStage?.stage_id || null,
+        custom_description: customDesc,
+        reported_by: currentUser.employee_id,
+      });
 
-    if (!result.success) {
-      setSubmitMsg({ type: "danger", text: result.message });
-      setTimeout(() => setSubmitMsg(null), 6000);
-      return;
+      if (!result.success) {
+        setSubmitMsg({ type: "danger", text: result.message });
+        setTimeout(() => setSubmitMsg(null), 6000);
+        return;
+      }
+
+      const successText = isRtl 
+        ? `تم تسجيل العداد ${serialNumber.trim().toUpperCase()} بنجاح!`
+        : `Meter ${serialNumber.trim().toUpperCase()} was registered successfully!`;
+
+      setSubmitMsg({ type: "success", text: successText });
+      setSerialNumber("");
+      setSelectedCode("");
+      setCustomDesc("");
+      setTimeout(() => setSubmitMsg(null), 4000);
+      serialRef.current?.focus(); 
+    } catch (err) {
+      console.error(err);
+      setSubmitMsg({
+        type: "danger",
+        text: isRtl ? "حدث خطأ غير متوقع أثناء تسجيل البلاغ." : "An unexpected error occurred during submission."
+      });
+      setTimeout(() => setSubmitMsg(null), 5000);
+    } finally {
+      setIsSubmitting(false);
     }
-
-    const successText = isRtl 
-      ? `تم تسجيل العداد ${serialNumber.trim().toUpperCase()} بنجاح!`
-      : `Meter ${serialNumber.trim().toUpperCase()} was registered successfully!`;
-
-    setSubmitMsg({ type: "success", text: successText });
-    setSerialNumber("");
-    setSelectedCode("");
-    setCustomDesc("");
-    setTimeout(() => setSubmitMsg(null), 4000);
-    serialRef.current?.focus(); 
   };
 
   if (!currentStage) {
@@ -499,9 +513,9 @@ export default function WorkspacePage() {
                 <button
                   type="submit"
                   className="btn btn-danger btn-full"
-                  disabled={!serialNumber.trim()}
+                  disabled={!serialNumber.trim() || isSubmitting}
                 >
-                  <AlertTriangle size={16} /> {t("registerDefectiveMeterBtn")}
+                  <AlertTriangle size={16} /> {isSubmitting ? (isRtl ? "جاري التسجيل..." : "Registering...") : t("registerDefectiveMeterBtn")}
                 </button>
               </form>
             </div>

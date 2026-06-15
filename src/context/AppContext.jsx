@@ -540,17 +540,41 @@ export function AppProvider({ children }) {
   }, [currentUser]);
 
   const addDefectiveMeter = useCallback(async (entry) => {
+    // 1. Client-side state check (fast response)
     const existing = defectiveMeters.find(m => 
       m.serial_number === entry.serial_number && m.status !== "resolved"
     );
 
     if (existing) {
       const statusLabel = existing.status === 'pending' ? 'قيد الانتظار' : 
-                          existing.status === 'verified' ? 'تم التحقق (معطوب)' : 'يعود لخط الانتاج';
+                          existing.status === 'verified' ? 'تم التحقق (معطوب)' : 'بلاغ جديد مسجل';
       return { 
         success: false, 
         message: `هذا العداد مسجل مسبقاً بعطل (${existing.error_code}) وحالته حالياً: ${statusLabel}.` 
       };
+    }
+
+    // 2. Direct database query to prevent race conditions
+    try {
+      const { data: dbExisting, error: checkErr } = await supabase
+        .from("defective_meters")
+        .select("serial_number, error_code, status")
+        .eq("serial_number", entry.serial_number)
+        .neq("status", "resolved");
+
+      if (checkErr) throw checkErr;
+
+      if (dbExisting && dbExisting.length > 0) {
+        const activeDef = dbExisting[0];
+        const statusLabel = activeDef.status === 'pending' ? 'قيد الانتظار' : 
+                            activeDef.status === 'verified' ? 'تم التحقق (معطوب)' : 'بلاغ جديد مسجل';
+        return { 
+          success: false, 
+          message: `هذا العداد مسجل مسبقاً بعطل (${activeDef.error_code}) وحالته حالياً: ${statusLabel}.` 
+        };
+      }
+    } catch (checkErr) {
+      console.warn("Direct DB duplicate check failed, relying on state:", checkErr.message);
     }
 
     let finalStage = entry.stage_found;
@@ -598,16 +622,45 @@ export function AppProvider({ children }) {
 
   const addDefectiveMetersBulk = useCallback(async (entriesArray) => {
     try {
-      const existingSerials = new Set(
-        defectiveMeters
-          .filter(m => m.status !== "resolved")
-          .map(m => m.serial_number)
-      );
+      // 1. Fetch active defects from DB for these serials
+      const serials = [...new Set(entriesArray.map(e => e.serial_number))];
+      let dbActiveSerials = new Set();
+      
+      try {
+        const { data: dbExisting, error: dbErr } = await supabase
+          .from("defective_meters")
+          .select("serial_number")
+          .in("serial_number", serials)
+          .neq("status", "resolved");
+        
+        if (dbErr) throw dbErr;
+        if (dbExisting) {
+          dbActiveSerials = new Set(dbExisting.map(m => m.serial_number));
+        }
+      } catch (dbErr) {
+        console.warn("Bulk DB duplicate check failed, relying on state:", dbErr.message);
+        // fallback to client state
+        dbActiveSerials = new Set(
+          defectiveMeters
+            .filter(m => m.status !== "resolved")
+            .map(m => m.serial_number)
+        );
+      }
 
-      const uniqueNew = entriesArray.filter(e => !existingSerials.has(e.serial_number));
+      // 2. Filter out duplicates from both DB/state and within the import itself
+      const uniqueNew = [];
+      const seenInImport = new Set();
+
+      for (const entry of entriesArray) {
+        const sn = entry.serial_number;
+        if (!dbActiveSerials.has(sn) && !seenInImport.has(sn)) {
+          uniqueNew.push(entry);
+          seenInImport.add(sn);
+        }
+      }
       
       if (uniqueNew.length === 0) {
-        return { success: false, message: "جميع العدادات مضافة مسبقاً ولديهم بلاغات نشطة." };
+        return { success: false, message: "جميع العدادات المرفقة مسجلة مسبقاً كمعطوبة حالياً أو تحتوي على تكرار." };
       }
 
       const payloads = uniqueNew.map(({ id, ...rest }) => {
