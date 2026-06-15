@@ -399,6 +399,7 @@ export function AppProvider({ children }) {
           employee_id,
           stage_id: slot.stage_id,
           is_team_leader,
+          is_supervisor: false,
         });
       });
 
