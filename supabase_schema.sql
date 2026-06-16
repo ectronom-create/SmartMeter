@@ -59,7 +59,8 @@ CREATE TABLE schedules (
     stage_id VARCHAR(50) REFERENCES production_stages(stage_id) ON DELETE CASCADE,
     is_team_leader BOOLEAN NOT NULL DEFAULT FALSE,
     is_supervisor BOOLEAN NOT NULL DEFAULT FALSE,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE
 );
 
 -- Error Codes

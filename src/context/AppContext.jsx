@@ -451,6 +451,62 @@ export function AppProvider({ children }) {
     }
   }, []);
 
+  const saveEditedSchedule = useCallback(async (date, shiftId, entries) => {
+    try {
+      // 1. Fetch the original created_at timestamp for these entries
+      const { data: oldEntries, error: fetchError } = await supabase
+        .from("schedules")
+        .select("created_at")
+        .eq("schedule_date", date)
+        .eq("shift_id", shiftId)
+        .limit(1);
+
+      if (fetchError) throw fetchError;
+
+      const originalCreatedAt = oldEntries && oldEntries.length > 0
+        ? oldEntries[0].created_at
+        : new Date().toISOString();
+
+      const now = new Date().toISOString();
+
+      // Prepare entries with correct created_at and updated_at
+      const entriesToInsert = entries.map(e => ({
+        ...e,
+        created_at: originalCreatedAt,
+        updated_at: now
+      }));
+
+      // 2. Delete all existing schedule entries for this date and shift
+      const { error: deleteError } = await supabase
+        .from("schedules")
+        .delete()
+        .eq("schedule_date", date)
+        .eq("shift_id", shiftId);
+
+      if (deleteError) throw deleteError;
+
+      // 3. Insert the new entries
+      if (entriesToInsert.length > 0) {
+        const { error: insertError } = await supabase
+          .from("schedules")
+          .insert(entriesToInsert);
+
+        if (insertError) throw insertError;
+      }
+
+      // 4. Update the local state
+      setSchedules(prev => {
+        const filtered = prev.filter(s => !(s.schedule_date === date && s.shift_id === shiftId));
+        return [...filtered, ...entriesToInsert];
+      });
+
+      return { success: true };
+    } catch (err) {
+      console.error("Supabase edit schedule error:", err);
+      return { success: false, error: err };
+    }
+  }, []);
+
   const deleteScheduleEntry = useCallback(async (id) => {
     try {
       const { error } = await supabase.from("schedules").delete().eq("id", id);
@@ -1010,7 +1066,7 @@ export function AppProvider({ children }) {
     currentUser: effectiveUser, login, logout, loginError, changePassword,
     users, addUser, updateUserRole, deleteUser, updateUser,
     schedules, todaySchedule, upcomingSchedule, currentStage, currentShift,
-    generateRotationSchedule, saveGeneratedSchedule,
+    generateRotationSchedule, saveGeneratedSchedule, saveEditedSchedule,
     deleteScheduleEntry, clearScheduleByDate,
     productionStages, addStage, updateStage, deleteStage,
     errorCodes, addErrorCode, updateErrorCode, deleteErrorCode, addErrorCodesBulk,

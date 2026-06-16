@@ -1,6 +1,6 @@
 import { useState, useMemo } from "react";
 import { useApp } from "../context/AppContext";
-import { Calendar, Plus, Trash2, Star, ChevronLeft, Clock, Filter, Search, Download, RefreshCw, User, Layers } from "lucide-react";
+import { Calendar, Plus, Trash2, Star, ChevronLeft, Clock, Filter, Search, Download, User, Layers, Edit2, X, Check } from "lucide-react";
 import ScheduleBuilderPanel from "./ScheduleBuilderPanel";
 import * as XLSX from "xlsx";
 
@@ -15,6 +15,18 @@ export default function ShiftSchedulesPanel() {
   const [showBuilder, setShowBuilder] = useState(false);
   const [activeTab, setActiveTab] = useState("current"); // "current" or "history"
   const [filterDate, setFilterDate] = useState(getTodayString());
+  const [editingShift, setEditingShift] = useState(null);
+
+  const formatChangeTime = (isoString, isRtl) => {
+    if (!isoString) return "";
+    const d = new Date(isoString);
+    return d.toLocaleString(isRtl ? "ar-SA" : "en-US", {
+      month: "short",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  };
 
   const [historySubTab, setHistorySubTab] = useState("workstations"); // "workstations" or "operators"
   const [filterStage, setFilterStage] = useState("");
@@ -146,7 +158,6 @@ export default function ShiftSchedulesPanel() {
     try {
       const dataToExport = filteredWorkstationHistory.map(row => {
         const stage = productionStages.find(s => s.stage_id === row.stageId);
-        const shift = shift_types.find(s => s.shift_id === row.shiftId);
         
         return {
           [isRtl ? "التاريخ" : "Date"]: row.date,
@@ -272,8 +283,45 @@ export default function ShiftSchedulesPanel() {
                           <Clock size={16} style={{ color: "var(--text-secondary)" }} />
                           <span style={{ fontWeight: 800 }}>{isRtl ? "شفت" : "Shift"} {getTranslatedShiftName(shiftId, isRtl)}</span>
                         </div>
-                        <span className="badge badge-gray">{list.length} {isRtl ? "موظفين" : "Operators"}</span>
+                        <div style={{ display: "flex", alignItems: "center", gap: 8, flexDirection: isRtl ? "row" : "row-reverse" }}>
+                          <button 
+                            className="btn btn-ghost btn-sm"
+                            style={{ 
+                              padding: "2px 8px", 
+                              color: "var(--accent)", 
+                              display: "inline-flex", 
+                              alignItems: "center", 
+                              gap: 4, 
+                              fontSize: "0.8rem",
+                              fontWeight: 700,
+                              height: "28px"
+                            }}
+                            onClick={() => setEditingShift({ date, shiftId, list })}
+                          >
+                            <Edit2 size={13} />
+                            {isRtl ? "تعديل" : "Edit"}
+                          </button>
+                          <span className="badge badge-gray">{list.length} {isRtl ? "موظفين" : "Operators"}</span>
+                        </div>
                       </div>
+
+                      {(() => {
+                        const changeTime = list.find(a => a.updated_at)?.updated_at;
+                        if (!changeTime) return null;
+                        return (
+                          <div style={{ 
+                            fontSize: "0.72rem", 
+                            color: "var(--text-muted)", 
+                            textAlign: isRtl ? "left" : "right",
+                            padding: "4px 16px",
+                            background: "rgba(0, 0, 0, 0.02)",
+                            borderBottom: "1px solid var(--border-subtle)",
+                            fontWeight: 600
+                          }}>
+                            {isRtl ? `آخر تعديل: ${formatChangeTime(changeTime, true)}` : `Last updated: ${formatChangeTime(changeTime, false)}`}
+                          </div>
+                        );
+                      })()}
                       
                       {/* Shift Supervisor Display */}
                       {list.some(a => a.stage_id === "SUPERVISION") && (
@@ -568,7 +616,6 @@ export default function ShiftSchedulesPanel() {
                     <tbody>
                       {filteredWorkstationHistory.map((row, idx) => {
                         const stage = productionStages.find(s => s.stage_id === row.stageId);
-                        const shift = shift_types.find(st => st.shift_id === row.shiftId);
                         
                         // Parse date for beautiful rendering
                         const formattedDate = new Date(row.date).toLocaleDateString(isRtl ? "ar-SA" : "en-US", {
@@ -713,6 +760,401 @@ export default function ShiftSchedulesPanel() {
           <h3>{isRtl ? "لا توجد جداول مسجلة" : "No schedules registered"}</h3>
         </div>
       )}
+
+      {editingShift && (
+        <EditScheduleModal 
+          date={editingShift.date}
+          shiftId={editingShift.shiftId}
+          list={editingShift.list}
+          onClose={() => setEditingShift(null)}
+        />
+      )}
+    </div>
+  );
+}
+
+function EditScheduleModal({ date, shiftId, list, onClose }) {
+  const { 
+    users, 
+    productionStages, 
+    shift_types, 
+    saveEditedSchedule, 
+    language 
+  } = useApp();
+  const isRtl = language === "ar";
+
+  // Filter out admin users
+  const operators = users.filter(u => u.role !== "admin");
+  const supervisors = users.filter(u => u.role === "supervisor");
+
+  // Find existing supervisor for this shift
+  const initialSupervisor = list.find(a => a.stage_id === "SUPERVISION")?.employee_id || "";
+
+  // Find which stage supervisor is assigned to (other than SUPERVISION)
+  const initialSupervisorStage = list.find(a => a.employee_id === initialSupervisor && a.stage_id !== "SUPERVISION")?.stage_id || "";
+
+  // Build initial assignments: stageId -> array of employeeIds (excluding SUPERVISION)
+  const initialAssignments = {};
+  productionStages.forEach(stage => {
+    if (stage.stage_id !== "SUPERVISION" && stage.stage_id !== "GLOBAL") {
+      initialAssignments[stage.stage_id] = list
+        .filter(a => a.stage_id === stage.stage_id)
+        .map(a => a.employee_id);
+    }
+  });
+
+  // Build initial team leaders: stageId -> employeeId of team leader
+  const initialTeamLeaders = {};
+  productionStages.forEach(stage => {
+    if (stage.stage_id !== "SUPERVISION" && stage.stage_id !== "GLOBAL") {
+      const tl = list.find(a => a.stage_id === stage.stage_id && a.is_team_leader);
+      initialTeamLeaders[stage.stage_id] = tl ? tl.employee_id : "";
+    }
+  });
+
+  const [supervisor, setSupervisor] = useState(initialSupervisor);
+  const [supervisorStage, setSupervisorStage] = useState(initialSupervisorStage);
+  const [assignments, setAssignments] = useState(initialAssignments);
+  const [teamLeaders, setTeamLeaders] = useState(initialTeamLeaders);
+
+  const [isSaving, setIsSaving] = useState(false);
+  const [done, setDone] = useState(false);
+  const [errorMsg, setErrorMsg] = useState("");
+
+  const assignedIds = Object.values(assignments).flat();
+
+  // Find all operators not assigned to this shift and not busy on other shifts
+  const unassigned = useMemo(() => {
+    return operators.filter(u => {
+      // If already assigned to a stage on this shift
+      if (assignedIds.includes(u.employee_id)) return false;
+      // If they are the active shift supervisor on this shift
+      if (u.employee_id === supervisor) return false;
+      
+      // Check if busy on a DIFFERENT shift on the SAME date
+      const isBusy = list.some(s => 
+        s.employee_id === u.employee_id && 
+        s.schedule_date === date && 
+        s.shift_id !== shiftId
+      );
+      return !isBusy;
+    });
+  }, [operators, assignedIds, supervisor, list, date, shiftId]);
+
+  const toggleEmployee = (stageId, empId) => {
+    setAssignments(prev => {
+      const current = prev[stageId] || [];
+      const exists = current.includes(empId);
+      // Remove employee from all other stages first to prevent duplicate assignment
+      const cleaned = Object.fromEntries(
+        Object.entries(prev).map(([sid, arr]) => [sid, arr.filter(id => id !== empId)])
+      );
+      return { 
+        ...cleaned, 
+        [stageId]: exists ? current.filter(id => id !== empId) : [...(cleaned[stageId] || []), empId] 
+      };
+    });
+    setTeamLeaders(prev => {
+      if (prev[stageId] === empId) return { ...prev, [stageId]: "" };
+      return prev;
+    });
+  };
+
+  const setLeader = (stageId, empId) => {
+    setTeamLeaders(prev => ({ 
+      ...prev, 
+      [stageId]: prev[stageId] === empId ? "" : empId 
+    }));
+  };
+
+  const getTranslatedStageName = (s, isRtl) => {
+    if (!s) return "";
+    if (isRtl) return s.short_name;
+    const match = s.stage_name.match(/\(([^)]+)\)/);
+    return match ? match[1].trim() : s.stage_name;
+  };
+
+  const getTranslatedShiftName = (shiftId, isRtl) => {
+    const shift = shift_types.find(st => st.shift_id === shiftId);
+    if (!shift) return shiftId;
+    if (isRtl) return shift.name;
+    const translations = {
+      "الصباحية (M)": "Morning Shift (M)",
+      "المسائية (E)": "Evening Shift (E)",
+      "الليلية (N)": "Night Shift (N)"
+    };
+    return translations[shift.name] || shift.name;
+  };
+
+  const submit = async (e) => {
+    e.preventDefault();
+    if (supervisor && !supervisorStage) {
+      setErrorMsg(isRtl ? "يرجى اختيار محطة عمل المشرف أولاً." : "Please select active workstation stage for supervisor first.");
+      return;
+    }
+
+    setIsSaving(true);
+    setErrorMsg("");
+
+    const entries = [];
+    let counter = Date.now();
+
+    // 1. Add Shift Supervisor entry if selected
+    if (supervisor) {
+      entries.push({
+        id: `SCH-ED-SUP-${counter++}`,
+        schedule_date: date,
+        shift_id: shiftId,
+        employee_id: supervisor,
+        stage_id: "SUPERVISION",
+        is_team_leader: false,
+        is_supervisor: true
+      });
+    }
+
+    // 2. Add stage assignments
+    // If supervisor has an active stage, make sure they are in the assignments for that stage
+    let finalAssignments = { ...assignments };
+    if (supervisor && supervisorStage) {
+      const currentArr = finalAssignments[supervisorStage] || [];
+      if (!currentArr.includes(supervisor)) {
+        // Remove supervisor from any other stage first
+        const cleaned = Object.fromEntries(
+          Object.entries(finalAssignments).map(([sid, arr]) => [sid, arr.filter(id => id !== supervisor)])
+        );
+        finalAssignments = {
+          ...cleaned,
+          [supervisorStage]: [supervisor, ...(cleaned[supervisorStage] || [])]
+        };
+      }
+    }
+
+    Object.entries(finalAssignments).forEach(([stageId, empIds]) => {
+      empIds.forEach(empId => {
+        const isTeamLeader = teamLeaders[stageId] === empId;
+        entries.push({
+          id: `SCH-ED-${counter++}`,
+          schedule_date: date,
+          shift_id: shiftId,
+          employee_id: empId,
+          stage_id: stageId,
+          is_team_leader: isTeamLeader,
+          is_supervisor: false
+        });
+      });
+    });
+
+    const res = await saveEditedSchedule(date, shiftId, entries);
+    setIsSaving(false);
+    if (res && res.success) {
+      setDone(true);
+      setTimeout(onClose, 1200);
+    } else {
+      setErrorMsg(isRtl ? "فشل حفظ التعديلات في قاعدة البيانات." : "Failed to save edits to the database.");
+    }
+  };
+
+  return (
+    <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.45)", backdropFilter: "blur(4px)", zIndex: 200, display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}>
+      <div className="card animate-fade" style={{ width: "100%", maxWidth: 650, padding: 24, maxHeight: "90vh", display: "flex", flexDirection: "column", gap: 16, textAlign: isRtl ? "right" : "left", direction: isRtl ? "rtl" : "ltr" }}>
+        
+        {/* Header */}
+        <div style={{ display: "flex", alignItems: "center", gap: 10, borderBottom: "1px solid var(--border-subtle)", paddingBottom: 12, flexDirection: isRtl ? "row" : "row-reverse" }}>
+          <Edit2 size={20} style={{ color: "var(--accent)" }} />
+          <div style={{ flex: 1, textAlign: isRtl ? "right" : "left" }}>
+            <h3 style={{ margin: 0 }}>{isRtl ? "تعديل جدول الوردية" : "Edit Shift Schedule"}</h3>
+            <span style={{ fontSize: "0.8rem", color: "var(--text-muted)", fontWeight: 600 }}>
+              📅 {date} | 🕒 {isRtl ? "شفت" : "Shift"} {getTranslatedShiftName(shiftId, isRtl)}
+            </span>
+          </div>
+          <button type="button" className="btn btn-ghost btn-icon btn-sm" onClick={onClose} style={{ marginRight: isRtl ? "auto" : "none", marginLeft: !isRtl ? "auto" : "none" }}><X size={15} /></button>
+        </div>
+
+        {done ? (
+          <div className="alert alert-success" style={{ margin: "20px 0" }}><Check size={15} /> {isRtl ? "تم تعديل الجدول وحفظه بنجاح!" : "Shift schedule updated successfully!"}</div>
+        ) : (
+          <form onSubmit={submit} style={{ display: "flex", flexDirection: "column", gap: 16, overflowY: "auto", paddingRight: 4, paddingLeft: 4 }}>
+            {errorMsg && (
+              <div className="alert alert-danger" style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                <span>{errorMsg}</span>
+              </div>
+            )}
+
+            {/* Supervisor settings */}
+            <div className="grid-2" style={{ background: "rgba(0,0,0,0.02)", padding: 16, borderRadius: "var(--radius-lg)", border: "1px solid var(--border-subtle)" }}>
+              <div className="input-group">
+                <label className="input-label" style={{ textAlign: isRtl ? "right" : "left" }}>
+                  👑 {isRtl ? "مشرف المناوبة" : "Shift Supervisor"}
+                </label>
+                <select className="input" value={supervisor} onChange={e => {
+                  setSupervisor(e.target.value);
+                  if (!e.target.value) setSupervisorStage("");
+                }}>
+                  <option value="">-- {isRtl ? "اختر مشرفاً" : "Select Supervisor"} --</option>
+                  {supervisors.map(s => (
+                    <option key={s.employee_id} value={s.employee_id}>{s.full_name}</option>
+                  ))}
+                </select>
+              </div>
+
+              {supervisor && (
+                <div className="input-group animate-fade">
+                  <label className="input-label" style={{ textAlign: isRtl ? "right" : "left" }}>
+                    📍 {isRtl ? "محطة عمل المشرف" : "Supervisor Active Station"}
+                  </label>
+                  <select className="input" value={supervisorStage} onChange={e => {
+                    const nextStage = e.target.value;
+                    setSupervisorStage(nextStage);
+                    // Add supervisor to the stage assignments list automatically
+                    if (nextStage) {
+                      setAssignments(prev => {
+                        const cleaned = Object.fromEntries(
+                          Object.entries(prev).map(([sid, arr]) => [sid, arr.filter(id => id !== supervisor)])
+                        );
+                        return {
+                          ...cleaned,
+                          [nextStage]: [supervisor, ...(cleaned[nextStage] || [])]
+                        };
+                      });
+                      setTeamLeaders(prev => ({ ...prev, [nextStage]: supervisor }));
+                    }
+                  }}>
+                    <option value="">-- {isRtl ? "اختر محطة عمل" : "Select Active Station"} --</option>
+                    {productionStages.filter(stg => stg.stage_id !== "GLOBAL" && stg.stage_id !== "SUPERVISION").map(stg => (
+                      <option key={stg.stage_id} value={stg.stage_id}>{getTranslatedStageName(stg, isRtl)}</option>
+                    ))}
+                  </select>
+                </div>
+              )}
+            </div>
+
+            {/* Stages assignments list */}
+            <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+              <h4 style={{ margin: "4px 0" }}>{isRtl ? "توزيع الموظفين على المراحل" : "Station Assignments"}</h4>
+              
+              {productionStages.filter(stage => stage.stage_id !== "GLOBAL" && stage.stage_id !== "SUPERVISION").map(stage => {
+                const color = STAGE_COLORS[stage.stage_id] || "var(--accent)";
+                const stageEmps = (assignments[stage.stage_id] || []);
+                return (
+                  <div key={stage.stage_id} style={{ border: `1px solid ${color}33`, borderRadius: "var(--radius)", overflow: "hidden" }}>
+                    <div style={{ 
+                      background: `${color}08`, 
+                      padding: "8px 12px", 
+                      display: "flex", 
+                      alignItems: "center", 
+                      gap: 8, 
+                      borderBottom: `1px solid ${color}22`,
+                      flexDirection: isRtl ? "row" : "row-reverse"
+                    }}>
+                      <span style={{ fontSize: "1.1rem" }}>{stage.icon}</span>
+                      <span style={{ fontWeight: 700, color, fontSize: "0.85rem" }}>{getTranslatedStageName(stage, isRtl)}</span>
+                      <span style={{ marginRight: isRtl ? "auto" : "none", marginLeft: !isRtl ? "auto" : "none", fontSize: "0.75rem", color: "var(--text-muted)" }}>
+                        {stageEmps.length} {isRtl ? "موظفين" : "Operators"}
+                      </span>
+                    </div>
+
+                    <div style={{ padding: "8px 12px", display: "flex", flexWrap: "wrap", gap: 6, flexDirection: isRtl ? "row" : "row-reverse", alignItems: "center" }}>
+                      {stageEmps.map(empId => {
+                        const emp = users.find(u => u.employee_id === empId);
+                        const isLeader = teamLeaders[stage.stage_id] === empId;
+                        const canBeLeader = emp?.role === "supervisor";
+                        
+                        return (
+                          <div key={empId} style={{ 
+                            display: "flex", alignItems: "center", gap: 4, padding: "3px 8px 3px 4px", 
+                            borderRadius: "100px", 
+                            background: isLeader ? "#fff8c5" : "#dafbe1", 
+                            border: `1px solid ${isLeader ? "#d4a72c44" : "#aceebb"}`, 
+                            fontSize: "0.78rem", fontWeight: 600,
+                            flexDirection: isRtl ? "row" : "row-reverse"
+                          }}>
+                            <button 
+                              type="button"
+                              title={canBeLeader ? (isRtl ? "تعيين كقائد فريق" : "Set as Team Leader") : (isRtl ? "قائد الفريق يجب أن يكون برتبة مشرف" : "Team Leader must have Supervisor rank")}
+                              onClick={() => {
+                                if (canBeLeader) {
+                                  setLeader(stage.stage_id, empId);
+                                } else {
+                                  alert(isRtl ? "عذراً، يجب أن يكون قائد الفريق برتبة مشرف (Supervisor)." : "Team Leader must have a Supervisor rank.");
+                                }
+                              }} 
+                              style={{ 
+                                background: "none", border: "none", 
+                                cursor: canBeLeader ? "pointer" : "not-allowed", 
+                                padding: 0, 
+                                color: isLeader ? "#9a6700" : (canBeLeader ? "var(--text-muted)" : "#ccc"), 
+                                display: "flex", alignItems: "center" 
+                              }}
+                            >
+                              <Star size={11} fill={isLeader ? "currentColor" : "none"} />
+                            </button>
+                            <span style={{ color: isLeader ? "#9a6700" : "var(--accent)" }}>
+                              {emp?.full_name?.split(" ")[0]} {emp?.full_name?.split(" ")[1] || ""}
+                            </span>
+                            <button 
+                              type="button"
+                              onClick={() => toggleEmployee(stage.stage_id, empId)} 
+                              style={{ background: "none", border: "none", cursor: "pointer", color: "var(--text-muted)", padding: 0, display: "flex", alignItems: "center", fontSize: "0.78rem", marginLeft: isRtl ? 0 : 2, marginRight: isRtl ? 2 : 0 }}
+                            >
+                              ✕
+                            </button>
+                          </div>
+                        );
+                      })}
+
+                      {/* Dropdown to add unassigned operators to this stage */}
+                      {unassigned.length > 0 ? (
+                        <select 
+                          className="input" 
+                          value=""
+                          onChange={e => {
+                            if (e.target.value) {
+                              toggleEmployee(stage.stage_id, e.target.value);
+                            }
+                          }}
+                          style={{
+                            padding: "2px 8px",
+                            fontSize: "0.75rem",
+                            width: "auto",
+                            height: "26px",
+                            borderRadius: "100px",
+                            border: "1px dashed var(--border)",
+                            background: "var(--bg-elevated)",
+                            color: "var(--text-muted)",
+                            cursor: "pointer",
+                            fontWeight: 600
+                          }}
+                        >
+                          <option value="">+ {isRtl ? "إضافة موظف" : "Add Operator"}</option>
+                          {unassigned.map(u => (
+                            <option key={u.employee_id} value={u.employee_id}>
+                              {u.full_name}
+                            </option>
+                          ))}
+                        </select>
+                      ) : stageEmps.length === 0 ? (
+                        <span style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>
+                          {isRtl ? "لا يوجد موظفون متاحون" : "No available operators"}
+                        </span>
+                      ) : null}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Actions footer */}
+            <div style={{ display: "flex", gap: 10, borderTop: "1px solid var(--border-subtle)", paddingTop: 16, justifyContent: "flex-end", flexDirection: isRtl ? "row" : "row-reverse" }}>
+              <button type="button" className="btn btn-secondary" onClick={onClose} disabled={isSaving}>
+                {isRtl ? "إلغاء" : "Cancel"}
+              </button>
+              <button type="submit" className="btn btn-primary" disabled={isSaving}>
+                {isSaving ? (isRtl ? "جاري الحفظ..." : "Saving...") : (isRtl ? "حفظ التغييرات" : "Save Changes")}
+              </button>
+            </div>
+          </form>
+        )}
+      </div>
     </div>
   );
 }
