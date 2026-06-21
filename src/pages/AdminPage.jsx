@@ -218,7 +218,7 @@ function DefectsPanel() {
                 <th style={{ textAlign: isRtl ? "right" : "left" }}>{isRtl ? "السيريال نمبر" : "Serial Number"}</th>
                 <th style={{ textAlign: isRtl ? "right" : "left" }}>{isRtl ? "الكود" : "Code"}</th>
                 <th style={{ textAlign: isRtl ? "right" : "left" }}>{isRtl ? "المرحلة" : "Stage"}</th>
-                <th style={{ textAlign: isRtl ? "right" : "left" }}>{isRtl ? "الوصف" : "Description"}</th>
+                <th style={{ textAlign: isRtl ? "right" : "left" }}>{isRtl ? "عنوان العطل" : "Defect Title"}</th>
                 <th style={{ textAlign: isRtl ? "right" : "left" }}>{isRtl ? "المُبلِّغ" : "Reported By"}</th>
                 <th style={{ textAlign: isRtl ? "right" : "left" }}>{isRtl ? "التاريخ" : "Date"}</th>
                 <th style={{ textAlign: isRtl ? "right" : "left" }}>{isRtl ? "الحالة" : "Status"}</th>
@@ -245,14 +245,7 @@ function DefectsPanel() {
                       </span>
                     </td>
                     <td style={{ maxWidth: 250 }}>
-                      <div style={{ display: "flex", flexDirection: "column", gap: 2, textAlign: isRtl ? "right" : "left" }}>
-                        <span style={{ fontWeight: 600 }}>{trans?.title || m.error_code || "—"}</span>
-                        {m.custom_description && (
-                          <span style={{ fontSize: "0.78rem", color: "var(--text-muted)", whiteSpace: "normal", wordBreak: "break-word" }}>
-                            💬 <TranslateText text={m.custom_description} targetLang={isRtl ? "ar" : "en"} />
-                          </span>
-                        )}
-                      </div>
+                      <span style={{ fontWeight: 600 }}>{trans?.title || m.error_code || "—"}</span>
                     </td>
                     <td style={{fontSize:"0.85rem"}}>{rep?.full_name||m.reported_by}</td>
                     <td style={{fontSize:"0.78rem",color:"var(--text-muted)"}}>

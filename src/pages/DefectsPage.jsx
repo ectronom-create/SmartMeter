@@ -801,7 +801,7 @@ export default function DefectsPage() {
                   <th style={{ textAlign: isRtl ? "right" : "left" }}>{isRtl ? "السيريال نمبر" : "Serial Number"}</th>
                   <th style={{ textAlign: isRtl ? "right" : "left" }}>{isRtl ? "كود العطل" : "Fault Code"}</th>
                   <th style={{ textAlign: isRtl ? "right" : "left" }}>{isRtl ? "المرحلة" : "Stage"}</th>
-                  <th style={{ textAlign: isRtl ? "right" : "left" }}>{isRtl ? "الوصف" : "Description"}</th>
+                  <th style={{ textAlign: isRtl ? "right" : "left" }}>{isRtl ? "عنوان العطل" : "Defect Title"}</th>
                   <th style={{ textAlign: isRtl ? "right" : "left" }}>{isRtl ? "المُبلِّغ" : "Reported By"}</th>
                   <th style={{ textAlign: isRtl ? "right" : "left" }}>{isRtl ? "الوقت" : "Time"}</th>
                   <th style={{ textAlign: isRtl ? "right" : "left" }}>{isRtl ? "الحالة" : "Status"}</th>
@@ -837,14 +837,7 @@ export default function DefectsPage() {
                         <span className="badge badge-gray">{stageNames[m.stage_found] || m.stage_found}</span>
                       </td>
                       <td style={{ maxWidth: 250 }}>
-                        <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
-                          <span style={{ fontWeight: 600 }}>{trans?.title || m.error_code || "—"}</span>
-                          {m.custom_description && (
-                            <span style={{ fontSize: "0.78rem", color: "var(--text-muted)", whiteSpace: "normal", wordBreak: "break-word" }}>
-                              💬 <TranslateText text={m.custom_description} targetLang={isRtl ? "ar" : "en"} />
-                            </span>
-                          )}
-                        </div>
+                        <span style={{ fontWeight: 600 }}>{trans?.title || m.error_code || "—"}</span>
                       </td>
                       <td>
                         <span style={{ fontSize: "0.85rem" }}>
