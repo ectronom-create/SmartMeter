@@ -34,7 +34,7 @@ export const translateError = (err, isRtl) => {
       ]
     },
     "-576": {
-      title: "Connection Error - Failed to Communicate",
+      title: "Error - RS485 Connection Failed",
       description: "Physical communication with the meter failed via port.",
       troubleshooting_steps: [
         "Check the cable connecting the device and the meter.",

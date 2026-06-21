@@ -512,7 +512,7 @@ function ErrorCodesPanel() {
     const headers = [["Code", "Stage", "Title Arabic", "Title English", "Description", "Troubleshooting Steps"]];
     const sampleData = [
       ["-101", "STG-01", "خطأ SFC - فشل استرداد البيانات", "SFC Error - Data Retrieval Failed", "فشل استرداد بيانات التصنيع من نظام SFC.", "Check network connection to the server.\nScan the barcode again."],
-      ["-576", "Assembly", "خطأ اتصال - تعذّر التواصل مع العداد", "Connection Error - Failed to Communicate", "فشل التواصل المادي مع العداد عبر المنفذ.", "Verify interface cable\nPower cycle system"]
+      ["-576", "Assembly", "خطأ - فشل اتصال RS485", "Error - RS485 Connection Failed", "فشل التواصل المادي مع العداد عبر المنفذ.", "Verify interface cable\nPower cycle system"]
     ];
     const ws = XLSX.utils.aoa_to_sheet([...headers, ...sampleData]);
     const wb = XLSX.utils.book_new();
