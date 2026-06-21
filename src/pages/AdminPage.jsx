@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useApp } from "../context/AppContext";
 import { Users, Calendar, AlertTriangle, BarChart2, Shield, BookOpen, ChevronRight, CheckCircle, Clock, Layers, X, Search, ClipboardList, Wrench, Package, Plus } from "lucide-react";
 import MaintenancePage from "./MaintenancePage";
@@ -25,13 +25,41 @@ function OverviewPanel() {
 }
 
 function DefectsPanel() {
-  const { defectiveMeters, getErrorByCode, getUserById, getStageById, updateMeterStatus, language } = useApp();
+  const { defectiveMeters, getErrorByCode, getUserById, getStageById, updateMeterStatus, language, boxes, assignMeterToBox } = useApp();
+  const [searchTerm, setSearchTerm] = useState("");
   const [reviewModal, setReviewModal] = useState(false);
   const [reviewSearch, setReviewSearch] = useState("");
   const [confirmingId, setConfirmingId] = useState(null);
   const [newStatus, setNewStatus] = useState("");
 
-const isRtl = language === "ar";
+  const isRtl = language === "ar";
+
+  const filteredMeters = useMemo(() => {
+    if (!searchTerm.trim()) return defectiveMeters;
+    const q = searchTerm.toLowerCase();
+    return defectiveMeters.filter(m => {
+      const err = m.error_code ? getErrorByCode(m.error_code) : null;
+      const trans = err ? translateError(err, isRtl) : null;
+      const rep = getUserById(m.reported_by);
+      const repName = rep?.full_name || m.reported_by || "";
+      const mod = m.resolved_by ? getUserById(m.resolved_by) : null;
+      const modName = mod?.full_name || m.resolved_by || "";
+      const box = boxes?.find(b => b.id === m.box_id);
+      const boxName = box ? box.name : "";
+      const boxCategory = box ? box.category : "";
+
+      return (
+        m.serial_number.toLowerCase().includes(q) ||
+        (m.error_code && m.error_code.toLowerCase().includes(q)) ||
+        (m.custom_description && m.custom_description.toLowerCase().includes(q)) ||
+        (trans && trans.title && trans.title.toLowerCase().includes(q)) ||
+        repName.toLowerCase().includes(q) ||
+        modName.toLowerCase().includes(q) ||
+        boxName.toLowerCase().includes(q) ||
+        boxCategory.toLowerCase().includes(q)
+      );
+    });
+  }, [searchTerm, defectiveMeters, boxes, isRtl, getErrorByCode, getUserById]);
 
   const handleExportExcel = () => {
     try {
@@ -70,6 +98,9 @@ const isRtl = language === "ar";
         const res = getUserById(m.resolved_by);
         const resolverName = res?.full_name || m.resolved_by || "—";
         
+        const boxObj = boxes?.find(b => b.id === m.box_id);
+        const boxName = boxObj ? `${boxObj.name} (${boxObj.category})` : "—";
+
         if (isRtl) {
           return {
             "الرقم التسلسلي (سيريال)": m.serial_number,
@@ -78,6 +109,7 @@ const isRtl = language === "ar";
             "المرحلة": stageText || "—",
             "المُبلِّغ": reporterName,
             "الحالة": statusText || "—",
+            "الصندوق": boxName,
             "تاريخ البلاغ": formatDate(m.created_at),
             "المُعدِّل / المعالج": resolverName,
             "تاريخ آخر تعديل": m.resolved_at ? formatDate(m.resolved_at) : "—"
@@ -90,6 +122,7 @@ const isRtl = language === "ar";
             "Stage Found": stageText || "—",
             "Reported By": reporterName,
             "Status": statusText || "—",
+            "Box": boxName,
             "Date Reported": formatDate(m.created_at),
             "Modified By": resolverName,
             "Date Modified": m.resolved_at ? formatDate(m.resolved_at) : "—"
@@ -159,6 +192,24 @@ const isRtl = language === "ar";
         })}
       </div>
 
+      <div style={{display:"flex", justifyContent: "space-between", alignItems: "center", gap:16, flexWrap:"wrap", flexDirection: isRtl ? "row" : "row-reverse"}}>
+        <div style={{position: "relative", width: "100%", maxWidth: "320px"}}>
+          <input 
+            className="input" 
+            value={searchTerm} 
+            onChange={e => setSearchTerm(e.target.value)} 
+            placeholder={isRtl ? "البحث بالسيريال نمبر، كود العطل، الصندوق..." : "Search serial, code, box..."} 
+            style={{ paddingRight: isRtl ? 35 : 12, paddingLeft: !isRtl ? 35 : 12, textAlign: isRtl ? "right" : "left", height: "38px" }}
+          />
+          <Search size={16} style={{
+            position: "absolute",
+            right: isRtl ? 10 : "auto",
+            left: !isRtl ? 10 : "auto",
+            top: "50%", transform: "translateY(-50%)", color: "var(--text-muted)"
+          }} />
+        </div>
+      </div>
+
       <div className="card" style={{padding:0}}>
         <div className="table-wrapper" style={{border:"none"}}>
           <table>
@@ -171,12 +222,13 @@ const isRtl = language === "ar";
                 <th style={{ textAlign: isRtl ? "right" : "left" }}>{isRtl ? "المُبلِّغ" : "Reported By"}</th>
                 <th style={{ textAlign: isRtl ? "right" : "left" }}>{isRtl ? "التاريخ" : "Date"}</th>
                 <th style={{ textAlign: isRtl ? "right" : "left" }}>{isRtl ? "الحالة" : "Status"}</th>
+                <th style={{ textAlign: isRtl ? "right" : "left" }}>{isRtl ? "الصندوق" : "Box"}</th>
                 <th style={{ textAlign: isRtl ? "right" : "left" }}>{isRtl ? "المُعدِّل / المعالج" : "Modified By"}</th>
                 <th style={{ textAlign: isRtl ? "right" : "left" }}>{isRtl ? "تغيير الحالة" : "Change Status"}</th>
               </tr>
             </thead>
             <tbody>
-              {defectiveMeters.map(m=>{
+              {filteredMeters.map(m=>{
                 const err=m.error_code?getErrorByCode(m.error_code):null;
                 const trans = err ? translateError(err, isRtl) : null;
                 const rep=getUserById(m.reported_by);
@@ -210,6 +262,35 @@ const isRtl = language === "ar";
                       <span className={`badge ${sc.cls}`}>{sc.label}</span>
                       {m.status === "resolved" && (
                         <CountdownTimer resolvedAt={m.resolved_at} isRtl={isRtl} />
+                      )}
+                    </td>
+                    <td>
+                      {m.status === "resolved" ? (
+                        <span style={{ color: "var(--text-muted)", fontSize: "0.85rem" }}>—</span>
+                      ) : (
+                        <select
+                          className="input"
+                          style={{ padding: "4px 8px", fontSize: "0.8rem", minWidth: "120px", background: "white" }}
+                          value={m.box_id || ""}
+                          onChange={async (e) => {
+                            const selectedBoxId = e.target.value || null;
+                            const res = await assignMeterToBox(m.id, selectedBoxId);
+                            if (res && !res.success) {
+                              alert(res.message);
+                            }
+                          }}
+                        >
+                          <option value="">{isRtl ? "-- بلا صندوق --" : "-- No Box --"}</option>
+                          {boxes.map(box => {
+                            const count = defectiveMeters.filter(x => x.box_id === box.id && x.status !== "resolved").length;
+                            const isFull = count >= box.size && m.box_id !== box.id;
+                            return (
+                              <option key={box.id} value={box.id} disabled={isFull}>
+                                {box.name} ({box.category}) {isFull ? (isRtl ? "[ممتلئ]" : "[FULL]") : ""}
+                              </option>
+                            );
+                          })}
+                        </select>
                       )}
                     </td>
                     <td>
@@ -303,14 +384,59 @@ const isRtl = language === "ar";
                         <div className="divider" style={{ margin: "10px 0" }} />
 
                         {isConfirming ? (
-                          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, flexDirection: isRtl ? "row" : "row-reverse" }}>
-                            <span style={{ fontSize: "0.8rem", fontWeight: 700 }}>
-                              {isRtl ? "تأكيد النقل إلى:" : "Confirm state to:"} <span className={`badge ${STATUS[newStatus].cls}`}>{STATUS[newStatus].label}</span>?
-                            </span>
-                            <div style={{ display: "flex", gap: 6 }}>
-                              <button className="btn btn-primary btn-sm" onClick={() => handleStatusChange(m.id, newStatus, true)}>{isRtl ? "حفظ" : "Save"}</button>
-                              <button className="btn btn-secondary btn-sm" onClick={() => setConfirmingId(null)}>{isRtl ? "إلغاء" : "Cancel"}</button>
+                          <div style={{ display: "flex", flexDirection: "column", gap: 10, background: "var(--bg-elevated)", padding: 12, borderRadius: 8, width: "100%", textAlign: isRtl ? "right" : "left" }}>
+                            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 8, flexDirection: isRtl ? "row" : "row-reverse" }}>
+                              <span style={{ fontSize: "0.8rem", fontWeight: 700 }}>
+                                {isRtl ? "تأكيد النقل إلى:" : "Confirm state to:"} <span className={`badge ${STATUS[newStatus].cls}`}>{STATUS[newStatus].label}</span>?
+                              </span>
+                              <div style={{ display: "flex", gap: 6 }}>
+                                <button
+                                  className="btn btn-primary btn-sm"
+                                  onClick={async () => {
+                                    if (newStatus === "verified") {
+                                      const selectEl = document.getElementById(`review-box-select-admin-${m.id}`);
+                                      const selectedBoxId = selectEl?.value || null;
+                                      if (selectedBoxId) {
+                                        const res = await assignMeterToBox(m.id, selectedBoxId);
+                                        if (res && !res.success) {
+                                          alert(res.message);
+                                          return;
+                                        }
+                                      }
+                                    }
+                                    handleStatusChange(m.id, newStatus, true);
+                                  }}
+                                >
+                                  {isRtl ? "حفظ" : "Save"}
+                                </button>
+                                <button className="btn btn-secondary btn-sm" onClick={() => setConfirmingId(null)}>{isRtl ? "إلغاء" : "Cancel"}</button>
+                              </div>
                             </div>
+
+                            {newStatus === "verified" && (
+                              <div style={{ borderTop: "1px dashed var(--border-subtle)", paddingTop: 8, marginTop: 4, width: "100%" }}>
+                                <label style={{ fontSize: "0.75rem", fontWeight: 700, display: "block", marginBottom: 6, color: "var(--text-secondary)" }}>
+                                  {isRtl ? "تحديد الصندوق لحفظ العداد فيه (اختياري):" : "Select box to store this defective meter (Optional):"}
+                                </label>
+                                <select
+                                  id={`review-box-select-admin-${m.id}`}
+                                  className="input"
+                                  style={{ padding: "4px 8px", fontSize: "0.8rem", width: "100%", background: "white" }}
+                                  defaultValue={m.box_id || ""}
+                                >
+                                  <option value="">{isRtl ? "-- بلا صندوق --" : "-- No Box --"}</option>
+                                  {boxes.map(box => {
+                                    const count = defectiveMeters.filter(x => x.box_id === box.id && x.status !== "resolved").length;
+                                    const isFull = count >= box.size && m.box_id !== box.id;
+                                    return (
+                                      <option key={box.id} value={box.id} disabled={isFull}>
+                                        {box.name} ({box.category}) {isFull ? (isRtl ? "[ممتلئ]" : "[FULL]") : ""}
+                                      </option>
+                                    );
+                                  })}
+                                </select>
+                              </div>
+                            )}
                           </div>
                         ) : (
                           <div style={{ display: "flex", gap: 8, flexDirection: isRtl ? "row" : "row-reverse" }}>

@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useApp } from "../context/AppContext";
-import { UserPlus, Edit2, Trash2, Shield, X, Check } from "lucide-react";
+import { UserPlus, Edit2, Trash2, Shield, X, Check, Search } from "lucide-react";
 
 const getRoles = (isRtl) => [
   { value: "operator",   label: isRtl ? "مشغّل" : "Operator",   badge: "badge-blue" },
@@ -197,6 +197,7 @@ export default function UsersPanel() {
   const { users, updateUserRole, deleteUser, currentUser, language } = useApp();
   const [showAdd, setShowAdd] = useState(false);
   const [selectedUserForEdit, setSelectedUserForEdit] = useState(null);
+  const [searchQuery, setSearchQuery] = useState("");
 
   const isRtl = language === "ar";
   const ROLES = getRoles(isRtl);
@@ -207,28 +208,58 @@ export default function UsersPanel() {
     operator: "badge-blue",
     quality_management: "badge-cyan"
   };
-  const roleLabel = { 
+  const roleLabel = useMemo(() => ({ 
     admin: isRtl ? "أدمن" : "Admin", 
     supervisor: isRtl ? "مشرف" : "Supervisor", 
     operator: isRtl ? "مشغّل" : "Operator",
     quality_management: isRtl ? "إدارة الجودة" : "Quality Management"
-  };
+  }), [isRtl]);
+
+  const filteredUsers = useMemo(() => {
+    if (!searchQuery.trim()) return users;
+    const q = searchQuery.toLowerCase();
+    return users.filter(u => 
+      u.employee_id.toLowerCase().includes(q) ||
+      u.full_name.toLowerCase().includes(q) ||
+      (u.role && u.role.toLowerCase().includes(q)) ||
+      (u.phone && u.phone.toLowerCase().includes(q)) ||
+      (u.email && u.email.toLowerCase().includes(q)) ||
+      (roleLabel[u.role] && roleLabel[u.role].toLowerCase().includes(q))
+    );
+  }, [searchQuery, users, roleLabel]);
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 16, direction: isRtl ? "rtl" : "ltr", textAlign: isRtl ? "right" : "left" }}>
       {showAdd && <AddUserModal onClose={() => setShowAdd(false)} />}
       {selectedUserForEdit && <EditUserModal user={selectedUserForEdit} onClose={() => setSelectedUserForEdit(null)} />}
 
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexDirection: isRtl ? "row" : "row-reverse" }}>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 12, flexDirection: isRtl ? "row" : "row-reverse" }}>
         <div>
           <h2 style={{ marginBottom: 2 }}>{isRtl ? "إدارة المستخدمين" : "User Management"}</h2>
           <p style={{ fontSize: "0.85rem", color: "var(--text-muted)" }}>
             {users.length} {isRtl ? "مستخدم — يمكنك تغيير الصلاحيات وإضافة موظفين جدد" : "registered users — manage access levels"}
           </p>
         </div>
-        <button className="btn btn-primary btn-sm" onClick={() => setShowAdd(true)}>
-          <UserPlus size={14} /> {isRtl ? "إضافة موظف" : "Add New User"}
-        </button>
+        <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap", flexDirection: isRtl ? "row" : "row-reverse" }}>
+          <div style={{ position: "relative", width: "100%", maxWidth: "260px" }}>
+            <input
+              className="input"
+              value={searchQuery}
+              onChange={e => setSearchQuery(e.target.value)}
+              placeholder={isRtl ? "البحث بالاسم، الرقم الوظيفي..." : "Search name, employee ID..."}
+              style={{ paddingRight: isRtl ? 35 : 12, paddingLeft: !isRtl ? 35 : 12, textAlign: isRtl ? "right" : "left", height: "36px", fontSize: "0.85rem", background: "white" }}
+            />
+            <Search size={16} style={{
+              position: "absolute",
+              right: isRtl ? 10 : "auto",
+              left: !isRtl ? 10 : "auto",
+              top: "50%", transform: "translateY(-50%)", color: "var(--text-muted)"
+            }} />
+          </div>
+          <button className="btn btn-primary btn-sm" onClick={() => setShowAdd(true)} style={{ height: "36px" }}>
+            <UserPlus size={14} /> {isRtl ? "إضافة موظف" : "Add New User"}
+          </button>
+        </div>
       </div>
 
       <div className="card" style={{ padding: 0 }}>
@@ -247,7 +278,7 @@ export default function UsersPanel() {
               </tr>
             </thead>
             <tbody>
-              {users.map(u => (
+              {filteredUsers.map(u => (
                 <tr key={u.employee_id}>
                   <td><code style={{ fontFamily: "monospace", fontSize: "0.83rem", background: "var(--bg-elevated)", padding: "2px 7px", borderRadius: 4 }}>{u.employee_id}</code></td>
                   <td>

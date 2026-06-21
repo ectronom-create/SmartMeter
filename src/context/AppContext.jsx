@@ -33,6 +33,7 @@ export function AppProvider({ children }) {
   const [equipmentStock, setEquipmentStock] = useState([]);
   const [equipmentHandouts, setEquipmentHandouts] = useState([]);
   const [defectLogs, setDefectLogs]         = useState([]);
+  const [boxes, setBoxes]                   = useState([]);
   
   const [loginError, setLoginError]         = useState("");
   const [isLoading, setIsLoading]           = useState(true);
@@ -69,7 +70,8 @@ export function AppProvider({ children }) {
           { data: eqData },
           { data: hoData },
           { data: shiftData },
-          { data: logsData }
+          { data: logsData },
+          { data: bxData }
         ] = await Promise.all([
           supabase.from("users").select("*"),
           supabase.from("production_stages").select("*"),
@@ -79,7 +81,14 @@ export function AppProvider({ children }) {
           supabase.from("equipment_stock").select("*"),
           supabase.from("equipment_handouts").select("*"),
           supabase.from("shift_types").select("*"),
-          fetchLogsPromise
+          fetchLogsPromise,
+          supabase.from("boxes").select("*").then(({ data, error }) => {
+            if (error) {
+              console.warn("boxes table might not exist yet:", error.message);
+              return { data: [] };
+            }
+            return { data };
+          }).catch(() => ({ data: [] }))
         ]);
 
         if (uData) setUsers(uData);
@@ -111,6 +120,7 @@ export function AppProvider({ children }) {
         if (eqData) setEquipmentStock(eqData);
         if (hoData) setEquipmentHandouts(hoData);
         if (shiftData) setShiftTypes(shiftData);
+        if (bxData) setBoxes(bxData);
         
         if (logsData) {
           setDefectLogs(logsData);
@@ -622,10 +632,10 @@ export function AppProvider({ children }) {
     // 2. Direct database query to prevent race conditions
     try {
       const { data: dbExisting, error: checkErr } = await supabase
-        .from("defective_meters")
-        .select("serial_number, error_code, status")
-        .eq("serial_number", entry.serial_number)
-        .neq("status", "resolved");
+         .from("defective_meters")
+         .select("serial_number, error_code, status")
+         .eq("serial_number", entry.serial_number)
+         .neq("status", "resolved");
 
       if (checkErr) throw checkErr;
 
@@ -642,6 +652,22 @@ export function AppProvider({ children }) {
       console.warn("Direct DB duplicate check failed, relying on state:", checkErr.message);
     }
 
+    // 3. Box capacity check if assigning to a box at registration
+    if (entry.box_id) {
+      const targetBox = boxes.find(b => b.id === entry.box_id);
+      if (targetBox) {
+        const currentCount = defectiveMeters.filter(m => m.box_id === entry.box_id && m.status !== "resolved").length;
+        if (currentCount >= targetBox.size) {
+          return { 
+            success: false, 
+            message: language === "ar" 
+              ? `عذراً، الصندوق "${targetBox.name}" ممتلئ بالفعل (السعة: ${targetBox.size})`
+              : `Sorry, Box "${targetBox.name}" is already full (Capacity: ${targetBox.size})`
+          };
+        }
+      }
+    }
+
     let finalStage = entry.stage_found;
     const errCodeObj = errorCodes.find(e => e.code === entry.error_code);
     if (errCodeObj) {
@@ -656,6 +682,7 @@ export function AppProvider({ children }) {
       custom_description: entry.custom_description || "",
       reported_by: entry.reported_by,
       status: "reported",
+      box_id: entry.box_id || null
     };
 
     try {
@@ -683,7 +710,7 @@ export function AppProvider({ children }) {
       console.error("Supabase defect add error:", err.message, err.details, err.hint);
       return { success: false, message: `خطأ في الحفظ: ${err.message || 'Error saving to cloud.'}` };
     }
-  }, [defectiveMeters, errorCodes, addDefectLog, currentUser]);
+  }, [defectiveMeters, errorCodes, addDefectLog, currentUser, boxes, language]);
 
   const addDefectiveMetersBulk = useCallback(async (entriesArray) => {
     try {
@@ -800,6 +827,87 @@ export function AppProvider({ children }) {
       console.error("Supabase defect update error:", err);
     }
   }, [defectiveMeters, currentUser, addDefectLog]);
+
+  // ── Box Tracking System ──────────────────────────────
+  const addBox = useCallback(async (box) => {
+    const newBox = {
+      id: `BOX-${Date.now()}-${Math.random().toString(36).substr(2, 6)}`,
+      name: box.name.trim(),
+      size: parseInt(box.size) || 24,
+      category: box.category.trim(),
+      created_at: new Date().toISOString()
+    };
+
+    try {
+      const { data, error } = await supabase.from("boxes").insert([newBox]).select().single();
+      if (error) throw error;
+      setBoxes(prev => [...prev, data || newBox]);
+      return { success: true, box: data || newBox };
+    } catch (err) {
+      console.error("Supabase box add error:", err);
+      // Local fallback
+      setBoxes(prev => [...prev, newBox]);
+      return { success: true, box: newBox };
+    }
+  }, []);
+
+  const updateBox = useCallback(async (id, updatedFields) => {
+    try {
+      const { error } = await supabase.from("boxes").update(updatedFields).eq("id", id);
+      if (error) throw error;
+      setBoxes(prev => prev.map(b => b.id === id ? { ...b, ...updatedFields } : b));
+      return { success: true };
+    } catch (err) {
+      console.error("Supabase box update error:", err);
+      setBoxes(prev => prev.map(b => b.id === id ? { ...b, ...updatedFields } : b));
+      return { success: true };
+    }
+  }, []);
+
+  const deleteBox = useCallback(async (id) => {
+    try {
+      const { error } = await supabase.from("boxes").delete().eq("id", id);
+      if (error) throw error;
+      setBoxes(prev => prev.filter(b => b.id !== id));
+      // Unassign all defective meters that were in this box
+      setDefectiveMeters(prev => prev.map(m => m.box_id === id ? { ...m, box_id: null } : m));
+      return { success: true };
+    } catch (err) {
+      console.error("Supabase box delete error:", err);
+      setBoxes(prev => prev.filter(b => b.id !== id));
+      setDefectiveMeters(prev => prev.map(m => m.box_id === id ? { ...m, box_id: null } : m));
+      return { success: true };
+    }
+  }, []);
+
+  const assignMeterToBox = useCallback(async (meterId, boxId) => {
+    if (boxId) {
+      // Check capacity
+      const targetBox = boxes.find(b => b.id === boxId);
+      if (targetBox) {
+        const currentCount = defectiveMeters.filter(m => m.box_id === boxId && m.status !== "resolved").length;
+        if (currentCount >= targetBox.size) {
+          return { 
+            success: false, 
+            message: language === "ar" 
+              ? `عذراً، الصندوق "${targetBox.name}" ممتلئ بالفعل (السعة: ${targetBox.size})`
+              : `Sorry, Box "${targetBox.name}" is already full (Capacity: ${targetBox.size})`
+          };
+        }
+      }
+    }
+
+    try {
+      const { error } = await supabase.from("defective_meters").update({ box_id: boxId }).eq("id", meterId);
+      if (error) throw error;
+      setDefectiveMeters(prev => prev.map(m => m.id === meterId ? { ...m, box_id: boxId } : m));
+      return { success: true };
+    } catch (err) {
+      console.error("Supabase assign meter to box error:", err);
+      setDefectiveMeters(prev => prev.map(m => m.id === meterId ? { ...m, box_id: boxId } : m));
+      return { success: true };
+    }
+  }, [boxes, defectiveMeters, language]);
 
   // ── Error code management ────────────────────────────
   const addErrorCode = useCallback(async (errorData) => {
@@ -1077,7 +1185,8 @@ export function AppProvider({ children }) {
     equipmentStock, addEquipmentStock, updateEquipmentStock, deleteEquipmentItem, restockEquipment,
     equipmentHandouts, handoutEquipment, returnEquipment, getMyHandouts, getLowStockItems,
     production_stages: productionStages, shift_types: shiftTypes, error_codes: errorCodes, getTodayString,
-    language, toggleLanguage, t, isLoading
+    language, toggleLanguage, t, isLoading,
+    boxes, addBox, updateBox, deleteBox, assignMeterToBox
   };
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;

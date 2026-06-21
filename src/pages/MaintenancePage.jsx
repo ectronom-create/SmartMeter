@@ -3,7 +3,7 @@ import { useApp } from "../context/AppContext";
 import { supabase } from "../supabaseClient";
 import { 
   Wrench, Calendar, User, Clock, CheckCircle, Plus, AlertCircle, 
-  Send, RefreshCw, ChevronLeft, Trash2, Mail, Users, ArrowRight 
+  Send, RefreshCw, ChevronLeft, Trash2, Mail, Users, ArrowRight, Search 
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
@@ -14,6 +14,7 @@ export default function MaintenancePage() {
   const isAdmin = currentUser?.role === "admin";
 
   const [schedule, setSchedule] = useState([]);
+  const [searchTerm, setSearchTerm] = useState("");
   const [loading, setLoading] = useState(true);
   const [errorMsg, setErrorMsg] = useState("");
   const [successMsg, setSuccessMsg] = useState("");
@@ -209,6 +210,21 @@ export default function MaintenancePage() {
       localStorage.setItem("Ectron_Maintenance_Schedule", JSON.stringify(newSchedule));
     }
   };
+
+  const filteredSchedule = useMemo(() => {
+    if (!searchTerm.trim()) return schedule;
+    const q = searchTerm.toLowerCase();
+    return schedule.filter(slot => {
+      const emp = users.find(u => u.employee_id === slot.employee_id);
+      const empName = emp ? emp.full_name : "";
+      return (
+        slot.employee_id.toLowerCase().includes(q) ||
+        empName.toLowerCase().includes(q) ||
+        (slot.task_name && slot.task_name.toLowerCase().includes(q)) ||
+        slot.week_start_date.toLowerCase().includes(q)
+      );
+    });
+  }, [searchTerm, schedule, users]);
 
   // Add individual slot
   const handleAddManualSlot = async (e) => {
@@ -556,7 +572,24 @@ export default function MaintenancePage() {
           
           {/* Rota List Container */}
           <div className="card" style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-            <h3 style={{ margin: 0 }}>📅 {isRtl ? "جدول التناوب والمناوبات الأسبوعية" : "Weekly Rotation Schedule"}</h3>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 12, flexDirection: isRtl ? "row" : "row-reverse" }}>
+              <h3 style={{ margin: 0 }}>📅 {isRtl ? "جدول التناوب والمناوبات الأسبوعية" : "Weekly Rotation Schedule"}</h3>
+              <div style={{ position: "relative", width: "100%", maxWidth: "240px" }}>
+                <input
+                  className="input"
+                  value={searchTerm}
+                  onChange={e => setSearchTerm(e.target.value)}
+                  placeholder={isRtl ? "البحث بالاسم، الرقم الوظيفي..." : "Search name, employee ID..."}
+                  style={{ paddingRight: isRtl ? 35 : 12, paddingLeft: !isRtl ? 35 : 12, textAlign: isRtl ? "right" : "left", height: "34px", fontSize: "0.85rem", background: "white" }}
+                />
+                <Search size={14} style={{
+                  position: "absolute",
+                  right: isRtl ? 10 : "auto",
+                  left: !isRtl ? 10 : "auto",
+                  top: "50%", transform: "translateY(-50%)", color: "var(--text-muted)"
+                }} />
+              </div>
+            </div>
             
             {loading ? (
               <div style={{ textAlign: "center", padding: 40 }}><span className="spinner"></span></div>
@@ -579,7 +612,13 @@ export default function MaintenancePage() {
                     </tr>
                   </thead>
                   <tbody>
-                    {schedule.map(slot => {
+                    {filteredSchedule.length === 0 ? (
+                      <tr>
+                        <td colSpan={5} style={{ textAlign: "center", padding: "40px", color: "var(--text-muted)" }}>
+                          {isRtl ? "لا توجد سجلات مطابقة" : "No matching records found"}
+                        </td>
+                      </tr>
+                    ) : filteredSchedule.map(slot => {
                       const emp = users.find(u => u.employee_id === slot.employee_id);
                       const isAssignedToMe = slot.employee_id === currentUser?.employee_id;
                       const dateObj = new Date(slot.week_start_date + "T00:00:00");

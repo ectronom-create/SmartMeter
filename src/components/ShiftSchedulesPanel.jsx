@@ -34,6 +34,7 @@ export default function ShiftSchedulesPanel() {
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
+  const [operatorsSearch, setOperatorsSearch] = useState("");
 
   const isRtl = language === "ar";
 
@@ -705,49 +706,85 @@ export default function ShiftSchedulesPanel() {
             </>
           ) : (
             /* Existing Operator Statistics Tab */
-            <div className="card animate-fade" style={{ padding: 0 }}>
-              <div className="table-wrapper" style={{ border: "none", overflowX: "auto" }}>
-                <table>
-                  <thead>
-                    <tr>
-                      <th style={{ textAlign: isRtl ? "right" : "left" }}>{isRtl ? "الموظف" : "Operator"}</th>
-                      <th style={{ textAlign: isRtl ? "right" : "left" }}>{isRtl ? "إجمالي الأيام" : "Total Workdays"}</th>
-                      <th style={{ textAlign: isRtl ? "right" : "left" }}>{isRtl ? "توزيع الشفتات" : "Shift Distribution"}</th>
-                      <th style={{ textAlign: isRtl ? "right" : "left" }}>{isRtl ? "أكثر مرحلة عملاً" : "Primary Workstation"}</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {users.filter(u => u.role !== "admin").map(u => {
-                      const stat = employeeHistory[u.employee_id] || { total: 0, shifts: {}, stages: {} };
-                      const topStageId = Object.entries(stat.stages).sort((a,b) => b[1] - a[1])[0]?.[0];
-                      const topStage = productionStages.find(s => s.stage_id === topStageId);
-                      
-                      return (
-                        <tr key={u.employee_id}>
-                          <td style={{ fontWeight: 700 }}>{u.full_name}</td>
-                          <td><span className="badge badge-blue">{stat.total} {isRtl ? "يوم" : "Days"}</span></td>
-                          <td>
-                            <div style={{ display: "flex", gap: 10, flexDirection: isRtl ? "row" : "row-reverse" }}>
-                              {Object.entries(stat.shifts).map(([sid, count]) => (
-                                <span key={sid} style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>
-                                  {getTranslatedShiftName(sid, isRtl)}: <strong>{count}</strong>
-                                </span>
-                              ))}
-                            </div>
-                          </td>
-                          <td>
-                            {topStage ? (
-                              <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: "0.85rem", flexDirection: isRtl ? "row" : "row-reverse" }}>
-                                <span>{topStage.icon}</span>
-                                <span>{getTranslatedStageName(topStage, isRtl)} ({stat.stages[topStageId]})</span>
-                              </div>
-                            ) : "—"}
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
+            <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+              <div className="card" style={{ padding: 16, display: "flex", alignItems: "center", justifyContent: "space-between", flexDirection: isRtl ? "row" : "row-reverse" }}>
+                <div style={{ position: "relative", width: "100%", maxWidth: "320px" }}>
+                  <input
+                    className="input"
+                    value={operatorsSearch}
+                    onChange={e => setOperatorsSearch(e.target.value)}
+                    placeholder={isRtl ? "البحث باسم الموظف أو الرقم الوظيفي..." : "Search operator name or employee ID..."}
+                    style={{ paddingRight: isRtl ? 35 : 12, paddingLeft: !isRtl ? 35 : 12, textAlign: isRtl ? "right" : "left", height: "38px", background: "white" }}
+                  />
+                  <Search size={16} style={{
+                    position: "absolute",
+                    right: isRtl ? 10 : "auto",
+                    left: !isRtl ? 10 : "auto",
+                    top: "50%", transform: "translateY(-50%)", color: "var(--text-muted)"
+                  }} />
+                </div>
+              </div>
+
+              <div className="card animate-fade" style={{ padding: 0 }}>
+                <div className="table-wrapper" style={{ border: "none", overflowX: "auto" }}>
+                  <table>
+                    <thead>
+                      <tr>
+                        <th style={{ textAlign: isRtl ? "right" : "left" }}>{isRtl ? "الموظف" : "Operator"}</th>
+                        <th style={{ textAlign: isRtl ? "right" : "left" }}>{isRtl ? "إجمالي الأيام" : "Total Workdays"}</th>
+                        <th style={{ textAlign: isRtl ? "right" : "left" }}>{isRtl ? "توزيع الشفتات" : "Shift Distribution"}</th>
+                        <th style={{ textAlign: isRtl ? "right" : "left" }}>{isRtl ? "أكثر مرحلة عملاً" : "Primary Workstation"}</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {(() => {
+                        const filteredList = users.filter(u => u.role !== "admin" && (
+                          !operatorsSearch.trim() ||
+                          u.full_name.toLowerCase().includes(operatorsSearch.toLowerCase()) ||
+                          u.employee_id.toLowerCase().includes(operatorsSearch.toLowerCase())
+                        ));
+                        if (filteredList.length === 0) {
+                          return (
+                            <tr>
+                              <td colSpan={4} style={{ textAlign: "center", padding: "40px", color: "var(--text-muted)" }}>
+                                {isRtl ? "لا توجد سجلات مطابقة" : "No matching records found"}
+                              </td>
+                            </tr>
+                          );
+                        }
+                        return filteredList.map(u => {
+                          const stat = employeeHistory[u.employee_id] || { total: 0, shifts: {}, stages: {} };
+                          const topStageId = Object.entries(stat.stages).sort((a,b) => b[1] - a[1])[0]?.[0];
+                          const topStage = productionStages.find(s => s.stage_id === topStageId);
+                          
+                          return (
+                            <tr key={u.employee_id}>
+                              <td style={{ fontWeight: 700 }}>{u.full_name}</td>
+                              <td><span className="badge badge-blue">{stat.total} {isRtl ? "يوم" : "Days"}</span></td>
+                              <td>
+                                <div style={{ display: "flex", gap: 10, flexDirection: isRtl ? "row" : "row-reverse" }}>
+                                  {Object.entries(stat.shifts).map(([sid, count]) => (
+                                    <span key={sid} style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>
+                                      {getTranslatedShiftName(sid, isRtl)}: <strong>{count}</strong>
+                                    </span>
+                                  ))}
+                                </div>
+                              </td>
+                              <td>
+                                {topStage ? (
+                                  <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: "0.85rem", flexDirection: isRtl ? "row" : "row-reverse" }}>
+                                    <span>{topStage.icon}</span>
+                                    <span>{getTranslatedStageName(topStage, isRtl)} ({stat.stages[topStageId]})</span>
+                                  </div>
+                                ) : "—"}
+                              </td>
+                            </tr>
+                          );
+                        });
+                      })()}
+                    </tbody>
+                  </table>
+                </div>
               </div>
             </div>
           )}

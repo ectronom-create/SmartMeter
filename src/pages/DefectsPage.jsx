@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect, useRef } from "react";
 import { useApp } from "../context/AppContext";
 import { useNavigate, useLocation } from "react-router-dom";
-import { ArrowRight, CheckCircle, Clock, AlertTriangle, X, Plus, AlertCircle } from "lucide-react";
+import { ArrowRight, CheckCircle, Clock, AlertTriangle, X, Plus, AlertCircle, Search } from "lucide-react";
 import { translateError, TranslateText } from "./KnowledgeBasePage";
 import * as XLSX from "xlsx";
 import CountdownTimer from "../components/CountdownTimer";
@@ -29,7 +29,8 @@ export default function DefectsPage() {
   const { 
     defectiveMeters, currentUser, updateMeterStatus, 
     getErrorByCode, addDefectiveMeter, addDefectiveMetersBulk, currentStage, errorCodes, language,
-    defectLogs, getUserById
+    defectLogs, getUserById,
+    boxes, addBox, updateBox, deleteBox, assignMeterToBox
   } = useApp();
 
   const isRtl = language === "ar";
@@ -37,9 +38,19 @@ export default function DefectsPage() {
   const stageNames = getStageNames(isRtl);
   
   const [filterStatus, setFilterStatus] = useState("all");
+  const [defectsSearch, setDefectsSearch] = useState("");
   const [submitMsg, setSubmitMsg] = useState(null);
   const [importStatus, setImportStatus] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Box management state
+  const [newBoxName, setNewBoxName] = useState("");
+  const [newBoxSize, setNewBoxSize] = useState("24");
+  const [customSize, setCustomSize] = useState("");
+  const [newBoxCategory, setNewBoxCategory] = useState("Assembly");
+  const [customCategory, setCustomCategory] = useState("");
+  const [boxSubmitMsg, setBoxSubmitMsg] = useState(null);
+  const [expandedBoxId, setExpandedBoxId] = useState(null);
 
 
   // Searchable Code logic
@@ -310,9 +321,32 @@ export default function DefectsPage() {
     );
   }, [searchQuery, errorCodes, stageNames, currentUser?.role, currentStage]);
 
-  const filtered = defectiveMeters.filter(m =>
-    filterStatus === "all" ? true : m.status === filterStatus
-  );
+  const filtered = defectiveMeters.filter(m => {
+    const matchesStatus = filterStatus === "all" ? true : m.status === filterStatus;
+    if (!matchesStatus) return false;
+    if (!defectsSearch.trim()) return true;
+    const q = defectsSearch.toLowerCase();
+    const err = m.error_code ? getErrorByCode(m.error_code) : null;
+    const trans = err ? translateError(err, isRtl) : null;
+    const rep = getUserById(m.reported_by);
+    const repName = rep ? rep.full_name : "";
+    const mod = m.resolved_by ? getUserById(m.resolved_by) : null;
+    const modName = mod ? mod.full_name : "";
+    const box = boxes.find(b => b.id === m.box_id);
+    const boxName = box ? box.name : "";
+    const boxCategory = box ? box.category : "";
+    
+    return (
+      m.serial_number.toLowerCase().includes(q) ||
+      (m.error_code && m.error_code.toLowerCase().includes(q)) ||
+      (m.custom_description && m.custom_description.toLowerCase().includes(q)) ||
+      (trans && trans.title && trans.title.toLowerCase().includes(q)) ||
+      repName.toLowerCase().includes(q) ||
+      modName.toLowerCase().includes(q) ||
+      boxName.toLowerCase().includes(q) ||
+      boxCategory.toLowerCase().includes(q)
+    );
+  });
 
   const allMeters = filtered.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
 
@@ -366,7 +400,8 @@ export default function DefectsPage() {
       error_code: selectedErrorCode.code,
       stage_found: selectedErrorCode.stage_id,
       custom_description: fd.get("desc").trim(),
-      reported_by: currentUser.employee_id
+      reported_by: currentUser.employee_id,
+      box_id: fd.get("boxId") || null
     });
     setIsSubmitting(false);
 
@@ -382,6 +417,65 @@ export default function DefectsPage() {
     setSearchQuery("");
     setSelectedErrorCode(null);
     setTimeout(() => setSubmitMsg(null), 3000);
+  };
+
+  const getNextBoxName = () => {
+    if (!boxes || boxes.length === 0) return "00001";
+    let maxNum = 0;
+    boxes.forEach(b => {
+      const num = parseInt(b.name, 10);
+      if (!isNaN(num) && num > maxNum) {
+        maxNum = num;
+      }
+    });
+    return String(maxNum + 1).padStart(5, "0");
+  };
+
+  const handleCreateBox = async (e) => {
+    e.preventDefault();
+    const autoName = getNextBoxName();
+    
+    let size = newBoxSize === "custom" ? parseInt(customSize) : parseInt(newBoxSize);
+    if (!size || size <= 0) {
+      setBoxSubmitMsg({
+        type: "error",
+        text: isRtl ? "يرجى إدخال سعة صحيحة للبوكس" : "Please enter a valid capacity"
+      });
+      return;
+    }
+
+    let category = newBoxCategory === "custom" ? customCategory.trim() : newBoxCategory;
+    if (!category) {
+      setBoxSubmitMsg({
+        type: "error",
+        text: isRtl ? "يرجى تحديد أو كتابة تصنيف للبوكس" : "Please specify a category"
+      });
+      return;
+    }
+
+    const res = await addBox({
+      name: autoName,
+      size: size,
+      category: category
+    });
+
+    if (res && res.success) {
+      setBoxSubmitMsg({
+        type: "success",
+        text: isRtl ? "تم إنشاء الصندوق بنجاح!" : "Box created successfully!"
+      });
+      setNewBoxName("");
+      setNewBoxSize("24");
+      setCustomSize("");
+      setNewBoxCategory("Assembly");
+      setCustomCategory("");
+      setTimeout(() => setBoxSubmitMsg(null), 3000);
+    } else {
+      setBoxSubmitMsg({
+        type: "error",
+        text: isRtl ? "فشل إنشاء الصندوق" : "Failed to create box"
+      });
+    }
   };
 
   const [activeTab, setActiveTab] = useState("defects");
@@ -476,15 +570,24 @@ export default function DefectsPage() {
         )}
 
         {/* Tab Selection */}
-        {["admin", "supervisor", "quality_management"].includes(currentUser.role) && (
-          <div style={{ display: "flex", gap: 10, borderBottom: "1px solid var(--border-subtle)", paddingBottom: 10 }}>
-            <button 
-              className={`btn ${activeTab === "defects" ? "btn-primary" : "btn-secondary"}`} 
-              onClick={() => setActiveTab("defects")}
-              style={{ fontSize: "0.85rem", padding: "6px 16px" }}
-            >
-              📋 {isRtl ? "قائمة الأعطال" : "Defect List"}
-            </button>
+        <div style={{ display: "flex", gap: 10, borderBottom: "1px solid var(--border-subtle)", paddingBottom: 10 }}>
+          <button 
+            className={`btn ${activeTab === "defects" ? "btn-primary" : "btn-secondary"}`} 
+            onClick={() => setActiveTab("defects")}
+            style={{ fontSize: "0.85rem", padding: "6px 16px" }}
+          >
+            📋 {isRtl ? "قائمة الأعطال" : "Defect List"}
+          </button>
+          
+          <button 
+            className={`btn ${activeTab === "boxes" ? "btn-primary" : "btn-secondary"}`} 
+            onClick={() => setActiveTab("boxes")}
+            style={{ fontSize: "0.85rem", padding: "6px 16px" }}
+          >
+            📦 {isRtl ? "نظام تتبع الصناديق" : "Box Tracking"}
+          </button>
+
+          {["admin", "supervisor", "quality_management"].includes(currentUser.role) && (
             <button 
               className={`btn ${activeTab === "history" ? "btn-primary" : "btn-secondary"}`} 
               onClick={() => setActiveTab("history")}
@@ -492,8 +595,8 @@ export default function DefectsPage() {
             >
               📜 {isRtl ? "سجل حركات الجودة" : "Quality Audit Logs"}
             </button>
-          </div>
-        )}
+          )}
+        </div>
 
         {activeTab === "defects" && (
           <>
@@ -505,7 +608,7 @@ export default function DefectsPage() {
               <h3 style={{ margin: 0 }}>{isRtl ? "تسجيل بلاغ عطل جديد" : "Report a New Defect"}</h3>
             </div>
             {submitMsg && <div className={`alert alert-${submitMsg.type === "error" ? "danger" : "success"}`} style={{ marginBottom: 12 }}>{submitMsg.text}</div>}
-            <form onSubmit={handleQuickSubmit} className="defect-form-grid">
+            <form onSubmit={handleQuickSubmit} className="defect-form-grid" style={{ gridTemplateColumns: "1fr 1.2fr 1fr 1fr auto" }}>
               <div className="input-group">
                 <label className="input-label">{isRtl ? "السيريال نمبر *" : "Serial Number *"}</label>
                 <input 
@@ -619,6 +722,22 @@ export default function DefectsPage() {
               </div>
 
               <div className="input-group">
+                <label className="input-label">{isRtl ? "تعيين إلى صندوق (اختياري)" : "Assign to Box (Optional)"}</label>
+                <select className="input" name="boxId" style={{ background: "white" }}>
+                  <option value="">{isRtl ? "-- اختر الصندوق --" : "-- Select Box --"}</option>
+                  {boxes.map(box => {
+                    const count = defectiveMeters.filter(m => m.box_id === box.id && m.status !== "resolved").length;
+                    const isFull = count >= box.size;
+                    return (
+                      <option key={box.id} value={box.id} disabled={isFull}>
+                        {box.name} ({box.category}) - {count}/{box.size} {isFull ? (isRtl ? "[ممتلئ]" : "[FULL]") : ""}
+                      </option>
+                    );
+                  })}
+                </select>
+              </div>
+
+              <div className="input-group">
                 <label className="input-label">{isRtl ? "ملاحظات إضافية" : "Optional Comments"}</label>
                 <input className="input" name="desc" placeholder={isRtl ? "ملاحظات اختيارية..." : "Add details..."} style={{ background: "white" }} />
               </div>
@@ -633,17 +752,42 @@ export default function DefectsPage() {
         )}
 
         {/* Filter & Summary */}
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 12 }}>
-          <div className="defects-filters-track">
-            {["all","reported","pending","verified","resolved"].map(s => (
-              <button
-                key={s}
-                className={`btn btn-sm ${filterStatus === s ? "btn-primary" : "btn-secondary"}`}
-                onClick={() => setFilterStatus(s)}
-              >
-                {s === "all" ? (isRtl ? "الكل" : "All") : STATUS_CONFIG[s].label}
-              </button>
-            ))}
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 12, marginBottom: 12 }}>
+          <div style={{ display: "flex", gap: 12, alignItems: "center", flexWrap: "wrap", flex: 1 }}>
+            <div className="defects-filters-track">
+              {["all","reported","pending","verified","resolved"].map(s => (
+                <button
+                  key={s}
+                  className={`btn btn-sm ${filterStatus === s ? "btn-primary" : "btn-secondary"}`}
+                  onClick={() => setFilterStatus(s)}
+                >
+                  {s === "all" ? (isRtl ? "الكل" : "All") : STATUS_CONFIG[s].label}
+                </button>
+              ))}
+            </div>
+            
+            <div style={{ position: "relative", width: "100%", maxWidth: "300px" }}>
+              <input
+                className="input"
+                style={{ 
+                  paddingRight: isRtl ? 35 : 12, 
+                  paddingLeft: !isRtl ? 35 : 12, 
+                  textAlign: isRtl ? "right" : "left",
+                  height: "36px",
+                  fontSize: "0.85rem",
+                  background: "white"
+                }}
+                value={defectsSearch}
+                onChange={e => setDefectsSearch(e.target.value)}
+                placeholder={isRtl ? "البحث بالسيريال نمبر، كود العطل، الصندوق..." : "Search serial, code, box..."}
+              />
+              <Search size={16} style={{
+                position: "absolute",
+                right: isRtl ? 10 : "auto",
+                left: !isRtl ? 10 : "auto",
+                top: "50%", transform: "translateY(-50%)", color: "var(--text-muted)"
+              }} />
+            </div>
           </div>
           <div className="badge badge-gray" style={{ flexShrink: 0 }}>{isRtl ? "إجمالي السجلات:" : "Total Logs:"} {allMeters.length}</div>
         </div>
@@ -661,6 +805,7 @@ export default function DefectsPage() {
                   <th style={{ textAlign: isRtl ? "right" : "left" }}>{isRtl ? "المُبلِّغ" : "Reported By"}</th>
                   <th style={{ textAlign: isRtl ? "right" : "left" }}>{isRtl ? "الوقت" : "Time"}</th>
                   <th style={{ textAlign: isRtl ? "right" : "left" }}>{isRtl ? "الحالة" : "Status"}</th>
+                  <th style={{ textAlign: isRtl ? "right" : "left" }}>{isRtl ? "الصندوق" : "Box"}</th>
                   <th style={{ textAlign: isRtl ? "right" : "left" }}>{isRtl ? "المُعدِّل / المعالج" : "Modified By"}</th>
                   {["supervisor", "quality_management", "admin"].includes(currentUser.role) && <th style={{ textAlign: isRtl ? "right" : "left" }}>{isRtl ? "تغيير الحالة" : "Change Status"}</th>}
                 </tr>
@@ -713,6 +858,35 @@ export default function DefectsPage() {
                         <span className={`badge ${sc.class}`}>{sc.icon} {sc.label}</span>
                         {m.status === "resolved" && (
                           <CountdownTimer resolvedAt={m.resolved_at} isRtl={isRtl} />
+                        )}
+                      </td>
+                      <td>
+                        {m.status === "resolved" ? (
+                          <span style={{ color: "var(--text-muted)", fontSize: "0.85rem" }}>—</span>
+                        ) : (
+                          <select
+                            className="input"
+                            style={{ padding: "4px 8px", fontSize: "0.8rem", minWidth: "120px", background: "white" }}
+                            value={m.box_id || ""}
+                            onChange={async (e) => {
+                              const selectedBoxId = e.target.value || null;
+                              const res = await assignMeterToBox(m.id, selectedBoxId);
+                              if (res && !res.success) {
+                                alert(res.message);
+                              }
+                            }}
+                          >
+                            <option value="">{isRtl ? "-- بلا صندوق --" : "-- No Box --"}</option>
+                            {boxes.map(box => {
+                              const count = defectiveMeters.filter(x => x.box_id === box.id && x.status !== "resolved").length;
+                              const isFull = count >= box.size && m.box_id !== box.id;
+                              return (
+                                <option key={box.id} value={box.id} disabled={isFull}>
+                                  {box.name} ({box.category}) {isFull ? (isRtl ? "[ممتلئ]" : "[FULL]") : ""}
+                                </option>
+                              );
+                            })}
+                          </select>
                         )}
                       </td>
                       <td>
@@ -787,6 +961,37 @@ export default function DefectsPage() {
                     <span>{isRtl ? "الوقت:" : "Time:"}</span>
                     <span>{formatDate(m.created_at)}</span>
                   </div>
+                  
+                  <div className="defect-card-field">
+                    <span>{isRtl ? "الصندوق:" : "Box:"}</span>
+                    {m.status === "resolved" ? (
+                      <span style={{ color: "var(--text-muted)" }}>—</span>
+                    ) : (
+                      <select
+                        className="input"
+                        style={{ padding: "4px 8px", fontSize: "0.8rem", width: "auto", display: "inline-block", background: "white" }}
+                        value={m.box_id || ""}
+                        onChange={async (e) => {
+                          const selectedBoxId = e.target.value || null;
+                          const res = await assignMeterToBox(m.id, selectedBoxId);
+                          if (res && !res.success) {
+                            alert(res.message);
+                          }
+                        }}
+                      >
+                        <option value="">{isRtl ? "-- بلا صندوق --" : "-- No Box --"}</option>
+                        {boxes.map(box => {
+                          const count = defectiveMeters.filter(x => x.box_id === box.id && x.status !== "resolved").length;
+                          const isFull = count >= box.size && m.box_id !== box.id;
+                          return (
+                            <option key={box.id} value={box.id} disabled={isFull}>
+                              {box.name} ({box.category}) {isFull ? (isRtl ? "[ممتلئ]" : "[FULL]") : ""}
+                            </option>
+                          );
+                        })}
+                      </select>
+                    )}
+                  </div>
 
                   <div className="defect-card-desc">
                     {trans?.title ? trans.title : (m.custom_description ? <TranslateText text={m.custom_description} targetLang={isRtl ? "ar" : "en"} /> : "—")}
@@ -823,6 +1028,321 @@ export default function DefectsPage() {
           })}
         </div>
         </>
+        )}
+
+        {activeTab === "boxes" && (
+          <div className="animate-fade" style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+            {/* Box Stats Summary */}
+            <div className="grid-4" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 16 }}>
+              <div className="stat-card" style={{ display: "flex", alignItems: "center", gap: 16, background: "var(--bg-surface)", padding: 20, borderRadius: "var(--radius-lg)", border: "1px solid var(--border)" }}>
+                <div className="stat-icon" style={{ fontSize: "1.5rem", width: 52, height: 52, borderRadius: "var(--radius-md)", display: "flex", alignItems: "center", justifyContent: "center", background: "rgba(9, 105, 218, 0.08)", color: "var(--blue)" }}>📦</div>
+                <div>
+                  <div className="stat-value" style={{ fontSize: "1.75rem", fontWeight: 800 }}>{boxes.length}</div>
+                  <div className="stat-label" style={{ fontSize: "0.78rem", color: "var(--text-muted)", fontWeight: 600 }}>{isRtl ? "إجمالي الصناديق" : "Total Boxes"}</div>
+                </div>
+              </div>
+              <div className="stat-card" style={{ display: "flex", alignItems: "center", gap: 16, background: "var(--bg-surface)", padding: 20, borderRadius: "var(--radius-lg)", border: "1px solid var(--border)" }}>
+                <div className="stat-icon" style={{ fontSize: "1.5rem", width: 52, height: 52, borderRadius: "var(--radius-md)", display: "flex", alignItems: "center", justifyContent: "center", background: "rgba(207, 34, 46, 0.08)", color: "var(--red)" }}>🚨</div>
+                <div>
+                  <div className="stat-value" style={{ fontSize: "1.75rem", fontWeight: 800 }}>
+                    {boxes.filter(b => defectiveMeters.filter(m => m.box_id === b.id && m.status !== "resolved").length >= b.size).length}
+                  </div>
+                  <div className="stat-label" style={{ fontSize: "0.78rem", color: "var(--text-muted)", fontWeight: 600 }}>{isRtl ? "الصناديق الممتلئة" : "Full Boxes"}</div>
+                </div>
+              </div>
+              <div className="stat-card" style={{ display: "flex", alignItems: "center", gap: 16, background: "var(--bg-surface)", padding: 20, borderRadius: "var(--radius-lg)", border: "1px solid var(--border)" }}>
+                <div className="stat-icon" style={{ fontSize: "1.5rem", width: 52, height: 52, borderRadius: "var(--radius-md)", display: "flex", alignItems: "center", justifyContent: "center", background: "rgba(26, 127, 55, 0.08)", color: "var(--accent)" }}>🧪</div>
+                <div>
+                  <div className="stat-value" style={{ fontSize: "1.75rem", fontWeight: 800 }}>
+                    {defectiveMeters.filter(m => m.box_id && m.status !== "resolved").length}
+                  </div>
+                  <div className="stat-label" style={{ fontSize: "0.78rem", color: "var(--text-muted)", fontWeight: 600 }}>{isRtl ? "عدادات بالصناديق" : "Meters in Boxes"}</div>
+                </div>
+              </div>
+              <div className="stat-card" style={{ display: "flex", alignItems: "center", gap: 16, background: "var(--bg-surface)", padding: 20, borderRadius: "var(--radius-lg)", border: "1px solid var(--border)" }}>
+                <div className="stat-icon" style={{ fontSize: "1.5rem", width: 52, height: 52, borderRadius: "var(--radius-md)", display: "flex", alignItems: "center", justifyContent: "center", background: "rgba(245, 158, 11, 0.08)", color: "#f59e0b" }}>⚠️</div>
+                <div>
+                  <div className="stat-value" style={{ fontSize: "1.75rem", fontWeight: 800 }}>
+                    {defectiveMeters.filter(m => !m.box_id && m.status !== "resolved").length}
+                  </div>
+                  <div className="stat-label" style={{ fontSize: "0.78rem", color: "var(--text-muted)", fontWeight: 600 }}>{isRtl ? "معطوبات بلا صندوق" : "Unassigned Defects"}</div>
+                </div>
+              </div>
+            </div>
+
+            {/* Create Box Form */}
+            <div className="card" style={{ background: "var(--bg-surface)", border: "1px solid var(--border)", padding: 20, borderRadius: "var(--radius-xl)" }}>
+              <div className="card-header" style={{ paddingBottom: 16, display: "flex", alignItems: "center", gap: 8 }}>
+                <h3 style={{ margin: 0, fontSize: "1.1rem", fontWeight: 700 }}>
+                  📦 {isRtl ? "إنشاء صندوق تتبع جديد" : "Create New Tracking Box"}
+                </h3>
+              </div>
+              
+              {boxSubmitMsg && (
+                <div className={`alert alert-${boxSubmitMsg.type === "error" ? "danger" : "success"}`} style={{ marginBottom: 16 }}>
+                  {boxSubmitMsg.text}
+                </div>
+              )}
+
+              <form onSubmit={handleCreateBox} className="defect-form-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr auto", gap: 16, alignItems: "end" }}>
+                <div className="input-group">
+                  <label className="input-label" style={{ fontSize: "0.85rem", fontWeight: 600, display: "block", marginBottom: 6 }}>{isRtl ? "رقم الصندوق (تلقائي) *" : "Box Number (Auto) *"}</label>
+                  <input
+                    className="input"
+                    value={getNextBoxName()}
+                    readOnly
+                    style={{ background: "#f5f5f5", fontWeight: "bold", fontFamily: "monospace", color: "var(--cyan)" }}
+                  />
+                </div>
+
+                <div className="input-group">
+                  <label className="input-label" style={{ fontSize: "0.85rem", fontWeight: 600, display: "block", marginBottom: 6 }}>{isRtl ? "السعة (السعة القصوى) *" : "Capacity (Max Size) *"}</label>
+                  <select
+                    className="input"
+                    value={newBoxSize}
+                    onChange={e => setNewBoxSize(e.target.value)}
+                    style={{ background: "white" }}
+                  >
+                    <option value="24">{isRtl ? "كبير (24 عداد)" : "Large (24 Meters)"}</option>
+                    <option value="8">{isRtl ? "صغير (8 عدادات)" : "Small (8 Meters)"}</option>
+                    <option value="custom">{isRtl ? "سعة مخصصة..." : "Custom Capacity..."}</option>
+                  </select>
+                  {newBoxSize === "custom" && (
+                    <input
+                      type="number"
+                      className="input"
+                      value={customSize}
+                      onChange={e => setCustomSize(e.target.value)}
+                      placeholder={isRtl ? "أدخل العدد..." : "Enter quantity..."}
+                      required
+                      min="1"
+                      style={{ marginTop: 6, background: "white" }}
+                    />
+                  )}
+                </div>
+
+                <div className="input-group">
+                  <label className="input-label" style={{ fontSize: "0.85rem", fontWeight: 600, display: "block", marginBottom: 6 }}>{isRtl ? "التصنيف (الكاتجري) *" : "Box Category *"}</label>
+                  <select
+                    className="input"
+                    value={newBoxCategory}
+                    onChange={e => setNewBoxCategory(e.target.value)}
+                    style={{ background: "white" }}
+                  >
+                    <option value="Assembly">{isRtl ? "Assembly (التجميع)" : "Assembly"}</option>
+                    <option value="Insulation Test">{isRtl ? "Insulation (اختبار العزل)" : "Insulation Test"}</option>
+                    <option value="Radio Frequency">{isRtl ? "Radio Frequency (التردد اللاسلكي)" : "Radio Frequency"}</option>
+                    <option value="Calibration">{isRtl ? "Calibration (المعايرة)" : "Calibration"}</option>
+                    <option value="Multi Test">{isRtl ? "Multi Test (الاختبار المتعدد)" : "Multi Test"}</option>
+                    <option value="Perso">{isRtl ? "Perso (التخصيص)" : "Perso"}</option>
+                    <option value="Scrap">{isRtl ? "Scrap (سكراب)" : "Scrap"}</option>
+                    <option value="custom">{isRtl ? "تصنيف مخصص (أكتب بنفسك)..." : "Custom Category..."}</option>
+                  </select>
+                  {newBoxCategory === "custom" && (
+                    <input
+                      className="input"
+                      value={customCategory}
+                      onChange={e => setCustomCategory(e.target.value)}
+                      placeholder={isRtl ? "اكتب التصنيف هنا..." : "Type custom category..."}
+                      required
+                      style={{ marginTop: 6, background: "white" }}
+                    />
+                  )}
+                </div>
+
+                <button type="submit" className="btn btn-primary" style={{ height: 42, background: "var(--accent)", color: "white" }}>
+                  {isRtl ? "إنشاء الصندوق" : "Create Box"}
+                </button>
+              </form>
+            </div>
+
+            {/* Boxes Grid */}
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(290px, 1fr))", gap: 20 }}>
+              {boxes.length === 0 ? (
+                <div className="card" style={{ gridColumn: "1/-1", textAlign: "center", padding: 40, color: "var(--text-muted)", border: "1px solid var(--border)", borderRadius: "var(--radius-lg)" }}>
+                  📦 {isRtl ? "لا توجد صناديق مضافة حالياً. استخدم النموذج أعلاه لإنشاء أول صندوق." : "No boxes added yet. Use the form above to create one."}
+                </div>
+              ) : (
+                boxes.map(box => {
+                  const metersInBox = defectiveMeters.filter(m => m.box_id === box.id && m.status !== "resolved");
+                  const count = metersInBox.length;
+                  const isFull = count >= box.size;
+                  const percent = Math.min(100, Math.round((count / box.size) * 100));
+                  const isExpanded = expandedBoxId === box.id;
+                  
+                  // Category badge styling
+                  let badgeClass = "badge-gray";
+                  if (box.category.toLowerCase().includes("scrap") || box.category.includes("سكراب")) badgeClass = "badge-red";
+                  else if (box.category.toLowerCase().includes("calibration") || box.category.includes("معايرة")) badgeClass = "badge-blue";
+                  else if (box.category.toLowerCase().includes("multi") || box.category.includes("متعدد")) badgeClass = "badge-purple";
+                  else if (box.category.toLowerCase().includes("rework") || box.category.includes("تشغيل")) badgeClass = "badge-amber";
+
+                  return (
+                    <div key={box.id} className="card animate-fade" style={{ display: "flex", flexDirection: "column", gap: 16, border: isFull ? "1px solid #feb2b2" : "1px solid var(--border)", background: isFull ? "#fff5f5" : "var(--bg-surface)", padding: 20, borderRadius: "var(--radius-lg)", boxShadow: "var(--shadow-sm)" }}>
+                      {/* Box Header */}
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+                        <div>
+                          <h4 style={{ margin: 0, fontSize: "1.05rem", fontWeight: 700 }}>{box.name}</h4>
+                          <span className={`badge ${badgeClass}`} style={{ marginTop: 6, display: "inline-block" }}>
+                            {box.category}
+                          </span>
+                        </div>
+                        <div style={{ textAlign: isRtl ? "left" : "right" }}>
+                          <span style={{ fontSize: "1.2rem", fontWeight: 800, color: isFull ? "var(--red)" : "var(--text-primary)" }}>
+                            {count} / {box.size}
+                          </span>
+                          {isFull && (
+                            <span style={{ display: "block", fontSize: "0.72rem", color: "var(--red)", fontWeight: 700, marginTop: 2 }}>
+                              ⚠️ {isRtl ? "ممتلئ" : "FULL"}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Fill Progress Bar */}
+                      <div>
+                        <div className="progress-bar" style={{ height: 8, background: "var(--bg-elevated)", borderRadius: 99, overflow: "hidden" }}>
+                          <div
+                            className="progress-fill"
+                            style={{
+                              width: `${percent}%`,
+                              height: "100%",
+                              borderRadius: 99,
+                              transition: "width 0.4s ease",
+                              background: isFull ? "var(--red)" : percent > 75 ? "#f59e0b" : "var(--green)"
+                            }}
+                          />
+                        </div>
+                      </div>
+
+                      {/* Meters inside box toggle */}
+                      <div>
+                        <button
+                          type="button"
+                          className="btn btn-secondary btn-sm"
+                          style={{ width: "100%", justifyContent: "space-between", padding: "8px 12px", background: "var(--bg-elevated)", border: "1px solid var(--border-subtle)" }}
+                          onClick={() => setExpandedBoxId(isExpanded ? null : box.id)}
+                        >
+                          <span style={{ fontWeight: 600 }}>📋 {isRtl ? "العدادات المشمولة" : "Included Meters"} ({count})</span>
+                          <span style={{ fontSize: "0.75rem" }}>{isExpanded ? "▲" : "▼"}</span>
+                        </button>
+
+                        {isExpanded && (
+                          <div className="animate-fade" style={{ background: "white", border: "1px solid var(--border-subtle)", borderRadius: 8, padding: 10, marginTop: 8, maxHeight: 180, overflowY: "auto", display: "flex", flexDirection: "column", gap: 6 }}>
+                            {count === 0 ? (
+                              <span style={{ fontSize: "0.82rem", color: "var(--text-muted)", textAlign: "center", padding: "12px 0" }}>
+                                {isRtl ? "لا توجد عدادات في هذا الصندوق" : "No meters in this box"}
+                              </span>
+                            ) : (
+                              metersInBox.map(m => (
+                                <div key={m.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: "0.82rem", padding: "6px 8px", borderBottom: "1px solid var(--border-subtle)", background: "var(--bg-elevated)", borderRadius: 4 }}>
+                                  <code style={{ fontFamily: "monospace", color: "var(--cyan)", fontWeight: 600 }}>{m.serial_number}</code>
+                                  <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                                    <span className="badge badge-gray" style={{ fontSize: "0.7rem", fontFamily: "monospace" }}>{m.error_code}</span>
+                                    <button
+                                      type="button"
+                                      onClick={async () => {
+                                        if (confirm(isRtl ? `هل أنت متأكد من إزالة العداد ${m.serial_number} من الصندوق؟` : `Remove meter ${m.serial_number} from box?`)) {
+                                          await assignMeterToBox(m.id, null);
+                                        }
+                                      }}
+                                      style={{ background: "none", border: "none", color: "var(--red)", cursor: "pointer", fontSize: "0.95rem", padding: "0 4px", fontWeight: "bold" }}
+                                      title={isRtl ? "إزالة من الصندوق" : "Remove from box"}
+                                    >
+                                      ✕
+                                    </button>
+                                  </div>
+                                </div>
+                              ))
+                            )}
+
+                            {/* Inline Add Meter to Box Selector */}
+                            {!isFull && (
+                              <div style={{ marginTop: 8, borderTop: "1px dashed var(--border-subtle)", paddingTop: 10 }}>
+                                <label style={{ fontSize: "0.75rem", fontWeight: 700, color: "var(--text-muted)", display: "block", marginBottom: 6 }}>
+                                  {isRtl ? "إضافة عداد معطوب لهذا الصندوق:" : "Add defective meter to this box:"}
+                                </label>
+                                <div style={{ display: "flex", gap: 8 }}>
+                                  <select
+                                    id={`add-meter-select-${box.id}`}
+                                    className="input"
+                                    style={{ padding: "4px 8px", fontSize: "0.8rem", flex: 1, background: "white" }}
+                                    defaultValue=""
+                                  >
+                                    <option value="">{isRtl ? "-- اختر العداد --" : "-- Select Meter --"}</option>
+                                    {defectiveMeters
+                                      .filter(m => !m.box_id && m.status !== "resolved")
+                                      .map(m => (
+                                        <option key={m.id} value={m.id}>
+                                          {m.serial_number} ({m.error_code})
+                                        </option>
+                                      ))}
+                                  </select>
+                                  <button
+                                    type="button"
+                                    className="btn btn-primary btn-sm"
+                                    style={{ padding: "4px 12px", background: "var(--accent)", color: "white", fontSize: "0.78rem" }}
+                                    onClick={async () => {
+                                      const selectEl = document.getElementById(`add-meter-select-${box.id}`);
+                                      const meterId = selectEl.value;
+                                      if (!meterId) return;
+                                      const res = await assignMeterToBox(meterId, box.id);
+                                      if (res && !res.success) {
+                                        alert(res.message);
+                                      } else {
+                                        selectEl.value = "";
+                                      }
+                                    }}
+                                  >
+                                    {isRtl ? "إضافة" : "Add"}
+                                  </button>
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="divider" style={{ margin: "4px 0 12px 0" }} />
+
+                      {/* Card Actions */}
+                      <div style={{ display: "flex", gap: 10 }}>
+                        <button
+                          type="button"
+                          className="btn btn-secondary btn-sm"
+                          style={{ flex: 1, padding: "8px", fontSize: "0.82rem", fontWeight: 600 }}
+                          disabled={count === 0}
+                          onClick={async () => {
+                            if (confirm(isRtl ? `هل أنت متأكد من إفراغ الصندوق "${box.name}" بالكامل؟` : `Are you sure you want to empty "${box.name}"?`)) {
+                              // Unassign all
+                              for (const m of metersInBox) {
+                                await assignMeterToBox(m.id, null);
+                              }
+                            }
+                          }}
+                        >
+                          🧹 {isRtl ? "إفراغ الصندوق" : "Empty Box"}
+                        </button>
+                        
+                        <button
+                          type="button"
+                          className="btn btn-secondary btn-sm"
+                          style={{ border: "1px solid rgba(207, 34, 46, 0.2)", color: "var(--red)", background: "rgba(207, 34, 46, 0.04)", padding: "8px", fontSize: "0.82rem", fontWeight: 600 }}
+                          onClick={async () => {
+                            if (confirm(isRtl ? `هل أنت متأكد من حذف الصندوق "${box.name}"؟ سيتم إخراج جميع العدادات منه.` : `Are you sure you want to delete box "${box.name}"? All meters will be unassigned.`)) {
+                              await deleteBox(box.id);
+                            }
+                          }}
+                        >
+                          🗑️ {isRtl ? "حذف" : "Delete"}
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })
+              )}
+            </div>
+          </div>
         )}
 
         {activeTab === "history" && (
@@ -989,14 +1509,59 @@ export default function DefectsPage() {
                         <div className="divider" style={{ margin: "12px 0" }} />
 
                         {isConfirming ? (
-                          <div className="animate-fade" style={{ display: "flex", alignItems: "center", justifyContent: "space-between", background: "var(--bg-elevated)", padding: 10, borderRadius: 8, flexWrap: "wrap", gap: 8 }}>
-                            <span style={{ fontSize: "0.85rem", fontWeight: 700 }}>
-                              {isRtl ? "تغيير الحالة إلى:" : "Change state to:"} <span className={`badge ${STATUS_CONFIG[newStatus].class}`}>{STATUS_CONFIG[newStatus].label}</span>?
-                            </span>
-                            <div style={{ display: "flex", gap: 8 }}>
-                              <button className="btn btn-primary btn-sm" onClick={() => handleStatusChange(m.id, newStatus, true)}>{isRtl ? "تأكيد وحفظ" : "Confirm & Save"}</button>
-                              <button className="btn btn-secondary btn-sm" onClick={() => setConfirmingId(null)}>{isRtl ? "إلغاء" : "Cancel"}</button>
+                          <div className="animate-fade" style={{ display: "flex", flexDirection: "column", gap: 10, background: "var(--bg-elevated)", padding: 12, borderRadius: 8, width: "100%" }}>
+                            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 8 }}>
+                              <span style={{ fontSize: "0.85rem", fontWeight: 700 }}>
+                                {isRtl ? "تغيير الحالة إلى:" : "Change state to:"} <span className={`badge ${STATUS_CONFIG[newStatus].class}`}>{STATUS_CONFIG[newStatus].label}</span>?
+                              </span>
+                              <div style={{ display: "flex", gap: 8 }}>
+                                <button
+                                  className="btn btn-primary btn-sm"
+                                  onClick={async () => {
+                                    if (newStatus === "verified") {
+                                      const selectEl = document.getElementById(`review-box-select-${m.id}`);
+                                      const selectedBoxId = selectEl?.value || null;
+                                      if (selectedBoxId) {
+                                        const res = await assignMeterToBox(m.id, selectedBoxId);
+                                        if (res && !res.success) {
+                                          alert(res.message);
+                                          return;
+                                        }
+                                      }
+                                    }
+                                    handleStatusChange(m.id, newStatus, true);
+                                  }}
+                                >
+                                  {isRtl ? "تأكيد وحفظ" : "Confirm & Save"}
+                                </button>
+                                <button className="btn btn-secondary btn-sm" onClick={() => setConfirmingId(null)}>{isRtl ? "إلغاء" : "Cancel"}</button>
+                              </div>
                             </div>
+
+                            {newStatus === "verified" && (
+                              <div style={{ borderTop: "1px dashed var(--border-subtle)", paddingTop: 8, marginTop: 4 }}>
+                                <label style={{ fontSize: "0.78rem", fontWeight: 700, display: "block", marginBottom: 6, color: "var(--text-secondary)" }}>
+                                  {isRtl ? "تحديد الصندوق لحفظ العداد فيه (اختياري):" : "Select box to store this defective meter (Optional):"}
+                                </label>
+                                <select
+                                  id={`review-box-select-${m.id}`}
+                                  className="input"
+                                  style={{ padding: "4px 8px", fontSize: "0.8rem", width: "100%", background: "white" }}
+                                  defaultValue={m.box_id || ""}
+                                >
+                                  <option value="">{isRtl ? "-- بلا صندوق --" : "-- No Box --"}</option>
+                                  {boxes.map(box => {
+                                    const count = defectiveMeters.filter(x => x.box_id === box.id && x.status !== "resolved").length;
+                                    const isFull = count >= box.size && m.box_id !== box.id;
+                                    return (
+                                      <option key={box.id} value={box.id} disabled={isFull}>
+                                        {box.name} ({box.category}) {isFull ? (isRtl ? "[ممتلئ]" : "[FULL]") : ""}
+                                      </option>
+                                    );
+                                  })}
+                                </select>
+                              </div>
+                            )}
                           </div>
                         ) : (
                           <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
