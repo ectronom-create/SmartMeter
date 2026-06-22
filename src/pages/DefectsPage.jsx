@@ -27,7 +27,7 @@ export default function DefectsPage() {
   const navigate = useNavigate();
   const location = useLocation();
   const { 
-    defectiveMeters, currentUser, updateMeterStatus, 
+    defectiveMeters, currentUser, updateMeterStatus, updateDefectiveMeter,
     getErrorByCode, addDefectiveMeter, addDefectiveMetersBulk, currentStage, errorCodes, language,
     defectLogs, getUserById,
     boxes, addBox, updateBox, deleteBox, assignMeterToBox
@@ -63,6 +63,14 @@ export default function DefectsPage() {
   const [reviewSearch, setReviewSearch] = useState("");
   const [confirmingId, setConfirmingId] = useState(null);
   const [newStatus, setNewStatus] = useState("");
+
+  // Defective Meter Edit Modal state
+  const [editingMeter, setEditingMeter] = useState(null);
+  const [editModalOpen, setEditModalOpen] = useState(false);
+  const [editSearchQuery, setEditSearchQuery] = useState("");
+  const [selectedEditCode, setSelectedEditCode] = useState(null);
+  const [showEditResults, setShowEditResults] = useState(false);
+  const [editFormMsg, setEditFormMsg] = useState(null);
 
   // Barcode scanner enforcement state
   const [serialNumber, setSerialNumber] = useState("");
@@ -148,6 +156,7 @@ export default function DefectsPage() {
         const headers = rows[0].map(h => (h || "").toString().toLowerCase().trim());
         
         const serialIdx = headers.findIndex(h => h.includes("serial") || h.includes("نمبر") || h.includes("سيريال") || h.includes("الرمز التسلسلي") || h.includes("تسلسلي") || h.includes("sn"));
+        const neSerialIdx = headers.findIndex(h => h.includes("ne") || h.includes("ثانوي"));
         const codeIdx = headers.findIndex(h => h.includes("code") || h.includes("كود") || h.includes("رمز العطل") || h.includes("عطل") || h.includes("error"));
         const stageIdx = headers.findIndex(h => h.includes("stage") || h.includes("المرحلة") || h.includes("مرحلة") || h.includes("stg"));
         const descIdx = headers.findIndex(h => h.includes("desc") || h.includes("وصف") || h.includes("تفاصيل") || h.includes("ملاحظات") || h.includes("comment"));
@@ -170,6 +179,7 @@ export default function DefectsPage() {
           if (!row || row.length === 0) continue;
 
           const rawSerial = (row[serialIdx] || "").toString().trim().toUpperCase();
+          const neSerial = neSerialIdx !== -1 && row[neSerialIdx] ? row[neSerialIdx].toString().trim().toUpperCase() : null;
           const rawCode = (row[codeIdx] || "").toString().trim().toUpperCase();
           
           if (!rawSerial || !rawCode) continue;
@@ -194,6 +204,7 @@ export default function DefectsPage() {
           newMeters.push({
             id: `DEF-${timestamp}-${i}-${Math.random().toString(36).substr(2, 5)}`,
             serial_number: rawSerial,
+            ne_serial_number: neSerial,
             error_code: rawCode,
             stage_found: stageId,
             custom_description: desc,
@@ -251,6 +262,7 @@ export default function DefectsPage() {
         if (isRtl) {
           return {
             "الرقم التسلسلي (سيريال)": m.serial_number,
+            "السيريال الثانوي NE": m.ne_serial_number || "—",
             "رمز العطل": m.error_code || "—",
             "وصف العطل": trans?.title || m.custom_description || "—",
             "المرحلة": stageText || "—",
@@ -263,6 +275,7 @@ export default function DefectsPage() {
         } else {
           return {
             "Serial Number": m.serial_number,
+            "NE Serial Number": m.ne_serial_number || "—",
             "Error Code": m.error_code || "—",
             "Error Title": trans?.title || m.custom_description || "—",
             "Stage Found": stageText || "—",
@@ -397,6 +410,7 @@ export default function DefectsPage() {
     setIsSubmitting(true);
     const result = await addDefectiveMeter({
       serial_number: sn,
+      ne_serial_number: fd.get("neSn")?.trim() || null,
       error_code: selectedErrorCode.code,
       stage_found: selectedErrorCode.stage_id,
       custom_description: fd.get("desc").trim(),
@@ -417,6 +431,84 @@ export default function DefectsPage() {
     setSearchQuery("");
     setSelectedErrorCode(null);
     setTimeout(() => setSubmitMsg(null), 3000);
+  };
+
+  const handleStartEdit = (meter) => {
+    setEditingMeter(meter);
+    const codeObj = errorCodes.find(e => e.code === meter.error_code);
+    setSelectedEditCode(codeObj || null);
+    setEditSearchQuery("");
+    setEditFormMsg(null);
+    setEditModalOpen(true);
+  };
+
+  const handleSaveEdit = async (e) => {
+    e.preventDefault();
+    if (!editingMeter) return;
+
+    const fd = new FormData(e.target);
+    const sn = fd.get("editSn")?.trim();
+    const neSn = fd.get("editNeSn")?.trim() || null;
+    const desc = fd.get("editDesc")?.trim() || "";
+    const boxId = fd.get("editBoxId") || null;
+    const status = fd.get("editStatus");
+
+    if (!sn) {
+      setEditFormMsg({ type: "error", text: isRtl ? "الرقم التسلسلي مطلوب!" : "Serial number is required!" });
+      return;
+    }
+
+    if (!selectedEditCode) {
+      setEditFormMsg({ type: "error", text: isRtl ? "يجب اختيار كود عطل!" : "Please select an error code!" });
+      return;
+    }
+
+    // Check box capacity if box changed
+    if (boxId && boxId !== editingMeter.box_id) {
+      const targetBox = boxes.find(b => b.id === boxId);
+      if (targetBox) {
+        const count = defectiveMeters.filter(m => m.box_id === boxId && m.status !== "resolved").length;
+        if (count >= targetBox.size) {
+          setEditFormMsg({ 
+            type: "error", 
+            text: isRtl 
+              ? `الصندوق "${targetBox.name}" ممتلئ بالفعل (السعة: ${targetBox.size})`
+              : `Box "${targetBox.name}" is already full (Capacity: ${targetBox.size})` 
+          });
+          return;
+        }
+      }
+    }
+
+    const updatedFields = {
+      serial_number: sn,
+      ne_serial_number: neSn,
+      error_code: selectedEditCode.code,
+      stage_found: selectedEditCode.stage_id,
+      custom_description: desc,
+      box_id: boxId,
+      status: status
+    };
+
+    // If resolving, set resolved_at and resolved_by
+    if (status === "resolved" && editingMeter.status !== "resolved") {
+      updatedFields.resolved_at = new Date().toISOString();
+      updatedFields.resolved_by = currentUser?.employee_id || null;
+    } else if (status !== "resolved" && editingMeter.status === "resolved") {
+      updatedFields.resolved_at = null;
+      updatedFields.resolved_by = null;
+    }
+
+    const res = await updateDefectiveMeter(editingMeter.id, updatedFields);
+    if (res.success) {
+      setEditFormMsg({ type: "success", text: isRtl ? "تم تحديث البيانات بنجاح!" : "Meter details updated successfully!" });
+      setTimeout(() => {
+        setEditModalOpen(false);
+        setEditingMeter(null);
+      }, 1500);
+    } else {
+      setEditFormMsg({ type: "error", text: res.message || (isRtl ? "حدث خطأ أثناء التحديث" : "An error occurred during update") });
+    }
   };
 
   const getNextBoxName = () => {
@@ -608,7 +700,7 @@ export default function DefectsPage() {
               <h3 style={{ margin: 0 }}>{isRtl ? "تسجيل بلاغ عطل جديد" : "Report a New Defect"}</h3>
             </div>
             {submitMsg && <div className={`alert alert-${submitMsg.type === "error" ? "danger" : "success"}`} style={{ marginBottom: 12 }}>{submitMsg.text}</div>}
-            <form onSubmit={handleQuickSubmit} className="defect-form-grid" style={{ gridTemplateColumns: "1fr 1.2fr 1fr 1fr auto" }}>
+            <form onSubmit={handleQuickSubmit} className="defect-form-grid" style={{ gridTemplateColumns: "1fr 1fr 1.2fr 1fr 1fr auto" }}>
               <div className="input-group">
                 <label className="input-label">{isRtl ? "السيريال نمبر *" : "Serial Number *"}</label>
                 <input 
@@ -632,6 +724,20 @@ export default function DefectsPage() {
                     ⚠️ {isRtl ? "يجب استخدام قارئ الباركود فقط! الكتابة اليدوية معطلة لتفادي الأخطاء." : "Must use barcode reader only! Manual typing is disabled to avoid errors."}
                   </span>
                 )}
+              </div>
+
+              <div className="input-group">
+                <label className="input-label">{isRtl ? "سيريال NE (اختياري)" : "NE Serial (Optional)"}</label>
+                <input 
+                  className="input" 
+                  name="neSn" 
+                  placeholder={isRtl ? "مثال: NE2617300506..." : "e.g. NE2617300506..."} 
+                  style={{ 
+                    background: "white",
+                    fontFamily: "'IBM Plex Mono', monospace",
+                    letterSpacing: "0.05em"
+                  }} 
+                />
               </div>
               
               <div className="input-group" style={{ position: "relative", zIndex: 99 }}>
@@ -798,22 +904,24 @@ export default function DefectsPage() {
             <table>
               <thead>
                 <tr>
-                  <th style={{ textAlign: isRtl ? "right" : "left" }}>{isRtl ? "السيريال نمبر" : "Serial Number"}</th>
-                  <th style={{ textAlign: isRtl ? "right" : "left" }}>{isRtl ? "كود العطل" : "Fault Code"}</th>
-                  <th style={{ textAlign: isRtl ? "right" : "left" }}>{isRtl ? "المرحلة" : "Stage"}</th>
-                  <th style={{ textAlign: isRtl ? "right" : "left" }}>{isRtl ? "عنوان العطل" : "Defect Title"}</th>
-                  <th style={{ textAlign: isRtl ? "right" : "left" }}>{isRtl ? "المُبلِّغ" : "Reported By"}</th>
-                  <th style={{ textAlign: isRtl ? "right" : "left" }}>{isRtl ? "الوقت" : "Time"}</th>
-                  <th style={{ textAlign: isRtl ? "right" : "left" }}>{isRtl ? "الحالة" : "Status"}</th>
-                  <th style={{ textAlign: isRtl ? "right" : "left" }}>{isRtl ? "الصندوق" : "Box"}</th>
-                  <th style={{ textAlign: isRtl ? "right" : "left" }}>{isRtl ? "المُعدِّل / المعالج" : "Modified By"}</th>
-                  {["supervisor", "quality_management", "admin"].includes(currentUser.role) && <th style={{ textAlign: isRtl ? "right" : "left" }}>{isRtl ? "تغيير الحالة" : "Change Status"}</th>}
+                  <th style={{ textAlign: isRtl ? "right" : "left", whiteSpace: "nowrap" }}>{isRtl ? "السيريال نمبر" : "Serial Number"}</th>
+                  <th style={{ textAlign: isRtl ? "right" : "left", whiteSpace: "nowrap" }}>{isRtl ? "السيريال الثانوي NE" : "NE Serial Number"}</th>
+                  <th style={{ textAlign: isRtl ? "right" : "left", whiteSpace: "nowrap" }}>{isRtl ? "كود العطل" : "Fault Code"}</th>
+                  <th style={{ textAlign: isRtl ? "right" : "left", whiteSpace: "nowrap" }}>{isRtl ? "المرحلة" : "Stage"}</th>
+                  <th style={{ textAlign: isRtl ? "right" : "left", whiteSpace: "nowrap" }}>{isRtl ? "عنوان العطل" : "Defect Title"}</th>
+                  <th style={{ textAlign: isRtl ? "right" : "left", whiteSpace: "nowrap" }}>{isRtl ? "المُبلِّغ" : "Reported By"}</th>
+                  <th style={{ textAlign: isRtl ? "right" : "left", whiteSpace: "nowrap" }}>{isRtl ? "الوقت" : "Time"}</th>
+                  <th style={{ textAlign: isRtl ? "right" : "left", whiteSpace: "nowrap" }}>{isRtl ? "الحالة" : "Status"}</th>
+                  <th style={{ textAlign: isRtl ? "right" : "left", whiteSpace: "nowrap" }}>{isRtl ? "الصندوق" : "Box"}</th>
+                  <th style={{ textAlign: isRtl ? "right" : "left", whiteSpace: "nowrap" }}>{isRtl ? "المُعدِّل / المعالج" : "Modified By"}</th>
+                  {["supervisor", "quality_management", "admin"].includes(currentUser.role) && <th style={{ textAlign: isRtl ? "right" : "left", whiteSpace: "nowrap" }}>{isRtl ? "تغيير الحالة" : "Change Status"}</th>}
+                  {["supervisor", "quality_management", "admin"].includes(currentUser.role) && <th style={{ textAlign: isRtl ? "right" : "left", whiteSpace: "nowrap" }}>{isRtl ? "إجراءات" : "Actions"}</th>}
                 </tr>
               </thead>
               <tbody>
                 {allMeters.length === 0 ? (
                   <tr>
-                    <td colSpan={9} style={{ textAlign: "center", padding: "40px", color: "var(--text-muted)" }}>
+                    <td colSpan={12} style={{ textAlign: "center", padding: "40px", color: "var(--text-muted)" }}>
                       {isRtl ? "لا توجد سجلات مطابقة" : "No matching records found"}
                     </td>
                   </tr>
@@ -824,23 +932,28 @@ export default function DefectsPage() {
                   return (
                     <tr key={m.id}>
                       <td>
-                        <code style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: "0.85rem", color: "var(--cyan)" }}>
+                        <code style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: "0.85rem", color: "var(--cyan)", whiteSpace: "nowrap" }}>
                           {m.serial_number}
                         </code>
                       </td>
                       <td>
+                        <code style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: "0.85rem", color: "var(--orange)", whiteSpace: "nowrap" }}>
+                          {m.ne_serial_number || "—"}
+                        </code>
+                      </td>
+                      <td>
                         {m.error_code ? (
-                           <span className="badge badge-amber" style={{ fontFamily: "monospace" }}>{m.error_code}</span>
+                           <span className="badge badge-amber" style={{ fontFamily: "monospace", whiteSpace: "nowrap" }}>{m.error_code}</span>
                         ) : <span className="badge badge-gray">—</span>}
                       </td>
                       <td>
-                        <span className="badge badge-gray">{stageNames[m.stage_found] || m.stage_found}</span>
+                        <span className="badge badge-gray" style={{ whiteSpace: "nowrap" }}>{stageNames[m.stage_found] || m.stage_found}</span>
                       </td>
                       <td style={{ maxWidth: 250 }}>
                         <span style={{ fontWeight: 600 }}>{trans?.title || m.error_code || "—"}</span>
                       </td>
                       <td>
-                        <span style={{ fontSize: "0.85rem" }}>
+                        <span style={{ fontSize: "0.85rem", whiteSpace: "nowrap" }}>
                           {getUserById(m.reported_by)?.full_name || m.reported_by || "—"}
                         </span>
                       </td>
@@ -848,7 +961,7 @@ export default function DefectsPage() {
                         {formatDate(m.created_at)}
                       </td>
                       <td>
-                        <span className={`badge ${sc.class}`}>{sc.icon} {sc.label}</span>
+                        <span className={`badge ${sc.class}`} style={{ whiteSpace: "nowrap" }}>{sc.icon} {sc.label}</span>
                         {m.status === "resolved" && (
                           <CountdownTimer resolvedAt={m.resolved_at} isRtl={isRtl} />
                         )}
@@ -884,7 +997,7 @@ export default function DefectsPage() {
                       </td>
                       <td>
                         {m.resolved_by ? (
-                          <span style={{ fontSize: "0.85rem", fontWeight: 500 }}>
+                          <span style={{ fontSize: "0.85rem", fontWeight: 500, whiteSpace: "nowrap" }}>
                             👤 {getUserById(m.resolved_by)?.full_name || m.resolved_by}
                           </span>
                         ) : (
@@ -904,6 +1017,17 @@ export default function DefectsPage() {
                             <option value="verified">{isRtl ? "تم التحقق (معطوب)" : "Verified Defective"}</option>
                             <option value="resolved">{isRtl ? "يعود لخط الانتاج" : "Returned to Line"}</option>
                           </select>
+                        </td>
+                      )}
+                      {["supervisor", "quality_management", "admin"].includes(currentUser.role) && (
+                        <td>
+                          <button
+                            className="btn btn-secondary btn-sm"
+                            style={{ padding: "4px 10px", fontSize: "0.8rem", display: "inline-flex", alignItems: "center", gap: 4, margin: 0, whiteSpace: "nowrap" }}
+                            onClick={() => handleStartEdit(m)}
+                          >
+                            ✏️ {isRtl ? "تعديل" : "Edit"}
+                          </button>
                         </td>
                       )}
                     </tr>
@@ -1585,6 +1709,200 @@ export default function DefectsPage() {
               <div style={{ fontSize: "0.8rem", color: "var(--text-muted)" }}>{isRtl ? "إجمالي الانتظار:" : "Total Pending:"} {pendingMeters.length}</div>
               <button className="btn btn-secondary btn-sm" onClick={() => setReviewModal(false)}>{isRtl ? "إغلاق" : "Close"}</button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Defective Meter Modal */}
+      {editModalOpen && editingMeter && (
+        <div className="modal-overlay" style={{ zIndex: 999 }}>
+          <div className="modal-content animate-scale" style={{ maxWidth: 600, maxHeight: "90vh", display: "flex", flexDirection: "column" }}>
+            <div className="modal-header">
+              <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                <span>✏️</span>
+                <h3 style={{ margin: 0 }}>{isRtl ? "تعديل بيانات العداد المعطوب" : "Edit Defective Meter Details"}</h3>
+              </div>
+              <button className="btn-close" onClick={() => { setEditModalOpen(false); setEditingMeter(null); }}>✕</button>
+            </div>
+
+            <form onSubmit={handleSaveEdit} style={{ flex: 1, overflowY: "auto", padding: 20, display: "flex", flexDirection: "column", gap: 16 }}>
+              {editFormMsg && (
+                <div className={`alert alert-${editFormMsg.type === "error" ? "danger" : "success"}`} style={{ margin: 0 }}>
+                  {editFormMsg.text}
+                </div>
+              )}
+
+              <div className="input-group">
+                <label className="input-label">{isRtl ? "السيريال نمبر *" : "Serial Number *"}</label>
+                <input 
+                  className="input" 
+                  name="editSn" 
+                  defaultValue={editingMeter.serial_number}
+                  required 
+                  style={{ fontFamily: "monospace", letterSpacing: "0.05em", background: "white" }}
+                />
+              </div>
+
+              <div className="input-group">
+                <label className="input-label">{isRtl ? "السيريال الثانوي NE (اختياري)" : "NE Serial Number (Optional)"}</label>
+                <input 
+                  className="input" 
+                  name="editNeSn" 
+                  defaultValue={editingMeter.ne_serial_number || ""}
+                  placeholder={isRtl ? "مثال: NE2617300506..." : "e.g. NE2617300506..."}
+                  style={{ fontFamily: "monospace", letterSpacing: "0.05em", background: "white" }}
+                />
+              </div>
+
+              <div className="input-group" style={{ position: "relative", zIndex: 999 }}>
+                <label className="input-label">{isRtl ? "رمز العطل *" : "Error Code *"}</label>
+                <div style={{ position: "relative" }}>
+                  <input 
+                    className="input" 
+                    placeholder={isRtl ? "ابحث بالكود أو اسم العطل..." : "Search by code or description..."} 
+                    value={selectedEditCode ? `${selectedEditCode.code} - ${translateError(selectedEditCode, isRtl).title}` : editSearchQuery}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      if (selectedEditCode) {
+                        const oldVal = `${selectedEditCode.code} - ${translateError(selectedEditCode, isRtl).title}`;
+                        if (val.length < oldVal.length) {
+                          setEditSearchQuery("");
+                        } else if (val.startsWith(oldVal)) {
+                          setEditSearchQuery(val.slice(oldVal.length));
+                        } else {
+                          setEditSearchQuery(val);
+                        }
+                      } else {
+                        setEditSearchQuery(val);
+                      }
+                      setSelectedEditCode(null);
+                      setShowEditResults(true);
+                    }}
+                    onFocus={() => setShowEditResults(true)}
+                    required
+                    autoComplete="off"
+                    style={{
+                      borderColor: selectedEditCode ? "var(--green)" : "var(--border)",
+                      background: selectedEditCode ? "#f0fff4" : "white",
+                      fontWeight: selectedEditCode ? 700 : "normal",
+                      paddingRight: isRtl ? 14 : 32,
+                      paddingLeft: !isRtl ? 14 : 32
+                    }}
+                  />
+                  {selectedEditCode && (
+                    <button type="button" onClick={() => setSelectedEditCode(null)} style={{
+                      position: "absolute",
+                      left: isRtl ? 8 : "auto",
+                      right: !isRtl ? 8 : "auto",
+                      top: "50%", transform: "translateY(-50%)", background: "none", border: "none", color: "var(--red)", cursor: "pointer"
+                    }}>
+                      <X size={14} />
+                    </button>
+                  )}
+                </div>
+
+                {showEditResults && !selectedEditCode && (
+                  <div className="animate-scale" style={{ 
+                    position: "absolute", top: "100%", left: 0, right: 0, zIndex: 1000,
+                    background: "white", borderRadius: 8, border: "1px solid var(--border)",
+                    boxShadow: "0 10px 15px rgba(0,0,0,0.1)", maxHeight: 200, overflowY: "auto", marginTop: 4
+                  }}>
+                    {errorCodes.filter(err => {
+                      const q = editSearchQuery.toLowerCase().trim();
+                      if (!q) return true;
+                      return (
+                        err.code.toLowerCase().includes(q) ||
+                        (err.title_ar && err.title_ar.toLowerCase().includes(q)) ||
+                        (err.title_en && err.title_en.toLowerCase().includes(q))
+                      );
+                    }).length === 0 ? (
+                      <div style={{ padding: 12, fontSize: "0.85rem", color: "var(--text-muted)" }}>
+                        {isRtl ? "لا توجد نتائج مطابقة" : "No matching error codes found"}
+                      </div>
+                    ) : (
+                      errorCodes.filter(err => {
+                        const q = editSearchQuery.toLowerCase().trim();
+                        if (!q) return true;
+                        return (
+                          err.code.toLowerCase().includes(q) ||
+                          (err.title_ar && err.title_ar.toLowerCase().includes(q)) ||
+                          (err.title_en && err.title_en.toLowerCase().includes(q))
+                        );
+                      }).map(err => {
+                        const trans = translateError(err, isRtl);
+                        return (
+                          <div 
+                            key={`${err.code}__${err.stage_id}`} 
+                            onClick={() => {
+                              setSelectedEditCode(err);
+                              setShowEditResults(false);
+                            }}
+                            style={{ 
+                              padding: "10px 12px", cursor: "pointer", borderBottom: "1px solid var(--border-subtle)",
+                              fontSize: "0.85rem", display: "flex", justifyContent: "space-between", alignItems: "center"
+                            }}
+                            className="hover-bg"
+                          >
+                            <div>
+                              <strong style={{ color: "var(--accent)" }}>{trans.code}</strong> - {trans.title}
+                            </div>
+                            <span className="badge badge-gray" style={{ fontSize: "0.7rem" }}>
+                              {isRtl ? (stageNames[err.stage_id] || err.stage_id) : (err.stage_id)}
+                            </span>
+                          </div>
+                        );
+                      })
+                    )}
+                  </div>
+                )}
+              </div>
+
+              <div className="input-group">
+                <label className="input-label">{isRtl ? "تعيين إلى صندوق (اختياري)" : "Assign to Box (Optional)"}</label>
+                <select className="input" name="editBoxId" defaultValue={editingMeter.box_id || ""} style={{ background: "white" }}>
+                  <option value="">{isRtl ? "-- بلا صندوق --" : "-- No Box --"}</option>
+                  {boxes.map(box => {
+                    const count = defectiveMeters.filter(m => m.box_id === box.id && m.status !== "resolved").length;
+                    const isFull = count >= box.size && editingMeter.box_id !== box.id;
+                    return (
+                      <option key={box.id} value={box.id} disabled={isFull}>
+                        {box.name} ({box.category}) - {count}/{box.size} {isFull ? (isRtl ? "[ممتلئ]" : "[FULL]") : ""}
+                      </option>
+                    );
+                  })}
+                </select>
+              </div>
+
+              <div className="input-group">
+                <label className="input-label">{isRtl ? "الحالة *" : "Status *"}</label>
+                <select className="input" name="editStatus" defaultValue={editingMeter.status} style={{ background: "white" }} required>
+                  <option value="reported">{isRtl ? "بلاغ جديد" : "New Report"}</option>
+                  <option value="pending">{isRtl ? "قيد الانتظار" : "Pending Review"}</option>
+                  <option value="verified">{isRtl ? "تم التحقق (معطوب)" : "Verified Defective"}</option>
+                  <option value="resolved">{isRtl ? "يعود لخط الانتاج" : "Returned to Line"}</option>
+                </select>
+              </div>
+
+              <div className="input-group">
+                <label className="input-label">{isRtl ? "ملاحظات إضافية" : "Optional Comments"}</label>
+                <input className="input" name="editDesc" defaultValue={editingMeter.custom_description || ""} placeholder={isRtl ? "ملاحظات اختيارية..." : "Add details..."} style={{ background: "white" }} />
+              </div>
+
+              {showEditResults && !selectedEditCode && (
+                <div style={{ position: "fixed", inset: 0, zIndex: 98 }} onClick={() => setShowEditResults(false)} />
+              )}
+
+              <div className="divider" style={{ margin: "8px 0" }} />
+
+              <div style={{ display: "flex", gap: 12, justifyContent: "flex-end" }}>
+                <button type="button" className="btn btn-secondary" onClick={() => { setEditModalOpen(false); setEditingMeter(null); }}>
+                  {isRtl ? "إلغاء" : "Cancel"}
+                </button>
+                <button type="submit" className="btn btn-primary" style={{ background: "var(--accent)" }}>
+                  {isRtl ? "حفظ التعديلات" : "Save Changes"}
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}

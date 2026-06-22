@@ -677,6 +677,7 @@ export function AppProvider({ children }) {
     const payload = {
       id: `DEF-${Date.now()}-${Math.random().toString(36).substr(2, 6)}`,
       serial_number: entry.serial_number,
+      ne_serial_number: entry.ne_serial_number || null,
       error_code: entry.error_code,
       stage_found: finalStage,
       custom_description: entry.custom_description || "",
@@ -763,6 +764,7 @@ export function AppProvider({ children }) {
         }
         return {
           serial_number: rest.serial_number,
+          ne_serial_number: rest.ne_serial_number || null,
           error_code: rest.error_code,
           stage_found: finalStage,
           custom_description: rest.custom_description || "",
@@ -825,6 +827,50 @@ export function AppProvider({ children }) {
       });
     } catch (err) {
       console.error("Supabase defect update error:", err);
+    }
+  }, [defectiveMeters, currentUser, addDefectLog]);
+
+  const updateDefectiveMeter = useCallback(async (id, updatedFields) => {
+    const oldMeter = defectiveMeters.find(m => m.id === id);
+    if (!oldMeter) return { success: false, message: "Meter not found" };
+
+    try {
+      const { error } = await supabase
+        .from("defective_meters")
+        .update(updatedFields)
+        .eq("id", id);
+
+      if (error) throw error;
+
+      setDefectiveMeters(prev => prev.map(m => m.id === id ? { ...m, ...updatedFields } : m));
+
+      // Log change in history
+      if (updatedFields.status && updatedFields.status !== oldMeter.status) {
+        addDefectLog({
+          defect_id: id,
+          serial_number: oldMeter.serial_number,
+          action_type: "status_change",
+          old_status: oldMeter.status,
+          new_status: updatedFields.status,
+          performed_by: currentUser?.employee_id,
+          performed_by_name: currentUser?.full_name || "User"
+        });
+      } else {
+        addDefectLog({
+          defect_id: id,
+          serial_number: oldMeter.serial_number,
+          action_type: "edit",
+          old_status: oldMeter.status,
+          new_status: oldMeter.status,
+          performed_by: currentUser?.employee_id,
+          performed_by_name: currentUser?.full_name || "User"
+        });
+      }
+
+      return { success: true };
+    } catch (err) {
+      console.error("Supabase defect update error:", err);
+      return { success: false, message: err.message };
     }
   }, [defectiveMeters, currentUser, addDefectLog]);
 
@@ -1179,7 +1225,7 @@ export function AppProvider({ children }) {
     productionStages, addStage, updateStage, deleteStage,
     errorCodes, addErrorCode, updateErrorCode, deleteErrorCode, addErrorCodesBulk,
     getStageById, getShiftById, getUserById, getScheduleWithDetails,
-    defectiveMeters, addDefectiveMeter, addDefectiveMetersBulk, updateMeterStatus,
+    defectiveMeters, addDefectiveMeter, addDefectiveMetersBulk, updateMeterStatus, updateDefectiveMeter,
     defectLogs, addDefectLog,
     searchErrorCodes, getErrorByCode,
     equipmentStock, addEquipmentStock, updateEquipmentStock, deleteEquipmentItem, restockEquipment,
