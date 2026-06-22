@@ -681,7 +681,7 @@ export function AppProvider({ children }) {
       stage_found: finalStage,
       custom_description: entry.custom_description || "",
       reported_by: entry.reported_by,
-      status: "reported",
+      status: "pending",
       box_id: entry.box_id || null
     };
 
@@ -700,7 +700,7 @@ export function AppProvider({ children }) {
         serial_number: data.serial_number,
         action_type: "reported",
         old_status: null,
-        new_status: "reported",
+        new_status: "pending",
         performed_by: entry.reported_by,
         performed_by_name: currentUser?.full_name || "Operator"
       });
@@ -767,7 +767,7 @@ export function AppProvider({ children }) {
           stage_found: finalStage,
           custom_description: rest.custom_description || "",
           reported_by: rest.reported_by,
-          status: rest.status || "reported",
+          status: rest.status || "pending",
         };
       });
 

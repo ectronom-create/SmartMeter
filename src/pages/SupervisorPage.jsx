@@ -40,7 +40,7 @@ export default function SupervisorPage() {
   ).map(s => getScheduleWithDetails(s));
 
   // Defects summary
-  const pendingDefects = defectiveMeters.filter(m => m.status === "reported");
+  const pendingDefects = defectiveMeters.filter(m => m.status === "pending");
   const verifiedDefects = defectiveMeters.filter(m => m.status === "verified");
 
   const filteredPendingDefects = useMemo(() => {
@@ -317,13 +317,13 @@ export default function SupervisorPage() {
                         </span>
                       </div>
                       <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-                        {/* Primary: refer to pending (stays on page) */}
+                        {/* Primary: Verify Defect */}
                         <button 
                           className="btn btn-primary btn-sm" 
                           style={{ width: "100%", justifyContent: "center" }}
-                          onClick={() => updateMeterStatus(m.id, "pending")}
+                          onClick={() => updateMeterStatus(m.id, "verified")}
                         >
-                          <CheckCircle size={14} /> {isRtl ? "إحالة للمراجعة النهائية" : "Refer to Final Review"}
+                          <CheckCircle size={14} /> {isRtl ? "تأكيد العطل (معطوب)" : "Confirm Defect (Verified)"}
                         </button>
                         {/* Bypass: resolve immediately if not a real defect */}
                         <button 

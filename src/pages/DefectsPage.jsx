@@ -198,7 +198,7 @@ export default function DefectsPage() {
             stage_found: stageId,
             custom_description: desc,
             reported_by: currentUser.employee_id,
-            status: "reported",
+            status: "pending",
             created_at: new Date().toISOString()
           });
         }

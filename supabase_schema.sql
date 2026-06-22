@@ -82,7 +82,7 @@ CREATE TABLE defective_meters (
     error_code VARCHAR(50) NOT NULL,
     stage_found VARCHAR(50) REFERENCES production_stages(stage_id) ON DELETE CASCADE,
     reported_by VARCHAR(50) REFERENCES users(employee_id) ON DELETE SET NULL,
-    status VARCHAR(50) NOT NULL DEFAULT 'reported', -- 'reported', 'pending', 'verified', 'resolved'
+    status VARCHAR(50) NOT NULL DEFAULT 'pending', -- 'reported', 'pending', 'verified', 'resolved'
     custom_description TEXT,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     resolved_at TIMESTAMP WITH TIME ZONE,
