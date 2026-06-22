@@ -141,6 +141,81 @@ export function AppProvider({ children }) {
     fetchAllData();
   }, []);
 
+  // Supabase Realtime Subscriptions
+  useEffect(() => {
+    // 1. Subscribe to defective_meters changes
+    const defectiveMetersChannel = supabase
+      .channel("realtime-defective-meters")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "defective_meters" },
+        (payload) => {
+          console.log("Realtime change received for defective_meters:", payload);
+          if (payload.eventType === "INSERT") {
+            setDefectiveMeters(prev => {
+              if (prev.some(m => m.id === payload.new.id)) return prev;
+              return [payload.new, ...prev];
+            });
+          } else if (payload.eventType === "UPDATE") {
+            setDefectiveMeters(prev => prev.map(m => m.id === payload.new.id ? payload.new : m));
+          } else if (payload.eventType === "DELETE") {
+            setDefectiveMeters(prev => prev.filter(m => m.id !== payload.old.id));
+          }
+        }
+      )
+      .subscribe();
+
+    // 2. Subscribe to boxes changes
+    const boxesChannel = supabase
+      .channel("realtime-boxes")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "boxes" },
+        (payload) => {
+          console.log("Realtime change received for boxes:", payload);
+          if (payload.eventType === "INSERT") {
+            setBoxes(prev => {
+              if (prev.some(b => b.id === payload.new.id)) return prev;
+              return [...prev, payload.new];
+            });
+          } else if (payload.eventType === "UPDATE") {
+            setBoxes(prev => prev.map(b => b.id === payload.new.id ? payload.new : b));
+          } else if (payload.eventType === "DELETE") {
+            setBoxes(prev => prev.filter(b => b.id !== payload.old.id));
+          }
+        }
+      )
+      .subscribe();
+
+    // 3. Subscribe to defect_logs changes
+    const defectLogsChannel = supabase
+      .channel("realtime-defect-logs")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "defect_logs" },
+        (payload) => {
+          console.log("Realtime change received for defect_logs:", payload);
+          if (payload.eventType === "INSERT") {
+            setDefectLogs(prev => {
+              if (prev.some(l => l.id === payload.new.id)) return prev;
+              return [payload.new, ...prev];
+            });
+          } else if (payload.eventType === "UPDATE") {
+            setDefectLogs(prev => prev.map(l => l.id === payload.new.id ? payload.new : l));
+          } else if (payload.eventType === "DELETE") {
+            setDefectLogs(prev => prev.filter(l => l.id !== payload.old.id));
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(defectiveMetersChannel);
+      supabase.removeChannel(boxesChannel);
+      supabase.removeChannel(defectLogsChannel);
+    };
+  }, []);
+
   // Sync cached session with latest Supabase user details
   useEffect(() => {
     if (currentUser && users.length > 0) {
