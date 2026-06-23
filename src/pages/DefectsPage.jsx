@@ -79,6 +79,23 @@ export default function DefectsPage() {
   const [showEditResults, setShowEditResults] = useState(false);
   const [editFormMsg, setEditFormMsg] = useState(null);
 
+  const visibleBoxes = useMemo(() => {
+    if (!boxes) return [];
+    if (currentUser?.role === "admin") return boxes;
+    return boxes.filter(box => {
+      const count = defectiveMeters.filter(m => m.box_id === box.id && m.status !== "resolved").length;
+      return count < box.size;
+    });
+  }, [boxes, defectiveMeters, currentUser?.role]);
+
+  const getEditModalBoxes = (currentBoxId) => {
+    if (currentUser?.role === "admin") return boxes;
+    return boxes.filter(box => {
+      const count = defectiveMeters.filter(m => m.box_id === box.id && m.status !== "resolved").length;
+      return count < box.size || box.id === currentBoxId;
+    });
+  };
+
   // Barcode scanner enforcement state
   const [serialNumber, setSerialNumber] = useState("");
   const [showScanWarning, setShowScanWarning] = useState(false);
@@ -924,7 +941,7 @@ export default function DefectsPage() {
                 <label className="input-label">{isRtl ? "تعيين إلى صندوق (اختياري)" : "Assign to Box (Optional)"}</label>
                 <select className="input" name="boxId" style={{ background: "white" }}>
                   <option value="">{isRtl ? "-- اختر الصندوق --" : "-- Select Box --"}</option>
-                  {boxes.map(box => {
+                  {visibleBoxes.map(box => {
                     const count = defectiveMeters.filter(m => m.box_id === box.id && m.status !== "resolved").length;
                     const isFull = count >= box.size;
                     return (
@@ -1076,7 +1093,7 @@ export default function DefectsPage() {
                             }}
                           >
                             <option value="">{isRtl ? "-- بلا صندوق --" : "-- No Box --"}</option>
-                            {boxes.map(box => {
+                            {getEditModalBoxes(m.box_id).map(box => {
                               const count = defectiveMeters.filter(x => x.box_id === box.id && x.status !== "resolved").length;
                               const isFull = count >= box.size && m.box_id !== box.id;
                               return (
@@ -1190,7 +1207,7 @@ export default function DefectsPage() {
                         }}
                       >
                         <option value="">{isRtl ? "-- بلا صندوق --" : "-- No Box --"}</option>
-                        {boxes.map(box => {
+                        {getEditModalBoxes(m.box_id).map(box => {
                           const count = defectiveMeters.filter(x => x.box_id === box.id && x.status !== "resolved").length;
                           const isFull = count >= box.size && m.box_id !== box.id;
                           return (
@@ -1247,7 +1264,7 @@ export default function DefectsPage() {
               <div className="stat-card" style={{ display: "flex", alignItems: "center", gap: 16, background: "var(--bg-surface)", padding: 20, borderRadius: "var(--radius-lg)", border: "1px solid var(--border)" }}>
                 <div className="stat-icon" style={{ fontSize: "1.5rem", width: 52, height: 52, borderRadius: "var(--radius-md)", display: "flex", alignItems: "center", justifyContent: "center", background: "rgba(9, 105, 218, 0.08)", color: "var(--blue)" }}>📦</div>
                 <div>
-                  <div className="stat-value" style={{ fontSize: "1.75rem", fontWeight: 800 }}>{boxes.length}</div>
+                  <div className="stat-value" style={{ fontSize: "1.75rem", fontWeight: 800 }}>{visibleBoxes.length}</div>
                   <div className="stat-label" style={{ fontSize: "0.78rem", color: "var(--text-muted)", fontWeight: 600 }}>{isRtl ? "إجمالي الصناديق" : "Total Boxes"}</div>
                 </div>
               </div>
@@ -1255,7 +1272,7 @@ export default function DefectsPage() {
                 <div className="stat-icon" style={{ fontSize: "1.5rem", width: 52, height: 52, borderRadius: "var(--radius-md)", display: "flex", alignItems: "center", justifyContent: "center", background: "rgba(207, 34, 46, 0.08)", color: "var(--red)" }}>🚨</div>
                 <div>
                   <div className="stat-value" style={{ fontSize: "1.75rem", fontWeight: 800 }}>
-                    {boxes.filter(b => defectiveMeters.filter(m => m.box_id === b.id && m.status !== "resolved").length >= b.size).length}
+                    {visibleBoxes.filter(b => defectiveMeters.filter(m => m.box_id === b.id && m.status !== "resolved").length >= b.size).length}
                   </div>
                   <div className="stat-label" style={{ fontSize: "0.78rem", color: "var(--text-muted)", fontWeight: 600 }}>{isRtl ? "الصناديق الممتلئة" : "Full Boxes"}</div>
                 </div>
@@ -1368,12 +1385,12 @@ export default function DefectsPage() {
 
             {/* Boxes Grid */}
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(290px, 1fr))", gap: 20 }}>
-              {boxes.length === 0 ? (
+              {visibleBoxes.length === 0 ? (
                 <div className="card" style={{ gridColumn: "1/-1", textAlign: "center", padding: 40, color: "var(--text-muted)", border: "1px solid var(--border)", borderRadius: "var(--radius-lg)" }}>
                   📦 {isRtl ? "لا توجد صناديق مضافة حالياً. استخدم النموذج أعلاه لإنشاء أول صندوق." : "No boxes added yet. Use the form above to create one."}
                 </div>
               ) : (
-                boxes.map(box => {
+                visibleBoxes.map(box => {
                   const metersInBox = defectiveMeters.filter(m => m.box_id === box.id && m.status !== "resolved");
                   const count = metersInBox.length;
                   const isFull = count >= box.size;
@@ -1774,7 +1791,7 @@ export default function DefectsPage() {
                                   defaultValue={m.box_id || ""}
                                 >
                                   <option value="">{isRtl ? "-- بلا صندوق --" : "-- No Box --"}</option>
-                                  {boxes.map(box => {
+                                  {getEditModalBoxes(m.box_id).map(box => {
                                     const count = defectiveMeters.filter(x => x.box_id === box.id && x.status !== "resolved").length;
                                     const isFull = count >= box.size && m.box_id !== box.id;
                                     return (
@@ -1968,7 +1985,7 @@ export default function DefectsPage() {
                 <label className="input-label">{isRtl ? "تعيين إلى صندوق (اختياري)" : "Assign to Box (Optional)"}</label>
                 <select className="input" name="editBoxId" defaultValue={editingMeter.box_id || ""} style={{ background: "white" }}>
                   <option value="">{isRtl ? "-- بلا صندوق --" : "-- No Box --"}</option>
-                  {boxes.map(box => {
+                  {getEditModalBoxes(editingMeter.box_id).map(box => {
                     const count = defectiveMeters.filter(m => m.box_id === box.id && m.status !== "resolved").length;
                     const isFull = count >= box.size && editingMeter.box_id !== box.id;
                     return (
