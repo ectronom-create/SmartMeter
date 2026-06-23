@@ -504,6 +504,25 @@ export default function DefectsPage() {
       }
     }
 
+    if (boxId !== editingMeter.box_id) {
+      const currentBox = boxes.find(b => b.id === editingMeter.box_id);
+      const newBox = boxes.find(b => b.id === boxId);
+      const confirmMsg = currentBox 
+        ? (newBox 
+            ? (isRtl 
+                ? `هل أنت متأكد من نقل العداد من الصندوق "${currentBox.name}" إلى الصندوق "${newBox.name}"؟` 
+                : `Are you sure you want to move the meter from box "${currentBox.name}" to box "${newBox.name}"?`)
+            : (isRtl 
+                ? `هل أنت متأكد من إزالة العداد من الصندوق "${currentBox.name}"؟` 
+                : `Are you sure you want to remove the meter from box "${currentBox.name}"?`))
+        : (isRtl 
+            ? `هل أنت متأكد من تعيين العداد إلى الصندوق "${newBox?.name}"؟` 
+            : `Are you sure you want to assign the meter to box "${newBox?.name}"?`);
+      if (!confirm(confirmMsg)) {
+        return;
+      }
+    }
+
     const updatedFields = {
       serial_number: sn,
       ne_serial_number: neSn,
@@ -1086,6 +1105,25 @@ export default function DefectsPage() {
                             value={m.box_id || ""}
                             onChange={async (e) => {
                               const selectedBoxId = e.target.value || null;
+                              if (selectedBoxId !== m.box_id) {
+                                const currentBox = boxes.find(b => b.id === m.box_id);
+                                const newBox = boxes.find(b => b.id === selectedBoxId);
+                                const confirmMsg = currentBox 
+                                  ? (newBox 
+                                      ? (isRtl 
+                                          ? `هل أنت متأكد من نقل العداد من الصندوق "${currentBox.name}" إلى الصندوق "${newBox.name}"؟` 
+                                          : `Are you sure you want to move the meter from box "${currentBox.name}" to box "${newBox.name}"?`)
+                                      : (isRtl 
+                                          ? `هل أنت متأكد من إزالة العداد من الصندوق "${currentBox.name}"؟` 
+                                          : `Are you sure you want to remove the meter from box "${currentBox.name}"?`))
+                                  : (isRtl 
+                                      ? `هل أنت متأكد من تعيين العداد إلى الصندوق "${newBox?.name}"؟` 
+                                      : `Are you sure you want to assign the meter to box "${newBox?.name}"?`);
+                                if (!confirm(confirmMsg)) {
+                                  e.target.value = m.box_id || "";
+                                  return;
+                                }
+                              }
                               const res = await assignMeterToBox(m.id, selectedBoxId);
                               if (res && !res.success) {
                                 alert(res.message);
@@ -1200,6 +1238,25 @@ export default function DefectsPage() {
                         value={m.box_id || ""}
                         onChange={async (e) => {
                           const selectedBoxId = e.target.value || null;
+                          if (selectedBoxId !== m.box_id) {
+                            const currentBox = boxes.find(b => b.id === m.box_id);
+                            const newBox = boxes.find(b => b.id === selectedBoxId);
+                            const confirmMsg = currentBox 
+                              ? (newBox 
+                                  ? (isRtl 
+                                      ? `هل أنت متأكد من نقل العداد من الصندوق "${currentBox.name}" إلى الصندوق "${newBox.name}"؟` 
+                                      : `Are you sure you want to move the meter from box "${currentBox.name}" to box "${newBox.name}"?`)
+                                  : (isRtl 
+                                      ? `هل أنت متأكد من إزالة العداد من الصندوق "${currentBox.name}"؟` 
+                                      : `Are you sure you want to remove the meter from box "${currentBox.name}"?`))
+                              : (isRtl 
+                                  ? `هل أنت متأكد من تعيين العداد إلى الصندوق "${newBox?.name}"؟` 
+                                  : `Are you sure you want to assign the meter to box "${newBox?.name}"?`);
+                            if (!confirm(confirmMsg)) {
+                              e.target.value = m.box_id || "";
+                              return;
+                            }
+                          }
                           const res = await assignMeterToBox(m.id, selectedBoxId);
                           if (res && !res.success) {
                             alert(res.message);
