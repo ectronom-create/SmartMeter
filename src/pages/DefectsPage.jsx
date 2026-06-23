@@ -52,6 +52,14 @@ export default function DefectsPage() {
   const [boxSubmitMsg, setBoxSubmitMsg] = useState(null);
   const [expandedBoxId, setExpandedBoxId] = useState(null);
 
+  // Edit Box modal states
+  const [editBoxModalOpen, setEditBoxModalOpen] = useState(false);
+  const [editingBox, setEditingBox] = useState(null);
+  const [editBoxSize, setEditBoxSize] = useState("24");
+  const [editBoxCustomSize, setEditBoxCustomSize] = useState("");
+  const [editBoxCategory, setEditBoxCategory] = useState("Assembly");
+  const [editBoxCustomCategory, setEditBoxCustomCategory] = useState("");
+  const [editBoxMsg, setEditBoxMsg] = useState(null);
 
   // Searchable Code logic
   const [searchQuery, setSearchQuery] = useState("");
@@ -513,14 +521,100 @@ export default function DefectsPage() {
 
   const getNextBoxName = () => {
     if (!boxes || boxes.length === 0) return "00001";
-    let maxNum = 0;
-    boxes.forEach(b => {
-      const num = parseInt(b.name, 10);
-      if (!isNaN(num) && num > maxNum) {
-        maxNum = num;
+    const existingNums = boxes
+      .map(b => parseInt(b.name, 10))
+      .filter(n => !isNaN(n))
+      .sort((a, b) => a - b);
+    let nextNum = 1;
+    for (let i = 0; i < existingNums.length; i++) {
+      if (existingNums[i] === nextNum) {
+        nextNum++;
+      } else if (existingNums[i] > nextNum) {
+        break;
       }
+    }
+    return String(nextNum).padStart(5, "0");
+  };
+
+  const confirmUserPIN = () => {
+    const pin = prompt(
+      isRtl
+        ? "الرجاء إدخال كلمة المرور لتأكيد الهوية وإجراء هذه العملية:"
+        : "Please enter your password to confirm identity and perform this operation:"
+    );
+    if (!pin) return false;
+    if (pin !== currentUser.password_hash) {
+      alert(isRtl ? "رمز التأكيد (كلمة المرور) غير صحيح!" : "Incorrect password!");
+      return false;
+    }
+    return true;
+  };
+
+  const handleStartEditBox = (box) => {
+    setEditingBox(box);
+    if (box.size === 24 || box.size === 8) {
+      setEditBoxSize(String(box.size));
+      setEditBoxCustomSize("");
+    } else {
+      setEditBoxSize("custom");
+      setEditBoxCustomSize(String(box.size));
+    }
+    const categories = ["Assembly", "Insulation", "Radio Frequency", "Calibration", "Multi Test", "Perso"];
+    if (categories.includes(box.category)) {
+      setEditBoxCategory(box.category);
+      setEditBoxCustomCategory("");
+    } else {
+      setEditBoxCategory("custom");
+      setEditBoxCustomCategory(box.category);
+    }
+    setEditBoxMsg(null);
+    setEditBoxModalOpen(true);
+  };
+
+  const handleSaveEditBox = async (e) => {
+    e.preventDefault();
+    if (!editingBox) return;
+
+    if (!confirmUserPIN()) return;
+
+    let size = editBoxSize === "custom" ? parseInt(editBoxCustomSize) : parseInt(editBoxSize);
+    if (!size || size <= 0) {
+      setEditBoxMsg({
+        type: "error",
+        text: isRtl ? "يرجى إدخال سعة صحيحة للبوكس" : "Please enter a valid capacity"
+      });
+      return;
+    }
+
+    let category = editBoxCategory === "custom" ? editBoxCustomCategory.trim() : editBoxCategory;
+    if (!category) {
+      setEditBoxMsg({
+        type: "error",
+        text: isRtl ? "يرجى تحديد أو كتابة تصنيف للبوكس" : "Please specify a category"
+      });
+      return;
+    }
+
+    const res = await updateBox(editingBox.id, {
+      size: size,
+      category: category
     });
-    return String(maxNum + 1).padStart(5, "0");
+
+    if (res && res.success) {
+      setEditBoxMsg({
+        type: "success",
+        text: isRtl ? "تم تعديل الصندوق بنجاح!" : "Box updated successfully!"
+      });
+      setTimeout(() => {
+        setEditBoxModalOpen(false);
+        setEditingBox(null);
+      }, 1500);
+    } else {
+      setEditBoxMsg({
+        type: "error",
+        text: isRtl ? "حدث خطأ أثناء التعديل" : "An error occurred while updating the box"
+      });
+    }
   };
 
   const handleCreateBox = async (e) => {
@@ -1423,36 +1517,50 @@ export default function DefectsPage() {
                       <div className="divider" style={{ margin: "4px 0 12px 0" }} />
 
                       {/* Card Actions */}
-                      <div style={{ display: "flex", gap: 10 }}>
-                        <button
-                          type="button"
-                          className="btn btn-secondary btn-sm"
-                          style={{ flex: 1, padding: "8px", fontSize: "0.82rem", fontWeight: 600 }}
-                          disabled={count === 0}
-                          onClick={async () => {
-                            if (confirm(isRtl ? `هل أنت متأكد من إفراغ الصندوق "${box.name}" بالكامل؟` : `Are you sure you want to empty "${box.name}"?`)) {
-                              // Unassign all
-                              for (const m of metersInBox) {
-                                await assignMeterToBox(m.id, null);
+                      <div style={{ display: "flex", flexDirection: "column", gap: 8, width: "100%" }}>
+                        <div style={{ display: "flex", gap: 8, width: "100%" }}>
+                          <button
+                            type="button"
+                            className="btn btn-secondary btn-sm"
+                            style={{ flex: 1, padding: "8px", fontSize: "0.82rem", fontWeight: 600, margin: 0 }}
+                            disabled={count === 0}
+                            onClick={async () => {
+                              if (confirm(isRtl ? `هل أنت متأكد من إفراغ الصندوق "${box.name}" بالكامل؟` : `Are you sure you want to empty "${box.name}"?`)) {
+                                // Unassign all
+                                for (const m of metersInBox) {
+                                  await assignMeterToBox(m.id, null);
+                                }
                               }
-                            }
-                          }}
-                        >
-                          🧹 {isRtl ? "إفراغ الصندوق" : "Empty Box"}
-                        </button>
-                        
-                        <button
-                          type="button"
-                          className="btn btn-secondary btn-sm"
-                          style={{ border: "1px solid rgba(207, 34, 46, 0.2)", color: "var(--red)", background: "rgba(207, 34, 46, 0.04)", padding: "8px", fontSize: "0.82rem", fontWeight: 600 }}
-                          onClick={async () => {
-                            if (confirm(isRtl ? `هل أنت متأكد من حذف الصندوق "${box.name}"؟ سيتم إخراج جميع العدادات منه.` : `Are you sure you want to delete box "${box.name}"? All meters will be unassigned.`)) {
-                              await deleteBox(box.id);
-                            }
-                          }}
-                        >
-                          🗑️ {isRtl ? "حذف" : "Delete"}
-                        </button>
+                            }}
+                          >
+                            🧹 {isRtl ? "إفراغ" : "Empty"}
+                          </button>
+                          
+                          <button
+                            type="button"
+                            className="btn btn-secondary btn-sm"
+                            style={{ flex: 1, padding: "8px", fontSize: "0.82rem", fontWeight: 600, margin: 0 }}
+                            onClick={() => handleStartEditBox(box)}
+                          >
+                            ✏️ {isRtl ? "تعديل" : "Edit"}
+                          </button>
+                        </div>
+                        {currentUser?.role === "admin" && (
+                          <button
+                            type="button"
+                            className="btn btn-secondary btn-sm"
+                            style={{ width: "100%", border: "1px solid rgba(207, 34, 46, 0.2)", color: "var(--red)", background: "rgba(207, 34, 46, 0.04)", padding: "8px", fontSize: "0.82rem", fontWeight: 600, margin: 0 }}
+                            onClick={async () => {
+                              if (confirmUserPIN()) {
+                                if (confirm(isRtl ? `هل أنت متأكد من حذف الصندوق "${box.name}"؟ سيتم إخراج جميع العدادات منه.` : `Are you sure you want to delete box "${box.name}"? All meters will be unassigned.`)) {
+                                  await deleteBox(box.id);
+                                }
+                              }
+                            }}
+                          >
+                            🗑️ {isRtl ? "حذف الصندوق" : "Delete Box"}
+                          </button>
+                        )}
                       </div>
                     </div>
                   );
@@ -1900,6 +2008,98 @@ export default function DefectsPage() {
                 </button>
                 <button type="submit" className="btn btn-primary" style={{ background: "var(--accent)" }}>
                   {isRtl ? "حفظ التعديلات" : "Save Changes"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Box Modal */}
+      {editBoxModalOpen && editingBox && (
+        <div className="modal-overlay" style={{ zIndex: 999 }}>
+          <div className="modal-content animate-scale" style={{ maxWidth: 500, maxHeight: "90vh", display: "flex", flexDirection: "column", direction: isRtl ? "rtl" : "ltr" }}>
+            <div className="modal-header" style={{ flexDirection: isRtl ? "row" : "row-reverse" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 10, flexDirection: isRtl ? "row" : "row-reverse" }}>
+                <span>📦</span>
+                <h3 style={{ margin: 0 }}>
+                  {isRtl ? `تعديل الصندوق: ${editingBox.name}` : `Edit Box: ${editingBox.name}`}
+                </h3>
+              </div>
+              <button className="btn-close" onClick={() => { setEditBoxModalOpen(false); setEditingBox(null); }}>✕</button>
+            </div>
+
+            <form onSubmit={handleSaveEditBox} style={{ flex: 1, overflowY: "auto", padding: 20, display: "flex", flexDirection: "column", gap: 16 }}>
+              {editBoxMsg && (
+                <div className={`alert alert-${editBoxMsg.type === "error" ? "danger" : "success"}`} style={{ margin: 0 }}>
+                  {editBoxMsg.text}
+                </div>
+              )}
+
+              <div className="input-group">
+                <label className="input-label">{isRtl ? "السعة (السعة القصوى) *" : "Capacity (Max Size) *"}</label>
+                <select
+                  className="input"
+                  value={editBoxSize}
+                  onChange={e => setEditBoxSize(e.target.value)}
+                  style={{ background: "white" }}
+                  required
+                >
+                  <option value="24">{isRtl ? "كبير (24 عداد)" : "Large (24 Meters)"}</option>
+                  <option value="8">{isRtl ? "صغير (8 عدادات)" : "Small (8 Meters)"}</option>
+                  <option value="custom">{isRtl ? "سعة مخصصة..." : "Custom Capacity..."}</option>
+                </select>
+                {editBoxSize === "custom" && (
+                  <input
+                    type="number"
+                    className="input"
+                    value={editBoxCustomSize}
+                    onChange={e => setEditBoxCustomSize(e.target.value)}
+                    placeholder={isRtl ? "أدخل العدد..." : "Enter quantity..."}
+                    required
+                    min="1"
+                    style={{ marginTop: 6, background: "white" }}
+                  />
+                )}
+              </div>
+
+              <div className="input-group">
+                <label className="input-label">{isRtl ? "التصنيف (المرحلة التابعة لها) *" : "Category (Stage) *"}</label>
+                <select
+                  className="input"
+                  value={editBoxCategory}
+                  onChange={e => setEditBoxCategory(e.target.value)}
+                  style={{ background: "white" }}
+                  required
+                >
+                  <option value="Assembly">{isRtl ? "Assembly (التجميع)" : "Assembly"}</option>
+                  <option value="Insulation">{isRtl ? "Insulation (العزل)" : "Insulation"}</option>
+                  <option value="Radio Frequency">{isRtl ? "Radio Frequency (ترددات الراديو)" : "Radio Frequency"}</option>
+                  <option value="Calibration">{isRtl ? "Calibration (المعايرة)" : "Calibration"}</option>
+                  <option value="Multi Test">{isRtl ? "Multi Test (فحص متعدد)" : "Multi Test"}</option>
+                  <option value="Perso">{isRtl ? "Perso (التخصيص)" : "Perso"}</option>
+                  <option value="custom">{isRtl ? "تصنيف مخصص..." : "Custom Category..."}</option>
+                </select>
+                {editBoxCategory === "custom" && (
+                  <input
+                    className="input"
+                    value={editBoxCustomCategory}
+                    onChange={e => setEditBoxCustomCategory(e.target.value)}
+                    placeholder={isRtl ? "اكتب التصنيف هنا..." : "Type custom category..."}
+                    required
+                    style={{ marginTop: 6, background: "white" }}
+                  />
+                )}
+              </div>
+
+              <div className="divider" style={{ margin: "8px 0" }} />
+
+              <div style={{ display: "flex", gap: 12, justifyContent: "flex-end", flexDirection: isRtl ? "row" : "row-reverse" }}>
+                <button type="button" className="btn btn-secondary" onClick={() => { setEditBoxModalOpen(false); setEditingBox(null); }}>
+                  {isRtl ? "إلغاء" : "Cancel"}
+                </button>
+                <button type="submit" className="btn btn-primary" style={{ background: "var(--accent)" }}>
+                  {isRtl ? "حفظ التغييرات" : "Save Changes"}
                 </button>
               </div>
             </form>
