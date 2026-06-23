@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo } from "react";
 import { useApp } from "../context/AppContext";
 import { Users, Calendar, AlertTriangle, BarChart2, Shield, BookOpen, ChevronRight, CheckCircle, Clock, Layers, X, Search, ClipboardList, Wrench, Package, Plus } from "lucide-react";
 import MaintenancePage from "./MaintenancePage";
+import DefectsPage from "./DefectsPage";
 import { AssetsPanel } from "./AssetsPage";
 import UsersPanel from "../components/UsersPanel";
 import ShiftSchedulesPanel from "../components/ShiftSchedulesPanel";
@@ -1677,7 +1678,7 @@ export default function AdminPage() {
       case "stages":     return <StagesPanel />;
       case "assets":     return <AssetsPanel />;
       case "schedule":   return <ShiftSchedulesPanel />;
-      case "defects":    return <DefectsPanel />;
+      case "defects":    return <DefectsPage />;
       case "errorcodes": return <ErrorCodesPanel />;
       case "sop_reports": return <SOPReportsPanel />;
       case "maintenance": return <MaintenancePage />;

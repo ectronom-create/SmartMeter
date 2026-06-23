@@ -699,7 +699,7 @@ export default function DefectsPage() {
         {/* Topbar Navigation & Actions */}
         <div className="defects-header">
           <div className="defects-title-section">
-            <button className="btn btn-ghost btn-sm" onClick={() => navigate("/dashboard")}>
+            <button className="btn btn-ghost btn-sm" onClick={() => navigate(currentUser?.role === "admin" ? "/admin" : "/dashboard")}>
               <ArrowRight size={15} style={{ transform: isRtl ? "none" : "rotate(180deg)" }} /> {isRtl ? "العودة للرئيسية" : "Back to Home"}
             </button>
             <div>
@@ -786,7 +786,7 @@ export default function DefectsPage() {
         {activeTab === "defects" && (
           <>
             {/* Quick Report Form */}
-            {currentUser.role !== "admin" && (
+            {true && (
           <div className="card animate-fade" style={{ background: "#fff5f5", border: "1px solid #feb2b2", overflow: "visible" }}>
             <div className="card-header" style={{ paddingBottom: 12 }}>
               <AlertTriangle size={18} style={{ color: "var(--red)" }} />
