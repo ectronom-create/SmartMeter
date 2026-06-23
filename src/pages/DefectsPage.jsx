@@ -44,7 +44,6 @@ export default function DefectsPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Box management state
-  const [newBoxName, setNewBoxName] = useState("");
   const [newBoxSize, setNewBoxSize] = useState("24");
   const [customSize, setCustomSize] = useState("");
   const [newBoxCategory, setNewBoxCategory] = useState("Assembly");
