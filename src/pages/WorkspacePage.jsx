@@ -109,7 +109,7 @@ export default function WorkspacePage() {
     const now = Date.now();
     if (lastKeyTimeRef.current !== 0) {
       const diff = now - lastKeyTimeRef.current;
-      if (diff > 60) {
+      if (diff > 150) {
         isManualRef.current = true;
         setShowScanWarning(true);
       }
