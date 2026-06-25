@@ -96,59 +96,11 @@ export default function DefectsPage() {
     });
   };
 
-  // Barcode scanner enforcement state
+  // Barcode scanner input state (allows manual typing)
   const [serialNumber, setSerialNumber] = useState("");
-  const [showScanWarning, setShowScanWarning] = useState(false);
-  const lastKeyTimeRef = useRef(0);
-  const isManualRef = useRef(false);
-
-  const handleSerialKeyDown = (e) => {
-    if (["Enter", "Tab", "Shift", "Control", "Alt", "Meta", "ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown", "Backspace"].includes(e.key)) {
-      return;
-    }
-    const now = Date.now();
-    if (lastKeyTimeRef.current !== 0) {
-      const diff = now - lastKeyTimeRef.current;
-      if (diff > 150) {
-        isManualRef.current = true;
-        setShowScanWarning(true);
-      }
-    }
-    lastKeyTimeRef.current = now;
-  };
 
   const handleSerialChange = (e) => {
-    const val = e.target.value;
-    if (val === "") {
-      isManualRef.current = false;
-      lastKeyTimeRef.current = 0;
-      setShowScanWarning(false);
-      setSerialNumber("");
-      return;
-    }
-
-    if (isManualRef.current) {
-      setSerialNumber("");
-      setTimeout(() => {
-        setShowScanWarning(false);
-        isManualRef.current = false;
-        lastKeyTimeRef.current = 0;
-      }, 3000);
-    } else {
-      setSerialNumber(val);
-    }
-  };
-
-  const handleSerialPaste = (e) => {
-    e.preventDefault();
-    isManualRef.current = true;
-    setShowScanWarning(true);
-    setSerialNumber("");
-    setTimeout(() => {
-      setShowScanWarning(false);
-      isManualRef.current = false;
-      lastKeyTimeRef.current = 0;
-    }, 3000);
+    setSerialNumber(e.target.value);
   };
 
   const handleExcelUpload = async (e) => {
@@ -835,24 +787,17 @@ export default function DefectsPage() {
                 <input 
                   className="input" 
                   name="sn" 
-                  placeholder={isRtl ? "امسح الباركود فقط..." : "Scan barcode only..."} 
+                  placeholder={isRtl ? "امسح الباركود أو اكتب السيريال..." : "Scan barcode or type serial..."} 
                   required 
                   value={serialNumber}
                   onChange={handleSerialChange}
-                  onKeyDown={handleSerialKeyDown}
-                  onPaste={handleSerialPaste}
                   style={{ 
-                    background: showScanWarning ? "#fff5f5" : "white",
-                    borderColor: showScanWarning ? "var(--red)" : "var(--border)",
+                    background: "white",
+                    borderColor: "var(--border)",
                     fontFamily: "'IBM Plex Mono', monospace",
                     letterSpacing: "0.05em"
                   }} 
                 />
-                {showScanWarning && (
-                  <span style={{ color: "var(--red)", fontSize: "0.75rem", fontWeight: 700, marginTop: 4, display: "block" }}>
-                    ⚠️ {isRtl ? "يجب استخدام قارئ الباركود فقط! الكتابة اليدوية معطلة لتفادي الأخطاء." : "Must use barcode reader only! Manual typing is disabled to avoid errors."}
-                  </span>
-                )}
               </div>
 
               <div className="input-group">
