@@ -15,12 +15,36 @@ import FPYPage from "./pages/FPYPage";
 import MaintenancePage from "./pages/MaintenancePage";
 
 
-function ProtectedRoute({ children, adminOnly = false, supervisorOnly = false, defectsPage = false }) {
+function isPanelAllowed(currentUser, panelId) {
+  if (!currentUser) return false;
+  if (currentUser.role !== "admin") return true;
+  if (currentUser.employee_id === "ADMIN-001") return true;
+  if (!currentUser.allowed_panels) return true;
+  try {
+    const parsed = typeof currentUser.allowed_panels === 'string'
+      ? JSON.parse(currentUser.allowed_panels)
+      : currentUser.allowed_panels;
+    if (Array.isArray(parsed) && parsed.length > 0) {
+      return parsed.includes(panelId);
+    }
+  } catch (e) {
+    if (typeof currentUser.allowed_panels === 'string') {
+      return currentUser.allowed_panels.split(',').includes(panelId);
+    }
+  }
+  return true;
+}
+
+function ProtectedRoute({ children, adminOnly = false, supervisorOnly = false, defectsPage = false, panelId = null }) {
   const { currentUser } = useApp();
   if (!currentUser) return <Navigate to="/login" replace />;
   if (adminOnly && currentUser.role !== "admin") return <Navigate to="/dashboard" replace />;
   if (supervisorOnly && !["admin", "supervisor"].includes(currentUser.role)) return <Navigate to="/dashboard" replace />;
   if (defectsPage && !["admin", "supervisor", "quality_management"].includes(currentUser.role)) return <Navigate to="/dashboard" replace />;
+  
+  if (currentUser.role === "admin" && panelId && !isPanelAllowed(currentUser, panelId)) {
+    return <Navigate to="/admin" replace />;
+  }
   return children;
 }
 
@@ -64,22 +88,22 @@ function AppRoutes() {
             <ProtectedRoute><WorkspacePage /></ProtectedRoute>
           } />
           <Route path="/defects" element={
-            <ProtectedRoute defectsPage><DefectsPage /></ProtectedRoute>
+            <ProtectedRoute defectsPage panelId="defects"><DefectsPage /></ProtectedRoute>
           } />
           <Route path="/knowledge" element={
             <ProtectedRoute><KnowledgeBasePage /></ProtectedRoute>
           } />
           <Route path="/assets" element={
-            <ProtectedRoute adminOnly><AssetsPage /></ProtectedRoute>
+            <ProtectedRoute adminOnly panelId="assets"><AssetsPage /></ProtectedRoute>
           } />
           <Route path="/start-production" element={
             <ProtectedRoute supervisorOnly><StartOfProductionPage /></ProtectedRoute>
           } />
           <Route path="/fpy-overview" element={
-            <ProtectedRoute><FPYPage /></ProtectedRoute>
+            <ProtectedRoute panelId="overview"><FPYPage /></ProtectedRoute>
           } />
           <Route path="/maintenance" element={
-            <ProtectedRoute><MaintenancePage /></ProtectedRoute>
+            <ProtectedRoute panelId="maintenance"><MaintenancePage /></ProtectedRoute>
           } />
 
           <Route path="*" element={<Navigate to={defaultRoute()} replace />} />

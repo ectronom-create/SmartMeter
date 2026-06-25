@@ -26,7 +26,8 @@ CREATE TABLE users (
     must_change_password BOOLEAN NOT NULL DEFAULT TRUE,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     phone VARCHAR(50),
-    email VARCHAR(100)
+    email VARCHAR(100),
+    allowed_panels JSONB DEFAULT '[]'
 );
 
 -- Shift Types

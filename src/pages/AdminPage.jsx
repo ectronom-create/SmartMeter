@@ -1664,12 +1664,45 @@ const getSidebarPanels = (isRtl, t) => [
 
 export default function AdminPage() {
   const { currentUser, language, t } = useApp();
-  const [active, setActive] = useState("overview");
 
   const isRtl = language === "ar";
-  const PANELS = getSidebarPanels(isRtl, t);
 
-  const sections = [...new Set(PANELS.map(p=>p.section))];
+  const allowed = useMemo(() => {
+    const allPanels = getSidebarPanels(isRtl, t);
+    if (!currentUser) return [];
+    if (currentUser.employee_id === "ADMIN-001") {
+      return allPanels.map(p => p.id);
+    }
+    if (!currentUser.allowed_panels) {
+      return allPanels.map(p => p.id);
+    }
+    try {
+      const parsed = typeof currentUser.allowed_panels === 'string'
+        ? JSON.parse(currentUser.allowed_panels)
+        : currentUser.allowed_panels;
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        return parsed;
+      }
+    } catch (e) {}
+    return allPanels.map(p => p.id);
+  }, [currentUser, t, isRtl]);
+
+  const PANELS = useMemo(() => {
+    const allPanels = getSidebarPanels(isRtl, t);
+    return allPanels.filter(p => allowed.includes(p.id));
+  }, [allowed, isRtl, t]);
+
+  const sections = useMemo(() => [...new Set(PANELS.map(p=>p.section))], [PANELS]);
+
+  const [active, setActive] = useState(() => {
+    return allowed.includes("overview") ? "overview" : (allowed[0] || "overview");
+  });
+
+  useEffect(() => {
+    if (!allowed.includes(active) && allowed.length > 0) {
+      setActive(allowed[0]);
+    }
+  }, [allowed, active]);
 
   const renderPanel = () => {
     switch(active) {
@@ -1707,21 +1740,25 @@ export default function AdminPage() {
             <div style={{fontSize:"0.67rem",color:"var(--text-muted)"}}>{currentUser?.full_name}</div>
           </div>
         </div>
-        {sections.map(sec=>(
-          <div key={sec}>
-            <div className="sidebar-section-label">{sec}</div>
-            {PANELS.filter(p=>p.section===sec).map(p=>{
-              const Icon=p.icon;
-              return (
-                <button key={p.id} className={`sidebar-item ${active===p.id?"active":""}`} onClick={()=>setActive(p.id)} style={{ flexDirection: isRtl ? "row" : "row-reverse", justifyContent: "flex-start", gap: 10 }}>
-                  <Icon size={15}/> 
-                  <span style={{ flex: 1, textAlign: isRtl ? "right" : "left" }}>{p.label}</span>
-                  {active===p.id&&<ChevronRight size={13} style={{ transform: isRtl ? "none" : "rotate(180deg)", flexShrink: 0 }}/>}
-                </button>
-              );
-            })}
-          </div>
-        ))}
+        {sections.map(sec=>{
+          const secPanels = PANELS.filter(p => p.section === sec);
+          if (secPanels.length === 0) return null;
+          return (
+            <div key={sec}>
+              <div className="sidebar-section-label">{sec}</div>
+              {secPanels.map(p=>{
+                const Icon=p.icon;
+                return (
+                  <button key={p.id} className={`sidebar-item ${active===p.id?"active":""}`} onClick={()=>setActive(p.id)} style={{ flexDirection: isRtl ? "row" : "row-reverse", justifyContent: "flex-start", gap: 10 }}>
+                    <Icon size={15}/> 
+                    <span style={{ flex: 1, textAlign: isRtl ? "right" : "left" }}>{p.label}</span>
+                    {active===p.id&&<ChevronRight size={13} style={{ transform: isRtl ? "none" : "rotate(180deg)", flexShrink: 0 }}/>}
+                  </button>
+                );
+              })}
+            </div>
+          );
+        })}
       </aside>
       <main className="admin-content" style={{ direction: isRtl ? "rtl" : "ltr" }}>{renderPanel()}</main>
     </div>

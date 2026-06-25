@@ -9,12 +9,32 @@ const getRoles = (isRtl) => [
   { value: "quality_management", label: isRtl ? "إدارة الجودة" : "Quality Management", badge: "badge-cyan" }
 ];
 
+const PANELS_LIST = [
+  { id: "overview", labelAr: "نظرة عامة FPY", labelEn: "FPY Overview" },
+  { id: "users", labelAr: "إدارة المستخدمين", labelEn: "User Management" },
+  { id: "stages", labelAr: "مراحل الإنتاج", labelEn: "Production Stages" },
+  { id: "assets", labelAr: "إدارة المعدات", labelEn: "Equipment Management" },
+  { id: "schedule", labelAr: "جدول الورديات", labelEn: "Shift Schedules" },
+  { id: "defects", labelAr: "العدادات المعطوبة", labelEn: "Defective Meters" },
+  { id: "errorcodes", labelAr: "دليل الأعطال", labelEn: "Fault Codes Guide" },
+  { id: "sop_reports", labelAr: "بداية الإنتاج (SOP)", labelEn: "Start of Production (SOP)" },
+  { id: "maintenance", labelAr: "الصيانة", labelEn: "Maintenance" }
+];
+
 function AddUserModal({ onClose }) {
   const { addUser, language, users } = useApp();
   const isRtl = language === "ar";
   const ROLES = getRoles(isRtl);
 
-  const [form, setForm] = useState({ employee_id: "", full_name: "", role: "operator", password: "pass1234", phone: "", email: "" });
+  const [form, setForm] = useState({ 
+    employee_id: "", 
+    full_name: "", 
+    role: "operator", 
+    password: "pass1234", 
+    phone: "", 
+    email: "",
+    allowed_panels: []
+  });
   const [done, setDone] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
 
@@ -73,6 +93,45 @@ function AddUserModal({ onClose }) {
                 {ROLES.map(r => <option key={r.value} value={r.value}>{r.label}</option>)}
               </select>
             </div>
+            {form.role === "admin" && (
+              <div className="input-group" style={{ marginTop: 4 }}>
+                <label className="input-label" style={{ textAlign: isRtl ? "right" : "left", fontWeight: 700 }}>
+                  {isRtl ? "الصفحات المسموح بعرضها للأدمن *" : "Allowed Admin Pages *"}
+                </label>
+                <div style={{
+                  display: "grid",
+                  gridTemplateColumns: "1fr 1fr",
+                  gap: "8px 12px",
+                  background: "var(--bg-elevated)",
+                  padding: 12,
+                  borderRadius: "var(--radius-md)",
+                  border: "1px solid var(--border)",
+                  maxHeight: "180px",
+                  overflowY: "auto"
+                }}>
+                  {PANELS_LIST.map(p => {
+                    const isChecked = form.allowed_panels.includes(p.id);
+                    return (
+                      <label key={p.id} style={{ display: "flex", alignItems: "center", gap: 8, fontSize: "0.82rem", cursor: "pointer", userSelect: "none" }}>
+                        <input
+                          type="checkbox"
+                          checked={isChecked}
+                          onChange={(e) => {
+                            if (e.target.checked) {
+                              setForm(prev => ({ ...prev, allowed_panels: [...prev.allowed_panels, p.id] }));
+                            } else {
+                              setForm(prev => ({ ...prev, allowed_panels: prev.allowed_panels.filter(id => id !== p.id) }));
+                            }
+                          }}
+                          style={{ width: "auto", margin: 0 }}
+                        />
+                        <span>{isRtl ? p.labelAr : p.labelEn}</span>
+                      </label>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
             <div className="input-group">
               <label className="input-label" style={{ textAlign: isRtl ? "right" : "left" }}>{isRtl ? "رقم الهاتف" : "Phone Number"}</label>
               <input className="input" name="phone" placeholder="+966500000000" value={form.phone} onChange={handle} style={{ textAlign: isRtl ? "right" : "left" }} />
@@ -110,7 +169,20 @@ function EditUserModal({ user, onClose }) {
     password: user.password_hash || "",
     phone: user.phone || "",
     email: user.email || "",
-    must_change_password: user.must_change_password || false
+    must_change_password: user.must_change_password || false,
+    allowed_panels: Array.isArray(user.allowed_panels) 
+      ? user.allowed_panels 
+      : (() => {
+          if (!user.allowed_panels) return [];
+          try {
+            const parsed = typeof user.allowed_panels === 'string' 
+              ? JSON.parse(user.allowed_panels) 
+              : user.allowed_panels;
+            return Array.isArray(parsed) ? parsed : [];
+          } catch(e) {
+            return typeof user.allowed_panels === 'string' ? user.allowed_panels.split(',') : [];
+          }
+        })()
   });
   const [done, setDone] = useState(false);
 
@@ -128,7 +200,8 @@ function EditUserModal({ user, onClose }) {
       password_hash: form.password,
       phone: form.phone?.trim() || null,
       email: form.email?.trim() || null,
-      must_change_password: form.must_change_password
+      must_change_password: form.must_change_password,
+      allowed_panels: form.role === "admin" ? form.allowed_panels : []
     });
     if (result && result.success) {
       setDone(true);
@@ -167,6 +240,45 @@ function EditUserModal({ user, onClose }) {
                 </select>
               )}
             </div>
+            {form.role === "admin" && user.employee_id !== "ADMIN-001" && (
+              <div className="input-group" style={{ marginTop: 4 }}>
+                <label className="input-label" style={{ textAlign: isRtl ? "right" : "left", fontWeight: 700 }}>
+                  {isRtl ? "الصفحات المسموح بعرضها للأدمن *" : "Allowed Admin Pages *"}
+                </label>
+                <div style={{
+                  display: "grid",
+                  gridTemplateColumns: "1fr 1fr",
+                  gap: "8px 12px",
+                  background: "var(--bg-elevated)",
+                  padding: 12,
+                  borderRadius: "var(--radius-md)",
+                  border: "1px solid var(--border)",
+                  maxHeight: "180px",
+                  overflowY: "auto"
+                }}>
+                  {PANELS_LIST.map(p => {
+                    const isChecked = form.allowed_panels.includes(p.id);
+                    return (
+                      <label key={p.id} style={{ display: "flex", alignItems: "center", gap: 8, fontSize: "0.82rem", cursor: "pointer", userSelect: "none" }}>
+                        <input
+                          type="checkbox"
+                          checked={isChecked}
+                          onChange={(e) => {
+                            if (e.target.checked) {
+                              setForm(prev => ({ ...prev, allowed_panels: [...prev.allowed_panels, p.id] }));
+                            } else {
+                              setForm(prev => ({ ...prev, allowed_panels: prev.allowed_panels.filter(id => id !== p.id) }));
+                            }
+                          }}
+                          style={{ width: "auto", margin: 0 }}
+                        />
+                        <span>{isRtl ? p.labelAr : p.labelEn}</span>
+                      </label>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
             <div className="input-group">
               <label className="input-label" style={{ textAlign: isRtl ? "right" : "left" }}>{isRtl ? "رقم الهاتف" : "Phone Number"}</label>
               <input className="input" name="phone" placeholder="+966500000000" value={form.phone} onChange={handle} style={{ textAlign: isRtl ? "right" : "left" }} />

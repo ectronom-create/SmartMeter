@@ -326,6 +326,7 @@ export function AppProvider({ children }) {
       must_change_password: true,
       phone:       userData.phone?.trim() || null,
       email:       userData.email?.trim() || null,
+      allowed_panels: userData.role === "admin" ? (userData.allowed_panels || []) : []
     };
 
     try {
