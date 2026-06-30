@@ -57,6 +57,7 @@ export default function DefectsPage() {
   const [filterStatus, setFilterStatus] = useState("all");
   const [filterStartDate, setFilterStartDate] = useState("");
   const [filterEndDate, setFilterEndDate] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
   const [defectsSearch, setDefectsSearch] = useState("");
   const [submitMsg, setSubmitMsg] = useState(null);
   const [importStatus, setImportStatus] = useState(null);
@@ -428,6 +429,29 @@ export default function DefectsPage() {
   });
 
   const allMeters = filtered.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+
+  // O(N) precomputed box counts to avoid O(N^2) inner render loops
+  const boxCounts = useMemo(() => {
+    const counts = {};
+    defectiveMeters.forEach(m => {
+      if (m.box_id && m.status !== "resolved") {
+        counts[m.box_id] = (counts[m.box_id] || 0) + 1;
+      }
+    });
+    return counts;
+  }, [defectiveMeters]);
+
+  const pageSize = 50;
+
+  // Reset pagination when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [filterStatus, defectsSearch, filterStartDate, filterEndDate]);
+
+  const totalPages = Math.ceil(allMeters.length / pageSize) || 1;
+  const paginatedMeters = useMemo(() => {
+    return allMeters.slice((currentPage - 1) * pageSize, currentPage * pageSize);
+  }, [allMeters, currentPage]);
 
   const formatDate = (iso) => {
     const d = new Date(iso);
@@ -1154,7 +1178,7 @@ export default function DefectsPage() {
                       {isRtl ? "لا توجد سجلات مطابقة" : "No matching records found"}
                     </td>
                   </tr>
-                ) : allMeters.map(m => {
+                ) : paginatedMeters.map(m => {
                   const err = m.error_code ? getErrorByCode(m.error_code) : null;
                   const trans = err ? translateError(err, isRtl) : null;
                   const sc = STATUS_CONFIG[m.status] || STATUS_CONFIG.pending;
@@ -1234,7 +1258,7 @@ export default function DefectsPage() {
                           >
                             <option value="">{isRtl ? "-- بلا صندوق --" : "-- No Box --"}</option>
                             {getEditModalBoxes(m.box_id).map(box => {
-                              const count = defectiveMeters.filter(x => x.box_id === box.id && x.status !== "resolved").length;
+                              const count = boxCounts[box.id] || 0;
                               const isFull = count >= box.size && m.box_id !== box.id;
                               return (
                                 <option key={box.id} value={box.id} disabled={isFull}>
@@ -1305,7 +1329,7 @@ export default function DefectsPage() {
             <div className="card" style={{ textAlign: "center", padding: "40px", color: "var(--text-muted)" }}>
               {isRtl ? "لا توجد سجلات مطابقة" : "No matching records found"}
             </div>
-          ) : allMeters.map(m => {
+          ) : paginatedMeters.map(m => {
             const err = m.error_code ? getErrorByCode(m.error_code) : null;
             const trans = err ? translateError(err, isRtl) : null;
             const sc = STATUS_CONFIG[m.status] || STATUS_CONFIG.pending;
@@ -1378,7 +1402,7 @@ export default function DefectsPage() {
                       >
                         <option value="">{isRtl ? "-- بلا صندوق --" : "-- No Box --"}</option>
                         {getEditModalBoxes(m.box_id).map(box => {
-                          const count = defectiveMeters.filter(x => x.box_id === box.id && x.status !== "resolved").length;
+                          const count = boxCounts[box.id] || 0;
                           const isFull = count >= box.size && m.box_id !== box.id;
                           return (
                             <option key={box.id} value={box.id} disabled={isFull}>
@@ -1431,6 +1455,38 @@ export default function DefectsPage() {
             );
           })}
         </div>
+
+        {/* Pagination Controls */}
+        {totalPages > 1 && (
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "12px 20px", background: "var(--bg-surface)", border: "1px solid var(--border)", borderRadius: "var(--radius-md)", marginTop: 12 }}>
+            <span style={{ fontSize: "0.85rem", color: "var(--text-secondary)" }}>
+              {isRtl 
+                ? `عرض ${(currentPage - 1) * pageSize + 1} - ${Math.min(currentPage * pageSize, allMeters.length)} من أصل ${allMeters.length} سجل` 
+                : `Showing ${(currentPage - 1) * pageSize + 1} - ${Math.min(currentPage * pageSize, allMeters.length)} of ${allMeters.length} records`}
+            </span>
+            <div style={{ display: "flex", gap: 8 }}>
+              <button 
+                className="btn btn-secondary btn-sm" 
+                disabled={currentPage === 1} 
+                style={{ margin: 0 }}
+                onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+              >
+                {isRtl ? "السابق" : "Previous"}
+              </button>
+              <span style={{ display: "flex", alignItems: "center", fontSize: "0.85rem", fontWeight: 700, padding: "0 8px" }}>
+                {currentPage} / {totalPages}
+              </span>
+              <button 
+                className="btn btn-secondary btn-sm" 
+                disabled={currentPage === totalPages} 
+                style={{ margin: 0 }}
+                onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+              >
+                {isRtl ? "التالي" : "Next"}
+              </button>
+            </div>
+          </div>
+        )}
         </>
         )}
 
@@ -1969,7 +2025,7 @@ export default function DefectsPage() {
                                 >
                                   <option value="">{isRtl ? "-- بلا صندوق --" : "-- No Box --"}</option>
                                   {getEditModalBoxes(m.box_id).map(box => {
-                                    const count = defectiveMeters.filter(x => x.box_id === box.id && x.status !== "resolved").length;
+                                    const count = boxCounts[box.id] || 0;
                                     const isFull = count >= box.size && m.box_id !== box.id;
                                     return (
                                       <option key={box.id} value={box.id} disabled={isFull}>
@@ -2163,7 +2219,7 @@ export default function DefectsPage() {
                 <select className="input" name="editBoxId" defaultValue={editingMeter.box_id || ""} style={{ background: "white" }}>
                   <option value="">{isRtl ? "-- بلا صندوق --" : "-- No Box --"}</option>
                   {getEditModalBoxes(editingMeter.box_id).map(box => {
-                    const count = defectiveMeters.filter(m => m.box_id === box.id && m.status !== "resolved").length;
+                    const count = boxCounts[box.id] || 0;
                     const isFull = count >= box.size && editingMeter.box_id !== box.id;
                     return (
                       <option key={box.id} value={box.id} disabled={isFull}>
