@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from "react";
 import { useApp } from "../context/AppContext";
-import { Users, Calendar, AlertTriangle, BarChart2, Shield, BookOpen, ChevronRight, CheckCircle, Clock, Layers, X, Search, ClipboardList, Wrench, Package, Plus } from "lucide-react";
+import { Users, Calendar, AlertTriangle, BarChart2, Shield, BookOpen, ChevronRight, CheckCircle, Clock, Layers, X, Search, ClipboardList, Wrench, Package, Plus, FileText } from "lucide-react";
 import MaintenancePage from "./MaintenancePage";
 import DefectsPage from "./DefectsPage";
 import { AssetsPanel } from "./AssetsPage";
@@ -12,6 +12,7 @@ import { translateError, TranslateText, TranslateSteps } from "./KnowledgeBasePa
 import { supabase } from "../supabaseClient";
 import * as XLSX from "xlsx";
 import CountdownTimer from "../components/CountdownTimer";
+import DefectsSummaryPanel from "../components/DefectsSummaryPanel";
 
 
 const STAGE_COLORS = { 
@@ -1657,6 +1658,7 @@ const getSidebarPanels = (isRtl, t) => [
   { id:"assets",     label: t("equipmentManagement"), icon:Package,      section: isRtl ? "الإدارة" : "Management" },
   { id:"schedule",   label: isRtl ? "جدول الورديات" : "Shift Schedules",     icon:Calendar,     section: isRtl ? "الإنتاج" : "Production" },
   { id:"defects",    label: isRtl ? "العدادات المعطوبة" : "Defective Meters", icon:AlertTriangle,section: isRtl ? "الإنتاج" : "Production" },
+  { id:"defects_summary", label: isRtl ? "تقرير الأعطال المجمع" : "Defects Summary Report", icon:FileText, section: isRtl ? "الإنتاج" : "Production" },
   { id:"errorcodes", label: isRtl ? "دليل الأعطال" : "Fault Codes Guide",      icon:BookOpen,     section: isRtl ? "الإنتاج" : "Production" },
   { id:"sop_reports", label: isRtl ? "بداية الإنتاج (SOP)" : "Start of Production (SOP)", icon:ClipboardList, section: isRtl ? "الإنتاج" : "Production" },
   { id:"maintenance", label: t("maintenance"),       icon:Wrench,       section: isRtl ? "الإنتاج" : "Production" },
@@ -1712,6 +1714,7 @@ export default function AdminPage() {
       case "assets":     return <AssetsPanel />;
       case "schedule":   return <ShiftSchedulesPanel />;
       case "defects":    return <DefectsPage />;
+      case "defects_summary": return <DefectsSummaryPanel />;
       case "errorcodes": return <ErrorCodesPanel />;
       case "sop_reports": return <SOPReportsPanel />;
       case "maintenance": return <MaintenancePage />;

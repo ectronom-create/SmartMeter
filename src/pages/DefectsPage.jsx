@@ -4,7 +4,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { ArrowRight, CheckCircle, Clock, AlertTriangle, X, Plus, AlertCircle, Search } from "lucide-react";
 import { translateError, TranslateText } from "./KnowledgeBasePage";
 import * as XLSX from "xlsx";
-import CountdownTimer from "../components/CountdownTimer";
+// CountdownTimer removed as resolved defects are kept in history
 
 const getStatusConfig = (isRtl) => ({
   reported: { label: isRtl ? "بلاغ جديد" : "New Report",           class: "badge-blue",   icon: <Plus size={11} /> },
@@ -78,6 +78,17 @@ export default function DefectsPage() {
   const [selectedEditCode, setSelectedEditCode] = useState(null);
   const [showEditResults, setShowEditResults] = useState(false);
   const [editFormMsg, setEditFormMsg] = useState(null);
+
+  // Resolution Modal State
+  const [resolutionModalOpen, setResolutionModalOpen] = useState(false);
+  const [resolutionMeterId, setResolutionMeterId] = useState(null);
+  const [resolutionType, setResolutionType] = useState("repaired"); // 'repaired', 'incorrect', 'custom'
+  const [resolutionComment, setResolutionComment] = useState("");
+
+  // Edit Defective Meter Resolution States
+  const [editStatusVal, setEditStatusVal] = useState("");
+  const [editResolutionType, setEditResolutionType] = useState("repaired");
+  const [editResolutionComment, setEditResolutionComment] = useState("");
 
   const visibleBoxes = useMemo(() => {
     if (!boxes) return [];
@@ -287,11 +298,47 @@ export default function DefectsPage() {
   }, [defectiveMeters, reviewSearch]);
 
   const handleStatusChange = (id, status, fromModal = false) => {
+    if (status === "resolved") {
+      setResolutionMeterId(id);
+      setResolutionType("repaired");
+      setResolutionComment("");
+      setResolutionModalOpen(true);
+      if (fromModal) {
+        setConfirmingId(null);
+        setNewStatus("");
+      }
+      return;
+    }
     updateMeterStatus(id, status);
     if (fromModal) {
       setConfirmingId(null);
       setNewStatus("");
     }
+  };
+
+  const handleConfirmResolution = async (e) => {
+    if (e) e.preventDefault();
+    if (!resolutionMeterId) return;
+
+    let actionTakenText = "";
+    if (resolutionType === "repaired") {
+      actionTakenText = isRtl ? "تم الإصلاح" : "Repaired";
+    } else if (resolutionType === "incorrect") {
+      actionTakenText = isRtl ? "بلاغ غير صحيح" : "Incorrect Report";
+    } else {
+      actionTakenText = isRtl ? "تعليق مخصص" : "Custom Comment";
+    }
+
+    if (resolutionComment.trim()) {
+      actionTakenText += ` · ${resolutionComment.trim()}`;
+    }
+
+    await updateMeterStatus(resolutionMeterId, "resolved", actionTakenText);
+    
+    setResolutionModalOpen(false);
+    setResolutionMeterId(null);
+    setResolutionType("repaired");
+    setResolutionComment("");
   };
 
   const filteredCodes = useMemo(() => {
@@ -415,6 +462,24 @@ export default function DefectsPage() {
     setSelectedEditCode(codeObj || null);
     setEditSearchQuery("");
     setEditFormMsg(null);
+    setEditStatusVal(meter.status);
+    
+    // Parse action_taken if it exists to prefill edit form
+    if (meter.action_taken) {
+      if (meter.action_taken.startsWith(isRtl ? "تم الإصلاح" : "Repaired")) {
+        setEditResolutionType("repaired");
+        setEditResolutionComment(meter.action_taken.replace(/^(تم الإصلاح|Repaired)\s*·\s*/, ""));
+      } else if (meter.action_taken.startsWith(isRtl ? "بلاغ غير صحيح" : "Incorrect Report")) {
+        setEditResolutionType("incorrect");
+        setEditResolutionComment(meter.action_taken.replace(/^(بلاغ غير صحيح|Incorrect Report)\s*·\s*/, ""));
+      } else {
+        setEditResolutionType("custom");
+        setEditResolutionComment(meter.action_taken.replace(/^(تعليق مخصص|Custom Comment)\s*·\s*/, ""));
+      }
+    } else {
+      setEditResolutionType("repaired");
+      setEditResolutionComment("");
+    }
     setEditModalOpen(true);
   };
 
@@ -485,13 +550,27 @@ export default function DefectsPage() {
       status: status
     };
 
-    // If resolving, set resolved_at and resolved_by
-    if (status === "resolved" && editingMeter.status !== "resolved") {
+    // If resolving, set resolved_at, resolved_by, and action_taken
+    if (status === "resolved") {
       updatedFields.resolved_at = new Date().toISOString();
       updatedFields.resolved_by = currentUser?.employee_id || null;
-    } else if (status !== "resolved" && editingMeter.status === "resolved") {
+      
+      let actionText = "";
+      if (editResolutionType === "repaired") {
+        actionText = isRtl ? "تم الإصلاح" : "Repaired";
+      } else if (editResolutionType === "incorrect") {
+        actionText = isRtl ? "بلاغ غير صحيح" : "Incorrect Report";
+      } else {
+        actionText = isRtl ? "تعليق مخصص" : "Custom Comment";
+      }
+      if (editResolutionComment.trim()) {
+        actionText += ` · ${editResolutionComment.trim()}`;
+      }
+      updatedFields.action_taken = actionText;
+    } else {
       updatedFields.resolved_at = null;
       updatedFields.resolved_by = null;
+      updatedFields.action_taken = null;
     }
 
     const res = await updateDefectiveMeter(editingMeter.id, updatedFields);
@@ -1036,8 +1115,10 @@ export default function DefectsPage() {
                       </td>
                       <td>
                         <span className={`badge ${sc.class}`} style={{ whiteSpace: "nowrap" }}>{sc.icon} {sc.label}</span>
-                        {m.status === "resolved" && (
-                          <CountdownTimer resolvedAt={m.resolved_at} isRtl={isRtl} />
+                        {m.status === "resolved" && m.action_taken && (
+                          <div style={{ fontSize: "0.75rem", color: "var(--accent)", marginTop: 4, fontStyle: "italic", whiteSpace: "normal", maxWidth: 180 }}>
+                            {m.action_taken}
+                          </div>
                         )}
                       </td>
                       <td>
@@ -1229,9 +1310,13 @@ export default function DefectsPage() {
                   {m.status === "resolved" && (
                     <div style={{ marginTop: 8, display: "flex", flexDirection: "column", gap: 6 }}>
                       <div className="defect-card-desc" style={{ background: "rgba(16, 185, 129, 0.08)", border: "1px solid rgba(16, 185, 129, 0.2)", padding: 8, borderRadius: 6, margin: 0 }}>
-                        <strong>{isRtl ? "المعالج:" : "Resolved By:"}</strong> {getUserById(m.resolved_by)?.full_name || m.resolved_by || "System"}
+                        <div><strong>{isRtl ? "المعالج:" : "Resolved By:"}</strong> {getUserById(m.resolved_by)?.full_name || m.resolved_by || "System"}</div>
+                        {m.action_taken && (
+                          <div style={{ marginTop: 4, fontStyle: "italic", color: "var(--accent)", fontSize: "0.8rem" }}>
+                            <strong>{isRtl ? "الإجراء:" : "Action:"}</strong> {m.action_taken}
+                          </div>
+                        )}
                       </div>
-                      <CountdownTimer resolvedAt={m.resolved_at} isRtl={isRtl} />
                     </div>
                   )}
                 </div>
@@ -2001,13 +2086,73 @@ export default function DefectsPage() {
 
               <div className="input-group">
                 <label className="input-label">{isRtl ? "الحالة *" : "Status *"}</label>
-                <select className="input" name="editStatus" defaultValue={editingMeter.status} style={{ background: "white" }} required>
+                <select 
+                  className="input" 
+                  name="editStatus" 
+                  value={editStatusVal} 
+                  onChange={e => setEditStatusVal(e.target.value)} 
+                  style={{ background: "white" }} 
+                  required
+                >
                   <option value="reported">{isRtl ? "بلاغ جديد" : "New Report"}</option>
                   <option value="pending">{isRtl ? "قيد الانتظار" : "Pending Review"}</option>
                   <option value="verified">{isRtl ? "تم التحقق (معطوب)" : "Verified Defective"}</option>
                   <option value="resolved">{isRtl ? "يعود لخط الانتاج" : "Returned to Line"}</option>
                 </select>
               </div>
+
+              {editStatusVal === "resolved" && (
+                <div className="animate-fade" style={{ background: "var(--bg-elevated)", padding: 12, borderRadius: 8, display: "flex", flexDirection: "column", gap: 12, border: "1px dashed var(--border)" }}>
+                  <div className="input-group" style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                    <label className="input-label" style={{ fontWeight: 700 }}>{isRtl ? "إجراء الحل الرئيسي *" : "Resolution Action *"}</label>
+                    <label style={{ display: "flex", alignItems: "center", gap: 6, cursor: "pointer", fontSize: "0.85rem" }}>
+                      <input 
+                        type="radio" 
+                        name="editResType" 
+                        value="repaired" 
+                        checked={editResolutionType === "repaired"} 
+                        onChange={() => setEditResolutionType("repaired")} 
+                      />
+                      <span>🛠️ {isRtl ? "تم الإصلاح" : "Repaired"}</span>
+                    </label>
+                    <label style={{ display: "flex", alignItems: "center", gap: 6, cursor: "pointer", fontSize: "0.85rem" }}>
+                      <input 
+                        type="radio" 
+                        name="editResType" 
+                        value="incorrect" 
+                        checked={editResolutionType === "incorrect"} 
+                        onChange={() => setEditResolutionType("incorrect")} 
+                      />
+                      <span>⚠️ {isRtl ? "بلاغ غير صحيح" : "Incorrect Report"}</span>
+                    </label>
+                    <label style={{ display: "flex", alignItems: "center", gap: 6, cursor: "pointer", fontSize: "0.85rem" }}>
+                      <input 
+                        type="radio" 
+                        name="editResType" 
+                        value="custom" 
+                        checked={editResolutionType === "custom"} 
+                        onChange={() => setEditResolutionType("custom")} 
+                      />
+                      <span>✍️ {isRtl ? "ملاحظة مخصصة أخرى" : "Custom Comment"}</span>
+                    </label>
+                  </div>
+
+                  <div className="input-group">
+                    <label className="input-label" style={{ fontWeight: 700 }}>
+                      {isRtl ? "ملاحظات إضافية" : "Resolution Notes"} 
+                      {editResolutionType === "custom" ? " *" : ""}
+                    </label>
+                    <input 
+                      className="input" 
+                      value={editResolutionComment} 
+                      onChange={e => setEditResolutionComment(e.target.value)} 
+                      placeholder={isRtl ? "اكتب الملاحظات..." : "Enter comments..."} 
+                      required={editResolutionType === "custom"}
+                      style={{ background: "white", padding: "6px 10px", fontSize: "0.85rem" }} 
+                    />
+                  </div>
+                </div>
+              )}
 
               <div className="input-group">
                 <label className="input-label">{isRtl ? "ملاحظات إضافية" : "Optional Comments"}</label>
@@ -2026,6 +2171,94 @@ export default function DefectsPage() {
                 </button>
                 <button type="submit" className="btn btn-primary" style={{ background: "var(--accent)" }}>
                   {isRtl ? "حفظ التعديلات" : "Save Changes"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Resolution Detail Modal */}
+      {resolutionModalOpen && (
+        <div className="modal-overlay" style={{ zIndex: 1000 }}>
+          <div className="modal-content animate-scale" style={{ maxWidth: 500, padding: 24, display: "flex", flexDirection: "column", gap: 16 }}>
+            <div className="modal-header" style={{ paddingBottom: 12, borderBottom: "1px solid var(--border-subtle)", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <h3 style={{ margin: 0 }}>
+                {isRtl ? "تأكيد إعادة العداد لخط الإنتاج" : "Confirm Returning Meter to Production"}
+              </h3>
+              <button className="btn-close" onClick={() => { setResolutionModalOpen(false); setResolutionMeterId(null); }} style={{ background: "none", border: "none", cursor: "pointer", fontSize: "1.2rem" }}>✕</button>
+            </div>
+
+            <form onSubmit={handleConfirmResolution} style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+              <div>
+                <p style={{ margin: 0, fontSize: "0.9rem", color: "var(--text-secondary)" }}>
+                  {isRtl ? "يرجى تحديد سبب الإعادة لخط الإنتاج وكتابة أي ملاحظات:" : "Please select the return reason and write comments:"}
+                </p>
+              </div>
+
+              {/* Radio options for return type */}
+              <div className="input-group" style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                <label className="input-label" style={{ fontWeight: 700 }}>{isRtl ? "السبب الرئيسي *" : "Primary Reason *"}</label>
+                
+                <label style={{ display: "flex", alignItems: "center", gap: 8, cursor: "pointer", fontSize: "0.9rem" }}>
+                  <input 
+                    type="radio" 
+                    name="resType" 
+                    value="repaired" 
+                    checked={resolutionType === "repaired"} 
+                    onChange={() => setResolutionType("repaired")} 
+                  />
+                  <span>🛠️ {isRtl ? "تم الإصلاح بنجاح" : "Successfully Repaired"}</span>
+                </label>
+
+                <label style={{ display: "flex", alignItems: "center", gap: 8, cursor: "pointer", fontSize: "0.9rem" }}>
+                  <input 
+                    type="radio" 
+                    name="resType" 
+                    value="incorrect" 
+                    checked={resolutionType === "incorrect"} 
+                    onChange={() => setResolutionType("incorrect")} 
+                  />
+                  <span>⚠️ {isRtl ? "بلاغ عطل غير صحيح / خاطئ" : "Incorrect / False Fault Report"}</span>
+                </label>
+
+                <label style={{ display: "flex", alignItems: "center", gap: 8, cursor: "pointer", fontSize: "0.9rem" }}>
+                  <input 
+                    type="radio" 
+                    name="resType" 
+                    value="custom" 
+                    checked={resolutionType === "custom"} 
+                    onChange={() => setResolutionType("custom")} 
+                  />
+                  <span>✍️ {isRtl ? "ملاحظة مخصصة أخرى" : "Other Custom Comment"}</span>
+                </label>
+              </div>
+
+              {/* Textarea for comments */}
+              <div className="input-group">
+                <label className="input-label" style={{ fontWeight: 700 }}>
+                  {isRtl ? "ملاحظات وتفاصيل إضافية" : "Additional Details & Notes"} 
+                  {resolutionType === "custom" ? " *" : ""}
+                </label>
+                <textarea 
+                  className="input" 
+                  rows={3}
+                  value={resolutionComment} 
+                  onChange={e => setResolutionComment(e.target.value)} 
+                  placeholder={isRtl ? "اكتب الملاحظات هنا..." : "Type notes here..."}
+                  required={resolutionType === "custom"}
+                  style={{ background: "white", resize: "none", padding: "8px 12px" }}
+                />
+              </div>
+
+              <div className="divider" style={{ margin: "8px 0" }} />
+
+              <div style={{ display: "flex", gap: 12, justifyContent: "flex-end" }}>
+                <button type="button" className="btn btn-secondary" onClick={() => { setResolutionModalOpen(false); setResolutionMeterId(null); }}>
+                  {isRtl ? "إلغاء" : "Cancel"}
+                </button>
+                <button type="submit" className="btn btn-primary" style={{ background: "var(--accent)", color: "white" }}>
+                  ✅ {isRtl ? "تأكيد وإعادة" : "Confirm & Return"}
                 </button>
               </div>
             </form>

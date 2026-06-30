@@ -16,6 +16,7 @@ const PANELS_LIST = [
   { id: "assets", labelAr: "إدارة المعدات", labelEn: "Equipment Management" },
   { id: "schedule", labelAr: "جدول الورديات", labelEn: "Shift Schedules" },
   { id: "defects", labelAr: "العدادات المعطوبة", labelEn: "Defective Meters" },
+  { id: "defects_summary", labelAr: "تقرير الأعطال المجمع", labelEn: "Defects Summary" },
   { id: "errorcodes", labelAr: "دليل الأعطال", labelEn: "Fault Codes Guide" },
   { id: "sop_reports", labelAr: "بداية الإنتاج (SOP)", labelEn: "Start of Production (SOP)" },
   { id: "maintenance", labelAr: "الصيانة", labelEn: "Maintenance" }

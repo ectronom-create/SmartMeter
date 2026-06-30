@@ -879,7 +879,7 @@ export function AppProvider({ children }) {
     }
   }, [defectiveMeters, errorCodes, addDefectLog, currentUser]);
 
-  const updateMeterStatus = useCallback(async (id, status) => {
+  const updateMeterStatus = useCallback(async (id, status, actionTaken = null) => {
     const resolved_at = new Date().toISOString();
     const resolved_by = currentUser?.employee_id || null;
     const oldMeter = defectiveMeters.find(m => m.id === id);
@@ -887,9 +887,13 @@ export function AppProvider({ children }) {
     const serialNumber = oldMeter ? oldMeter.serial_number : "UNKNOWN";
 
     try {
-      const { error } = await supabase.from("defective_meters").update({ status, resolved_at, resolved_by }).eq("id", id);
+      const updateData = { status, resolved_at, resolved_by };
+      if (actionTaken !== null) {
+        updateData.action_taken = actionTaken;
+      }
+      const { error } = await supabase.from("defective_meters").update(updateData).eq("id", id);
       if (error) throw error;
-      setDefectiveMeters(prev => prev.map(m => m.id === id ? { ...m, status, resolved_at, resolved_by } : m));
+      setDefectiveMeters(prev => prev.map(m => m.id === id ? { ...m, ...updateData } : m));
 
       // Log status change
       addDefectLog({
@@ -1249,37 +1253,10 @@ export function AppProvider({ children }) {
     employee: getUserById(sch.employee_id),
   }), [getStageById, getShiftById, getUserById]);
 
-  // Polling interval to automatically delete resolved meters after 5 minutes
+  // Disable automatic deletion of resolved meters to keep history intact
   useEffect(() => {
-    const checkAndCleanup = async () => {
-      const now = Date.now();
-      const FIVE_MINUTES = 5 * 60 * 1000;
-      const expiredIds = [];
-
-      defectiveMeters.forEach(m => {
-        if (m.status === "resolved" && m.resolved_at) {
-          const age = now - new Date(m.resolved_at).getTime();
-          if (age >= FIVE_MINUTES) {
-            expiredIds.push(m.id);
-          }
-        }
-      });
-
-      if (expiredIds.length > 0) {
-        // Optimistically update local state first
-        setDefectiveMeters(prev => prev.filter(m => !expiredIds.includes(m.id)));
-        try {
-          const { error } = await supabase.from("defective_meters").delete().in("id", expiredIds);
-          if (error) throw error;
-        } catch (err) {
-          console.error("Supabase timer defect cleanup error:", err);
-        }
-      }
-    };
-
-    const interval = setInterval(checkAndCleanup, 10000); // Check every 10 seconds
-    return () => clearInterval(interval);
-  }, [defectiveMeters]);
+    // Keep resolved meters history in database as per user request
+  }, []);
 
   // Global loading overlay to prevent interacting with empty tables
   if (isLoading) {
