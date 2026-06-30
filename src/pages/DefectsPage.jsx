@@ -55,6 +55,8 @@ export default function DefectsPage() {
   };
   
   const [filterStatus, setFilterStatus] = useState("all");
+  const [filterStartDate, setFilterStartDate] = useState("");
+  const [filterEndDate, setFilterEndDate] = useState("");
   const [defectsSearch, setDefectsSearch] = useState("");
   const [submitMsg, setSubmitMsg] = useState(null);
   const [importStatus, setImportStatus] = useState(null);
@@ -390,6 +392,17 @@ export default function DefectsPage() {
   const filtered = defectiveMeters.filter(m => {
     const matchesStatus = filterStatus === "all" ? true : m.status === filterStatus;
     if (!matchesStatus) return false;
+
+    // Date filters
+    if (filterStartDate && m.created_at) {
+      const mDate = m.created_at.substring(0, 10);
+      if (mDate < filterStartDate) return false;
+    }
+    if (filterEndDate && m.created_at) {
+      const mDate = m.created_at.substring(0, 10);
+      if (mDate > filterEndDate) return false;
+    }
+
     if (!defectsSearch.trim()) return true;
     const q = defectsSearch.toLowerCase();
     const err = m.error_code ? getErrorByCode(m.error_code) : null;
@@ -1079,6 +1092,36 @@ export default function DefectsPage() {
                 left: !isRtl ? 10 : "auto",
                 top: "50%", transform: "translateY(-50%)", color: "var(--text-muted)"
               }} />
+            </div>
+
+            {/* Date Range Selector */}
+            <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
+              <input 
+                type="date"
+                className="input"
+                style={{ height: "36px", fontSize: "0.82rem", background: "white", padding: "6px 10px", width: "135px" }}
+                value={filterStartDate}
+                onChange={e => setFilterStartDate(e.target.value)}
+                placeholder={isRtl ? "من تاريخ" : "From Date"}
+              />
+              <span style={{ fontSize: "0.8rem", color: "var(--text-secondary)" }}>{isRtl ? "إلى" : "to"}</span>
+              <input 
+                type="date"
+                className="input"
+                style={{ height: "36px", fontSize: "0.82rem", background: "white", padding: "6px 10px", width: "135px" }}
+                value={filterEndDate}
+                onChange={e => setFilterEndDate(e.target.value)}
+                placeholder={isRtl ? "إلى تاريخ" : "To Date"}
+              />
+              {(filterStartDate || filterEndDate) && (
+                <button 
+                  className="btn btn-ghost btn-sm"
+                  style={{ color: "var(--red)", padding: "4px 8px", fontSize: "0.75rem", margin: 0 }}
+                  onClick={() => { setFilterStartDate(""); setFilterEndDate(""); }}
+                >
+                  {isRtl ? "إعادة تعيين" : "Reset"}
+                </button>
+              )}
             </div>
           </div>
           <div className="badge badge-gray" style={{ flexShrink: 0 }}>{isRtl ? "إجمالي السجلات:" : "Total Logs:"} {allMeters.length}</div>
