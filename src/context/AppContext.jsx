@@ -910,6 +910,31 @@ export function AppProvider({ children }) {
     }
   }, [defectiveMeters, currentUser, addDefectLog]);
 
+  const deleteDefectiveMeter = useCallback(async (id) => {
+    const meter = defectiveMeters.find(m => m.id === id);
+    const serialNumber = meter ? meter.serial_number : "UNKNOWN";
+    try {
+      const { error } = await supabase.from("defective_meters").delete().eq("id", id);
+      if (error) throw error;
+      setDefectiveMeters(prev => prev.filter(m => m.id !== id));
+      
+      // Log delete action in history
+      addDefectLog({
+        defect_id: id,
+        serial_number: serialNumber,
+        action_type: "delete_defect",
+        old_status: meter ? meter.status : null,
+        new_status: "deleted",
+        performed_by: currentUser?.employee_id,
+        performed_by_name: currentUser?.full_name || "User"
+      });
+      return { success: true };
+    } catch (err) {
+      console.error("Supabase delete defect error:", err);
+      return { success: false, message: err.message };
+    }
+  }, [defectiveMeters, currentUser, addDefectLog]);
+
   const updateDefectiveMeter = useCallback(async (id, updatedFields) => {
     const oldMeter = defectiveMeters.find(m => m.id === id);
     if (!oldMeter) return { success: false, message: "Meter not found" };
@@ -1278,7 +1303,7 @@ export function AppProvider({ children }) {
     productionStages, addStage, updateStage, deleteStage,
     errorCodes, addErrorCode, updateErrorCode, deleteErrorCode, addErrorCodesBulk,
     getStageById, getShiftById, getUserById, getScheduleWithDetails,
-    defectiveMeters, addDefectiveMeter, addDefectiveMetersBulk, updateMeterStatus, updateDefectiveMeter,
+    defectiveMeters, addDefectiveMeter, addDefectiveMetersBulk, updateMeterStatus, updateDefectiveMeter, deleteDefectiveMeter,
     defectLogs, addDefectLog,
     searchErrorCodes, getErrorByCode,
     equipmentStock, addEquipmentStock, updateEquipmentStock, deleteEquipmentItem, restockEquipment,

@@ -27,7 +27,7 @@ export default function DefectsPage() {
   const navigate = useNavigate();
   const location = useLocation();
   const { 
-    defectiveMeters, currentUser, updateMeterStatus, updateDefectiveMeter,
+    defectiveMeters, currentUser, updateMeterStatus, updateDefectiveMeter, deleteDefectiveMeter,
     getErrorByCode, addDefectiveMeter, addDefectiveMetersBulk, currentStage, errorCodes, language,
     defectLogs, getUserById,
     boxes, addBox, updateBox, deleteBox, assignMeterToBox
@@ -356,6 +356,19 @@ export default function DefectsPage() {
     setResolutionMeterId(null);
     setResolutionType("repaired");
     setResolutionComment("");
+  };
+
+  const handleDeleteDefect = async (id, serialNumber) => {
+    const confirmMsg = isRtl 
+      ? `هل أنت متأكد من حذف العداد المعطوب رقم: ${serialNumber} نهائياً؟` 
+      : `Are you sure you want to permanently delete defective meter: ${serialNumber}?`;
+      
+    if (confirm(confirmMsg)) {
+      const res = await deleteDefectiveMeter(id);
+      if (res && !res.success) {
+        alert(res.message);
+      }
+    }
   };
 
   const filteredCodes = useMemo(() => {
@@ -1215,13 +1228,24 @@ export default function DefectsPage() {
                       )}
                       {["supervisor", "quality_management", "admin"].includes(currentUser.role) && (
                         <td>
-                          <button
-                            className="btn btn-secondary btn-sm"
-                            style={{ padding: "4px 10px", fontSize: "0.8rem", display: "inline-flex", alignItems: "center", gap: 4, margin: 0, whiteSpace: "nowrap" }}
-                            onClick={() => handleStartEdit(m)}
-                          >
-                            ✏️ {isRtl ? "تعديل" : "Edit"}
-                          </button>
+                          <div style={{ display: "flex", gap: 6 }}>
+                            <button
+                              className="btn btn-secondary btn-sm"
+                              style={{ padding: "4px 10px", fontSize: "0.8rem", display: "inline-flex", alignItems: "center", gap: 4, margin: 0, whiteSpace: "nowrap" }}
+                              onClick={() => handleStartEdit(m)}
+                            >
+                              ✏️ {isRtl ? "تعديل" : "Edit"}
+                            </button>
+                            {currentUser.role === "admin" && (
+                              <button
+                                className="btn btn-danger btn-sm"
+                                style={{ padding: "4px 10px", fontSize: "0.8rem", display: "inline-flex", alignItems: "center", gap: 4, margin: 0, whiteSpace: "nowrap", background: "var(--red)", color: "white" }}
+                                onClick={() => handleDeleteDefect(m.id, m.serial_number)}
+                              >
+                                🗑️ {isRtl ? "حذف" : "Delete"}
+                              </button>
+                            )}
+                          </div>
                         </td>
                       )}
                     </tr>
@@ -1340,21 +1364,24 @@ export default function DefectsPage() {
                     </div>
                   )}
                 </div>
-                
                 {["supervisor", "quality_management", "admin"].includes(currentUser.role) && (
-                  <div className="defect-card-actions">
-                    <label>{isRtl ? "تعديل حالة العداد" : "Change Status"}</label>
-                    <select
-                      className="input"
-                      value={m.status}
-                      onChange={e => handleStatusChange(m.id, e.target.value)}
-                      style={{ padding: "8px 10px", fontSize: "0.85rem" }}
+                  <div className="defect-card-actions" style={{ display: "flex", gap: 8, marginTop: 8 }}>
+                    <button
+                      className="btn btn-secondary btn-sm"
+                      style={{ flex: 1, padding: "6px", fontSize: "0.8rem", display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 4, margin: 0 }}
+                      onClick={() => handleStartEdit(m)}
                     >
-                      <option value="reported">{isRtl ? "بلاغ جديد" : "New Report"}</option>
-                      <option value="pending">{isRtl ? "قيد الانتظار" : "Pending Review"}</option>
-                      <option value="verified">{isRtl ? "تم التحقق (معطوب)" : "Verified Defective"}</option>
-                      <option value="resolved">{isRtl ? "يعود لخط الانتاج" : "Returned to Line"}</option>
-                    </select>
+                      ✏️ {isRtl ? "تعديل" : "Edit"}
+                    </button>
+                    {currentUser.role === "admin" && (
+                      <button
+                        className="btn btn-danger btn-sm"
+                        style={{ flex: 1, padding: "6px", fontSize: "0.8rem", display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 4, margin: 0, background: "var(--red)", color: "white" }}
+                        onClick={() => handleDeleteDefect(m.id, m.serial_number)}
+                      >
+                        🗑️ {isRtl ? "حذف" : "Delete"}
+                      </button>
+                    )}
                   </div>
                 )}
               </div>
