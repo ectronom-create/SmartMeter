@@ -36,6 +36,23 @@ export default function DefectsPage() {
   const isRtl = language === "ar";
   const STATUS_CONFIG = getStatusConfig(isRtl);
   const stageNames = getStageNames(isRtl);
+
+  const translateActionTaken = (actionStr, isRtlVal) => {
+    if (!actionStr) return "";
+    const parts = actionStr.split(" · ");
+    let prefix = parts[0];
+    const comment = parts.slice(1).join(" · ");
+    
+    if (prefix === "Repaired" || prefix === "تم الإصلاح") {
+      prefix = isRtlVal ? "تم الإصلاح" : "Repaired";
+    } else if (prefix === "Incorrect Report" || prefix === "بلاغ غير صحيح") {
+      prefix = isRtlVal ? "بلاغ غير صحيح" : "Incorrect Report";
+    } else if (prefix === "Custom Comment" || prefix === "تعليق مخصص") {
+      prefix = isRtlVal ? "تعليق مخصص" : "Custom Comment";
+    }
+    
+    return comment ? `${prefix} · ${comment}` : prefix;
+  };
   
   const [filterStatus, setFilterStatus] = useState("all");
   const [defectsSearch, setDefectsSearch] = useState("");
@@ -464,12 +481,15 @@ export default function DefectsPage() {
     setEditFormMsg(null);
     setEditStatusVal(meter.status);
     
-    // Parse action_taken if it exists to prefill edit form
+    // Parse action_taken if it exists to prefill edit form language-agnostically
     if (meter.action_taken) {
-      if (meter.action_taken.startsWith(isRtl ? "تم الإصلاح" : "Repaired")) {
+      const isRepaired = meter.action_taken.startsWith("تم الإصلاح") || meter.action_taken.startsWith("Repaired");
+      const isIncorrect = meter.action_taken.startsWith("بلاغ غير صحيح") || meter.action_taken.startsWith("Incorrect Report");
+
+      if (isRepaired) {
         setEditResolutionType("repaired");
         setEditResolutionComment(meter.action_taken.replace(/^(تم الإصلاح|Repaired)\s*·\s*/, ""));
-      } else if (meter.action_taken.startsWith(isRtl ? "بلاغ غير صحيح" : "Incorrect Report")) {
+      } else if (isIncorrect) {
         setEditResolutionType("incorrect");
         setEditResolutionComment(meter.action_taken.replace(/^(بلاغ غير صحيح|Incorrect Report)\s*·\s*/, ""));
       } else {
@@ -1117,7 +1137,7 @@ export default function DefectsPage() {
                         <span className={`badge ${sc.class}`} style={{ whiteSpace: "nowrap" }}>{sc.icon} {sc.label}</span>
                         {m.status === "resolved" && m.action_taken && (
                           <div style={{ fontSize: "0.75rem", color: "var(--accent)", marginTop: 4, fontStyle: "italic", whiteSpace: "normal", maxWidth: 180 }}>
-                            {m.action_taken}
+                            {translateActionTaken(m.action_taken, isRtl)}
                           </div>
                         )}
                       </td>
@@ -1313,7 +1333,7 @@ export default function DefectsPage() {
                         <div><strong>{isRtl ? "المعالج:" : "Resolved By:"}</strong> {getUserById(m.resolved_by)?.full_name || m.resolved_by || "System"}</div>
                         {m.action_taken && (
                           <div style={{ marginTop: 4, fontStyle: "italic", color: "var(--accent)", fontSize: "0.8rem" }}>
-                            <strong>{isRtl ? "الإجراء:" : "Action:"}</strong> {m.action_taken}
+                            <strong>{isRtl ? "الإجراء:" : "Action:"}</strong> {translateActionTaken(m.action_taken, isRtl)}
                           </div>
                         )}
                       </div>
