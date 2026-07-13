@@ -880,16 +880,19 @@ export function AppProvider({ children }) {
   }, [defectiveMeters, errorCodes, addDefectLog, currentUser]);
 
   const updateMeterStatus = useCallback(async (id, status, actionTaken = null) => {
-    const resolved_at = new Date().toISOString();
-    const resolved_by = currentUser?.employee_id || null;
     const oldMeter = defectiveMeters.find(m => m.id === id);
     const oldStatus = oldMeter ? oldMeter.status : null;
     const serialNumber = oldMeter ? oldMeter.serial_number : "UNKNOWN";
+
+    const resolved_at = status === "resolved" ? new Date().toISOString() : null;
+    const resolved_by = status === "resolved" ? (currentUser?.employee_id || null) : null;
 
     try {
       const updateData = { status, resolved_at, resolved_by };
       if (actionTaken !== null) {
         updateData.action_taken = actionTaken;
+      } else if (status !== "resolved") {
+        updateData.action_taken = null;
       }
       const { error } = await supabase.from("defective_meters").update(updateData).eq("id", id);
       if (error) throw error;

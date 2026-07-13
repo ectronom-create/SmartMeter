@@ -311,6 +311,10 @@ export default function DefectsPage() {
     }
   }, [location]);
 
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [filterStatus, defectsSearch, filterStartDate, filterEndDate]);
+
   const pendingMeters = useMemo(() => {
     const list = defectiveMeters.filter(m => m.status === "pending");
     if (!reviewSearch.trim()) return list;

@@ -27,7 +27,52 @@ export default function DefectsSummaryPanel() {
   const [endDate, setEndDate] = useState("");
   const [selectedStage, setSelectedStage] = useState("ALL");
   const [selectedCode, setSelectedCode] = useState("ALL");
+  const [selectedSupplier, setSelectedSupplier] = useState("ALL");
   const [searchTerm, setSearchTerm] = useState("");
+
+  // Supplier helper
+  const getSupplier = (m) => {
+    const sn = (m.serial_number || "").toUpperCase();
+    const neSn = (m.ne_serial_number || "").toUpperCase();
+    if (sn.startsWith("NE") || neSn.startsWith("NE")) {
+      return "Ningbo East (NE)";
+    }
+    if (sn.startsWith("4552") || neSn.startsWith("4552")) {
+      return "Kaifa (4552)";
+    }
+    if (neSn.startsWith("BNR")) {
+      return "BNR";
+    }
+    return "Other";
+  };
+
+  const getStageColor = (stageId) => {
+    const colors = {
+      "STG-01": "#f97316",
+      "STG-02": "#4f46e5",
+      "STG-03": "#06b6d4",
+      "STG-04": "#10b981",
+      "STG-05": "#8b5cf6",
+      "STG-06": "#ec4899",
+      "GLOBAL": "#6366f1",
+      "—": "#6b7280"
+    };
+    return colors[stageId] || "#6366f1";
+  };
+
+  const getStageIcon = (stageId) => {
+    const icons = {
+      "STG-01": "⚙️",
+      "STG-02": "🛡️",
+      "STG-03": "📡",
+      "STG-04": "⚖️",
+      "STG-05": "🧪",
+      "STG-06": "🏷️",
+      "GLOBAL": "🌐",
+      "—": "❓"
+    };
+    return icons[stageId] || "⚙️";
+  };
 
   // Stage translator helper
   const getStageLabel = (stageId) => {
@@ -75,9 +120,15 @@ export default function DefectsSummaryPanel() {
       // Error code filter
       if (selectedCode !== "ALL" && m.error_code !== selectedCode) return false;
 
+      // Supplier filter
+      if (selectedSupplier !== "ALL") {
+        const sup = getSupplier(m);
+        if (sup !== selectedSupplier) return false;
+      }
+
       return true;
     });
-  }, [defectiveMeters, startDate, endDate, selectedStage, selectedCode]);
+  }, [defectiveMeters, startDate, endDate, selectedStage, selectedCode, selectedSupplier]);
 
   // 2. Compute Top Level Aggregates (Stats Widgets) based on filtered list
   const stats = useMemo(() => {
@@ -88,6 +139,39 @@ export default function DefectsSummaryPanel() {
 
     return { total, verified, pending, resolved };
   }, [filteredMeters]);
+
+  // Compute Stage Distribution based on filtered data
+  const stageDistribution = useMemo(() => {
+    const counts = {};
+    
+    // Initialize all possible stages for a complete/consistent view
+    const knownStages = ["STG-01", "STG-02", "STG-03", "STG-04", "STG-05", "STG-06", "GLOBAL"];
+    knownStages.forEach(stageId => {
+      counts[stageId] = 0;
+    });
+
+    let totalFiltered = 0;
+    filteredMeters.forEach(m => {
+      const stageId = m.stage_found || "—";
+      if (stageId in counts) {
+        counts[stageId] += 1;
+      } else {
+        counts[stageId] = 1;
+      }
+      totalFiltered++;
+    });
+
+    return Object.entries(counts).map(([stageId, count]) => {
+      const percentage = totalFiltered > 0 ? ((count / totalFiltered) * 100).toFixed(1) : "0.0";
+      return {
+        stageId,
+        count,
+        percentage: parseFloat(percentage),
+        label: getStageLabel(stageId),
+        color: getStageColor(stageId)
+      };
+    }).sort((a, b) => b.count - a.count);
+  }, [filteredMeters, language]);
 
   // 3. Group the Filtered Meters by Date, Code, and Stage
   const groupedList = useMemo(() => {
@@ -203,6 +287,7 @@ export default function DefectsSummaryPanel() {
     setEndDate("");
     setSelectedStage("ALL");
     setSelectedCode("ALL");
+    setSelectedSupplier("ALL");
     setSearchTerm("");
   };
 
@@ -271,6 +356,70 @@ export default function DefectsSummaryPanel() {
         </div>
       </div>
 
+      {/* Stage Distribution Dashboard */}
+      <div className="card animate-fade" style={{ background: "var(--card-bg)", border: "1px solid var(--border-subtle)", padding: "20px" }}>
+        <h3 style={{ margin: "0 0 16px 0", fontSize: "1.1rem", fontWeight: 700, display: "flex", alignItems: "center", gap: 8, color: "var(--text-main)" }}>
+          <Layers size={18} color="var(--accent)" />
+          {isRtl ? "توزيع الأعطال على مراحل الإنتاج" : "Defects Distribution across Stages"}
+        </h3>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))", gap: 16 }}>
+          {stageDistribution.map(stage => {
+            if (stage.stageId === "—" && stage.count === 0) return null;
+            return (
+              <div 
+                key={stage.stageId} 
+                style={{ 
+                  background: "var(--bg-secondary)", 
+                  borderRadius: "8px", 
+                  padding: "12px", 
+                  border: "1px solid var(--border-subtle)", 
+                  display: "flex", 
+                  flexDirection: "column", 
+                  gap: 8,
+                  position: "relative",
+                  overflow: "hidden"
+                }}
+              >
+                {/* Visual indicator bar at the top */}
+                <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: "3px", background: stage.color }} />
+                
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                  <span style={{ fontSize: "0.85rem", fontWeight: 700, color: "var(--text-main)", display: "flex", alignItems: "center", gap: 6 }}>
+                    <span style={{ fontSize: "1.1rem" }}>{getStageIcon(stage.stageId)}</span>
+                    {stage.label}
+                  </span>
+                  <span className="badge badge-gray" style={{ fontWeight: 800, fontSize: "0.78rem" }}>
+                    {stage.percentage}%
+                  </span>
+                </div>
+                
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginTop: 4 }}>
+                  <span style={{ fontSize: "1.3rem", fontWeight: 800, color: stage.count > 0 ? "var(--text-main)" : "var(--text-muted)" }}>
+                    {stage.count}
+                  </span>
+                  <span style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>
+                    {isRtl ? "عداد معطوب" : "meters"}
+                  </span>
+                </div>
+
+                {/* Progress Bar Container */}
+                <div style={{ background: "rgba(0,0,0,0.05)", borderRadius: "4px", height: "6px", width: "100%", overflow: "hidden" }}>
+                  <div 
+                    style={{ 
+                      background: stage.color, 
+                      width: `${stage.percentage}%`, 
+                      height: "100%", 
+                      borderRadius: "4px",
+                      transition: "width 0.4s ease-out" 
+                    }} 
+                  />
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
       {/* Interactive Filters Panel */}
       <div className="card" style={{ background: "var(--bg-secondary)", border: "1px solid var(--border-subtle)" }}>
         <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 14 }}>
@@ -278,7 +427,7 @@ export default function DefectsSummaryPanel() {
           <strong style={{ fontSize: "0.9rem", color: "var(--text-secondary)" }}>
             {isRtl ? "فلاتر التصفية التفاعلية" : "Interactive Filters"}
           </strong>
-          {(startDate || endDate || selectedStage !== "ALL" || selectedCode !== "ALL" || searchTerm) && (
+          {(startDate || endDate || selectedStage !== "ALL" || selectedCode !== "ALL" || selectedSupplier !== "ALL" || searchTerm) && (
             <button 
               className="btn btn-ghost btn-sm" 
               onClick={handleClearFilters}
@@ -289,7 +438,7 @@ export default function DefectsSummaryPanel() {
           )}
         </div>
 
-        <div className="grid-3" style={{ gap: 12 }}>
+        <div className="grid-4" style={{ gap: 12 }}>
           {/* Start Date */}
           <div className="input-group">
             <label className="input-label" style={{ fontSize: "0.78rem", fontWeight: 700 }}>
@@ -333,6 +482,25 @@ export default function DefectsSummaryPanel() {
               {uniqueStages.map(st => (
                 <option key={st} value={st}>{getStageLabel(st)}</option>
               ))}
+            </select>
+          </div>
+
+          {/* Supplier Filter */}
+          <div className="input-group">
+            <label className="input-label" style={{ fontSize: "0.78rem", fontWeight: 700 }}>
+              {isRtl ? "المورد" : "Supplier"}
+            </label>
+            <select 
+              className="input" 
+              value={selectedSupplier} 
+              onChange={e => setSelectedSupplier(e.target.value)}
+              style={{ background: "white", padding: "6px 10px", fontSize: "0.85rem" }}
+            >
+              <option value="ALL">{isRtl ? "كل الموردين" : "All Suppliers"}</option>
+              <option value="Ningbo East (NE)">{isRtl ? "نينغبو إيست (NE)" : "Ningbo East (NE)"}</option>
+              <option value="Kaifa (4552)">{isRtl ? "كايفا (4552)" : "Kaifa (4552)"}</option>
+              <option value="BNR">{isRtl ? "بي إن آر (BNR)" : "BNR"}</option>
+              <option value="Other">{isRtl ? "أخرى / غير محدد" : "Other / Unspecified"}</option>
             </select>
           </div>
         </div>
