@@ -409,7 +409,7 @@ export default function DefectsPage() {
     }
 
     if (!defectsSearch.trim()) return true;
-    const q = defectsSearch.toLowerCase();
+    const q = defectsSearch.trim().toLowerCase();
     const err = m.error_code ? getErrorByCode(m.error_code) : null;
     const trans = err ? translateError(err, isRtl) : null;
     const rep = getUserById(m.reported_by);

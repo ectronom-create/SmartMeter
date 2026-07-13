@@ -65,7 +65,7 @@ function DefectsPanel() {
 
   const filteredMeters = useMemo(() => {
     if (!searchTerm.trim()) return defectiveMeters;
-    const q = searchTerm.toLowerCase();
+    const q = searchTerm.trim().toLowerCase();
     return defectiveMeters.filter(m => {
       const err = m.error_code ? getErrorByCode(m.error_code) : null;
       const trans = err ? translateError(err, isRtl) : null;
