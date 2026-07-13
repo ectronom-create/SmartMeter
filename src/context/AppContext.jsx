@@ -60,6 +60,30 @@ export function AppProvider({ children }) {
           })
           .catch(() => ({ data: null }));
 
+        const fetchDefectiveMetersPaginated = async () => {
+          let allData = [];
+          let from = 0;
+          let hasMore = true;
+          while (hasMore) {
+            const { data, error } = await supabase
+              .from("defective_meters")
+              .select("*")
+              .range(from, from + 999);
+            if (error) throw error;
+            if (data && data.length > 0) {
+              allData = [...allData, ...data];
+              if (data.length < 1000) {
+                hasMore = false;
+              } else {
+                from += 1000;
+              }
+            } else {
+              hasMore = false;
+            }
+          }
+          return { data: allData };
+        };
+
         // Fetch all data in parallel for speed
         const [
           { data: uData },
@@ -77,7 +101,7 @@ export function AppProvider({ children }) {
           supabase.from("production_stages").select("*"),
           supabase.from("error_codes").select("*"),
           supabase.from("schedules").select("*"),
-          supabase.from("defective_meters").select("*"),
+          fetchDefectiveMetersPaginated(),
           supabase.from("equipment_stock").select("*"),
           supabase.from("equipment_handouts").select("*"),
           supabase.from("shift_types").select("*"),
