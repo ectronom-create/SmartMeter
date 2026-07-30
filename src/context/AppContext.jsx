@@ -34,6 +34,8 @@ export function AppProvider({ children }) {
   const [equipmentHandouts, setEquipmentHandouts] = useState([]);
   const [defectLogs, setDefectLogs]         = useState([]);
   const [boxes, setBoxes]                   = useState([]);
+  const [stoppages, setStoppages]           = useState([]);
+  const [materialConsumption, setMaterialConsumption] = useState([]);
   
   const [loginError, setLoginError]         = useState("");
   const [isLoading, setIsLoading]           = useState(true);
@@ -95,7 +97,9 @@ export function AppProvider({ children }) {
           { data: hoData },
           { data: shiftData },
           { data: logsData },
-          { data: bxData }
+          { data: bxData },
+          { data: stopData },
+          { data: matConsData }
         ] = await Promise.all([
           supabase.from("users").select("*"),
           supabase.from("production_stages").select("*"),
@@ -109,6 +113,20 @@ export function AppProvider({ children }) {
           supabase.from("boxes").select("*").then(({ data, error }) => {
             if (error) {
               console.warn("boxes table might not exist yet:", error.message);
+              return { data: [] };
+            }
+            return { data };
+          }).catch(() => ({ data: [] })),
+          supabase.from("production_stoppages").select("*").then(({ data, error }) => {
+            if (error) {
+              console.warn("production_stoppages table might not exist yet:", error.message);
+              return { data: [] };
+            }
+            return { data };
+          }).catch(() => ({ data: [] })),
+          supabase.from("material_consumption").select("*").then(({ data, error }) => {
+            if (error) {
+              console.warn("material_consumption table might not exist yet:", error.message);
               return { data: [] };
             }
             return { data };
@@ -145,6 +163,8 @@ export function AppProvider({ children }) {
         if (hoData) setEquipmentHandouts(hoData);
         if (shiftData) setShiftTypes(shiftData);
         if (bxData) setBoxes(bxData);
+        if (stopData) setStoppages(stopData);
+        if (matConsData) setMaterialConsumption(matConsData);
         
         if (logsData) {
           setDefectLogs(logsData);
@@ -233,10 +253,56 @@ export function AppProvider({ children }) {
       )
       .subscribe();
 
+    // 4. Subscribe to production_stoppages changes
+    const stoppagesChannel = supabase
+      .channel("realtime-production-stoppages")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "production_stoppages" },
+        (payload) => {
+          console.log("Realtime change received for production_stoppages:", payload);
+          if (payload.eventType === "INSERT") {
+            setStoppages(prev => {
+              if (prev.some(s => s.id === payload.new.id)) return prev;
+              return [payload.new, ...prev];
+            });
+          } else if (payload.eventType === "UPDATE") {
+            setStoppages(prev => prev.map(s => s.id === payload.new.id ? payload.new : s));
+          } else if (payload.eventType === "DELETE") {
+            setStoppages(prev => prev.filter(s => s.id !== payload.old.id));
+          }
+        }
+      )
+      .subscribe();
+
+    // 5. Subscribe to material_consumption changes
+    const materialConsumptionChannel = supabase
+      .channel("realtime-material-consumption")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "material_consumption" },
+        (payload) => {
+          console.log("Realtime change received for material_consumption:", payload);
+          if (payload.eventType === "INSERT") {
+            setMaterialConsumption(prev => {
+              if (prev.some(m => m.id === payload.new.id)) return prev;
+              return [payload.new, ...prev];
+            });
+          } else if (payload.eventType === "UPDATE") {
+            setMaterialConsumption(prev => prev.map(m => m.id === payload.new.id ? payload.new : m));
+          } else if (payload.eventType === "DELETE") {
+            setMaterialConsumption(prev => prev.filter(m => m.id !== payload.old.id));
+          }
+        }
+      )
+      .subscribe();
+
     return () => {
       supabase.removeChannel(defectiveMetersChannel);
       supabase.removeChannel(boxesChannel);
       supabase.removeChannel(defectLogsChannel);
+      supabase.removeChannel(stoppagesChannel);
+      supabase.removeChannel(materialConsumptionChannel);
     };
   }, []);
 
@@ -1310,6 +1376,75 @@ export function AppProvider({ children }) {
     // Keep resolved meters history in database as per user request
   }, []);
 
+  const reportStoppage = useCallback(async (stageId, reasonCode, notes) => {
+    const newStoppage = {
+      id: `STOP-${Date.now()}`,
+      stage_id: stageId,
+      supervisor_id: currentUser?.employee_id || "ADMIN",
+      stopped_at: new Date().toISOString(),
+      resumed_at: null,
+      reason_code: reasonCode,
+      notes: notes || ""
+    };
+    try {
+      const { error } = await supabase.from("production_stoppages").insert([newStoppage]);
+      if (error) throw error;
+      setStoppages(prev => [newStoppage, ...prev]);
+      return { success: true };
+    } catch (err) {
+      console.error("Error reporting stoppage:", err);
+      return { success: false, message: err.message };
+    }
+  }, [currentUser]);
+
+  const resumeProduction = useCallback(async (stoppageId) => {
+    const resumeTime = new Date().toISOString();
+    try {
+      const { error } = await supabase.from("production_stoppages").update({ resumed_at: resumeTime }).eq("id", stoppageId);
+      if (error) throw error;
+      setStoppages(prev => prev.map(s => s.id === stoppageId ? { ...s, resumed_at: resumeTime } : s));
+      return { success: true };
+    } catch (err) {
+      console.error("Error resuming production:", err);
+      return { success: false, message: err.message };
+    }
+  }, []);
+
+  const consumeMaterial = useCallback(async (materialId, materialType, stageId, quantity, notes) => {
+    const material = equipmentStock.find(e => e.id === materialId);
+    if (!material || material.current_stock < quantity) {
+      return { success: false, message: "الكمية المطلوبة غير متوفرة في المستودع" };
+    }
+
+    const newConsumption = {
+      id: `CONS-${Date.now()}`,
+      material_id: materialId,
+      material_type: materialType,
+      stage_id: stageId,
+      quantity: parseInt(quantity),
+      withdrawn_by: currentUser?.employee_id || "ADMIN",
+      withdrawal_date: new Date().toISOString().split("T")[0],
+      notes: notes || ""
+    };
+
+    try {
+      const { error: cError } = await supabase.from("material_consumption").insert([newConsumption]);
+      if (cError) throw cError;
+
+      const newStock = material.current_stock - parseInt(quantity);
+      const { error: sError } = await supabase.from("equipment_stock").update({ current_stock: newStock }).eq("id", materialId);
+      if (sError) throw sError;
+
+      setMaterialConsumption(prev => [newConsumption, ...prev]);
+      setEquipmentStock(prev => prev.map(e => e.id === materialId ? { ...e, current_stock: newStock } : e));
+
+      return { success: true };
+    } catch (err) {
+      console.error("Error consuming material:", err);
+      return { success: false, message: err.message };
+    }
+  }, [equipmentStock, currentUser]);
+
   // Global loading overlay to prevent interacting with empty tables
   if (isLoading) {
     return (
@@ -1337,7 +1472,9 @@ export function AppProvider({ children }) {
     equipmentHandouts, handoutEquipment, returnEquipment, getMyHandouts, getLowStockItems,
     production_stages: productionStages, shift_types: shiftTypes, error_codes: errorCodes, getTodayString,
     language, toggleLanguage, t, isLoading,
-    boxes, addBox, updateBox, deleteBox, assignMeterToBox
+    boxes, addBox, updateBox, deleteBox, assignMeterToBox,
+    stoppages, reportStoppage, resumeProduction,
+    materialConsumption, consumeMaterial
   };
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;

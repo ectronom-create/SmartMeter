@@ -34,7 +34,8 @@ export const getTranslatedCategory = (cat, isRtl) => {
     "حماية": "Protection",
     "ملابس": "Uniforms",
     "أدوات": "Tools",
-    "قرطاسية": "Stationery"
+    "قرطاسية": "Stationery",
+    "مواد خام": "Raw Materials"
   };
   return translations[cat] || cat;
 };
@@ -45,7 +46,8 @@ export const getTranslatedUnit = (unit, isRtl) => {
     "زوج": "pairs",
     "قطعة": "pieces",
     "كرتون": "boxes",
-    "حزمة": "packs"
+    "حزمة": "packs",
+    "متر": "meters"
   };
   return translations[unit] || unit;
 };
@@ -60,12 +62,15 @@ export function AssetsPanel() {
     deleteEquipmentItem,
     users,
     currentUser,
-    language
+    language,
+    materialConsumption,
+    productionStages
   } = useApp();
 
   const isRtl = language === "ar";
 
   const [activeTab, setActiveTab] = useState("stock"); // stock | history
+  const [historyType, setHistoryType] = useState("ppe"); // ppe | materials
   const [showAddModal, setShowAddModal] = useState(false);
   const [showHandoutModal, setShowHandoutModal] = useState(false);
   const [showRestockModal, setShowRestockModal] = useState(null); // stores item object
@@ -139,6 +144,16 @@ export function AssetsPanel() {
     h.employee_name.toLowerCase().includes(handoutSearch.toLowerCase()) ||
     h.equipment_name.toLowerCase().includes(handoutSearch.toLowerCase())
   );
+
+  const filteredMaterialConsumptions = (materialConsumption || []).filter(mc => {
+    const mat = equipmentStock.find(e => e.id === mc.material_id);
+    const matName = mat ? mat.name : mc.material_id;
+    const operator = users.find(u => u.employee_id === mc.withdrawn_by);
+    const opName = operator ? operator.full_name : mc.withdrawn_by;
+    return matName.toLowerCase().includes(handoutSearch.toLowerCase()) || 
+           opName.toLowerCase().includes(handoutSearch.toLowerCase()) ||
+           (mc.notes && mc.notes.toLowerCase().includes(handoutSearch.toLowerCase()));
+  });
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
@@ -255,6 +270,24 @@ export function AssetsPanel() {
         </div>
       ) : (
         <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+          {/* History Type Sub-tabs */}
+          <div style={{ display: "flex", gap: 8, borderBottom: "1px solid var(--border-subtle)", paddingBottom: 8, flexDirection: isRtl ? "row" : "row-reverse" }}>
+            <button 
+              className={`btn btn-sm ${historyType === "ppe" ? "btn-primary" : "btn-secondary"}`} 
+              onClick={() => setHistoryType("ppe")}
+              style={{ fontSize: "0.8rem", height: 32, padding: "0 12px" }}
+            >
+              {isRtl ? "عهدة مستلزمات الموظفين (PPE)" : "Operator PPE Handouts"}
+            </button>
+            <button 
+              className={`btn btn-sm ${historyType === "materials" ? "btn-primary" : "btn-secondary"}`} 
+              onClick={() => setHistoryType("materials")}
+              style={{ fontSize: "0.8rem", height: 32, padding: "0 12px" }}
+            >
+              {isRtl ? "سجل سحب العدادات والشرائح" : "Meter/SIM Card Consumptions"}
+            </button>
+          </div>
+
           {/* History Search */}
           <div className="card" style={{ padding: 16 }}>
             <div style={{ position: "relative", width: "100%" }}>
@@ -266,7 +299,10 @@ export function AssetsPanel() {
               }} />
               <input 
                 className="input" 
-                placeholder={isRtl ? "البحث باسم الموظف أو الأصل..." : "Search by operator name or item..."} 
+                placeholder={historyType === "ppe" 
+                  ? (isRtl ? "البحث باسم الموظف أو الأصل..." : "Search by operator name or item...")
+                  : (isRtl ? "البحث باسم المادة (العداد أو الشريحة)..." : "Search by material (Meter or SIM)...")
+                } 
                 style={{
                   paddingRight: isRtl ? 40 : 12,
                   paddingLeft: !isRtl ? 40 : 12,
@@ -279,49 +315,110 @@ export function AssetsPanel() {
           </div>
 
           {/* History Table */}
-          <div className="card" style={{ padding: 0, overflow: "hidden" }}>
-            <div className="table-wrapper" style={{ border: "none" }}>
-              <table>
-                <thead>
-                  <tr>
-                    <th style={{ textAlign: isRtl ? "right" : "left" }}>{isRtl ? "التاريخ" : "Date"}</th>
-                    <th style={{ textAlign: isRtl ? "right" : "left" }}>{isRtl ? "الموظف" : "Operator"}</th>
-                    <th style={{ textAlign: isRtl ? "right" : "left" }}>{isRtl ? "الأصل" : "Asset"}</th>
-                    <th style={{ textAlign: isRtl ? "right" : "left" }}>{isRtl ? "الكمية" : "Qty"}</th>
-                    <th style={{ textAlign: isRtl ? "right" : "left" }}>{isRtl ? "سلمت بواسطة" : "Handed By"}</th>
-                    <th style={{ textAlign: isRtl ? "right" : "left" }}>{isRtl ? "ملاحظات" : "Notes"}</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredHandouts.length === 0 ? (
+          {historyType === "ppe" ? (
+            <div className="card" style={{ padding: 0, overflow: "hidden" }}>
+              <div className="table-wrapper" style={{ border: "none" }}>
+                <table>
+                  <thead>
                     <tr>
-                      <td colSpan="6" style={{ textAlign: "center", padding: 40, color: "var(--text-muted)" }}>
-                        {isRtl ? "لا توجد سجلات تسليم حالياً" : "No handout logs found"}
-                      </td>
+                      <th style={{ textAlign: isRtl ? "right" : "left" }}>{isRtl ? "التاريخ" : "Date"}</th>
+                      <th style={{ textAlign: isRtl ? "right" : "left" }}>{isRtl ? "الموظف" : "Operator"}</th>
+                      <th style={{ textAlign: isRtl ? "right" : "left" }}>{isRtl ? "الأصل" : "Asset"}</th>
+                      <th style={{ textAlign: isRtl ? "right" : "left" }}>{isRtl ? "الكمية" : "Qty"}</th>
+                      <th style={{ textAlign: isRtl ? "right" : "left" }}>{isRtl ? "سلمت بواسطة" : "Handed By"}</th>
+                      <th style={{ textAlign: isRtl ? "right" : "left" }}>{isRtl ? "ملاحظات" : "Notes"}</th>
                     </tr>
-                  ) : (
-                    filteredHandouts.map(h => (
-                      <tr key={h.id}>
-                        <td style={{ fontSize: "0.85rem", whiteSpace: "nowrap" }}>{h.handout_date}</td>
-                        <td>
-                          <div style={{ display: "flex", alignItems: "center", gap: 8, flexDirection: isRtl ? "row" : "row-reverse" }}>
-                            <div style={{ width: 24, height: 24, borderRadius: "50%", background: "var(--bg-elevated)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "0.7rem", fontWeight: 700 }}>
-                              {h.employee_name[0]}
-                            </div>
-                            {h.employee_name}
-                          </div>
+                  </thead>
+                  <tbody>
+                    {filteredHandouts.length === 0 ? (
+                      <tr>
+                        <td colSpan="6" style={{ textAlign: "center", padding: 40, color: "var(--text-muted)" }}>
+                          {isRtl ? "لا توجد سجلات تسليم حالياً" : "No handout logs found"}
                         </td>
-                        <td><span className="badge badge-gray">{getTranslatedAssetName(h.equipment_name, isRtl)}</span></td>
-                        <td style={{ fontWeight: 700 }}>{h.quantity} {getTranslatedUnit(h.unit, isRtl)}</td>
-                        <td style={{ fontSize: "0.85rem", color: "var(--text-secondary)" }}>{h.handed_by}</td>
-                        <td style={{ fontSize: "0.85rem", color: "var(--text-muted)" }}>{h.notes || "—"}</td>
                       </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
+                    ) : (
+                      filteredHandouts.map(h => (
+                        <tr key={h.id}>
+                          <td style={{ fontSize: "0.85rem", whiteSpace: "nowrap" }}>{h.handout_date}</td>
+                          <td>
+                            <div style={{ display: "flex", alignItems: "center", gap: 8, flexDirection: isRtl ? "row" : "row-reverse" }}>
+                              <div style={{ width: 24, height: 24, borderRadius: "50%", background: "var(--bg-elevated)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "0.7rem", fontWeight: 700 }}>
+                                {h.employee_name ? h.employee_name[0] : "?"}
+                              </div>
+                              {h.employee_name}
+                            </div>
+                          </td>
+                          <td><span className="badge badge-gray">{getTranslatedAssetName(h.equipment_name, isRtl)}</span></td>
+                          <td style={{ fontWeight: 700 }}>{h.quantity} {getTranslatedUnit(h.unit, isRtl)}</td>
+                          <td style={{ fontSize: "0.85rem", color: "var(--text-secondary)" }}>{h.handed_by}</td>
+                          <td style={{ fontSize: "0.85rem", color: "var(--text-muted)" }}>{h.notes || "—"}</td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </div>
             </div>
-          </div>
+          ) : (
+            <div className="card" style={{ padding: 0, overflow: "hidden" }}>
+              <div className="table-wrapper" style={{ border: "none" }}>
+                <table>
+                  <thead>
+                    <tr>
+                      <th style={{ textAlign: isRtl ? "right" : "left" }}>{isRtl ? "التاريخ" : "Date"}</th>
+                      <th style={{ textAlign: isRtl ? "right" : "left" }}>{isRtl ? "المادة" : "Material"}</th>
+                      <th style={{ textAlign: isRtl ? "right" : "left" }}>{isRtl ? "النوع" : "Type"}</th>
+                      <th style={{ textAlign: isRtl ? "right" : "left" }}>{isRtl ? "المحطة المستلمة" : "Workstation Stage"}</th>
+                      <th style={{ textAlign: isRtl ? "right" : "left" }}>{isRtl ? "الكمية" : "Qty"}</th>
+                      <th style={{ textAlign: isRtl ? "right" : "left" }}>{isRtl ? "سحبت بواسطة" : "Withdrawn By"}</th>
+                      <th style={{ textAlign: isRtl ? "right" : "left" }}>{isRtl ? "ملاحظات" : "Notes"}</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {filteredMaterialConsumptions.length === 0 ? (
+                      <tr>
+                        <td colSpan="7" style={{ textAlign: "center", padding: 40, color: "var(--text-muted)" }}>
+                          {isRtl ? "لا توجد سجلات استهلاك مواد حالياً" : "No material consumption logs found"}
+                        </td>
+                      </tr>
+                    ) : (
+                      filteredMaterialConsumptions.map(mc => {
+                        const mat = equipmentStock.find(e => e.id === mc.material_id);
+                        const matName = mat ? mat.name : mc.material_id;
+                        const operator = users.find(u => u.employee_id === mc.withdrawn_by);
+                        const opName = operator ? operator.full_name : mc.withdrawn_by;
+                        const stage = productionStages.find(s => s.stage_id === mc.stage_id);
+                        const stageName = stage ? (isRtl ? stage.stage_name : stage.short_name) : mc.stage_id;
+                        
+                        return (
+                          <tr key={mc.id}>
+                            <td style={{ fontSize: "0.85rem", whiteSpace: "nowrap" }}>{mc.withdrawal_date}</td>
+                            <td><span className="badge badge-blue">{getTranslatedAssetName(matName, isRtl)}</span></td>
+                            <td style={{ fontSize: "0.88rem", fontWeight: 600 }}>{mc.material_type}</td>
+                            <td>
+                              <span 
+                                className="badge" 
+                                style={{ 
+                                  background: (stage?.color || "#6366f1") + "22", 
+                                  color: stage?.color || "#6366f1",
+                                  border: `1px solid ${(stage?.color || "#6366f1")}44`
+                                }}
+                              >
+                                {stageName}
+                              </span>
+                            </td>
+                            <td style={{ fontWeight: 700, color: "var(--accent)" }}>{mc.quantity} {isRtl ? "قطعة" : "pcs"}</td>
+                            <td style={{ fontSize: "0.85rem", color: "var(--text-secondary)" }}>{opName}</td>
+                            <td style={{ fontSize: "0.85rem", color: "var(--text-muted)" }}>{mc.notes || "—"}</td>
+                          </tr>
+                        );
+                      })
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
         </div>
       )}
 
@@ -429,6 +526,7 @@ export function AssetsPanel() {
                     <option value="ملابس">{isRtl ? "ملابس عمل" : "Uniforms"}</option>
                     <option value="أدوات">{isRtl ? "أدوات ومعدات" : "Tools & Gear"}</option>
                     <option value="قرطاسية">{isRtl ? "قرطاسية" : "Stationery"}</option>
+                    <option value="مواد خام">{isRtl ? "مواد خام (الكت ميتر)" : "Raw Materials"}</option>
                   </select>
                 </div>
                 <div className="input-group">
@@ -442,6 +540,7 @@ export function AssetsPanel() {
                     <option value="قطعة">{isRtl ? "قطعة" : "Piece"}</option>
                     <option value="كرتون">{isRtl ? "كرتون" : "Box"}</option>
                     <option value="حزمة">{isRtl ? "حزمة" : "Pack"}</option>
+                    <option value="متر">{isRtl ? "متر" : "Meter"}</option>
                   </select>
                 </div>
               </div>

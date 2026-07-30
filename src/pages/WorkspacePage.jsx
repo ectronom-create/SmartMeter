@@ -65,6 +65,16 @@ function ErrorResultCard({ result, stepsOpen, onToggle }) {
   );
 }
 
+const downtimeReasons = {
+  "CAL_BENCH_FAIL": { ar: "عطل بنش المعايرة والاختبار", en: "Calibration Bench Failure" },
+  "SFC_OFFLINE": { ar: "انقطاع شبكة سيرفر تتبع العدادات", en: "SFC/Network Offline" },
+  "MATERIAL_SHORTAGE": { ar: "نقص المواد الخام (البوردات/الهياكل)", en: "Material Shortage" },
+  "METER_TECH_ISSUE": { ar: "مشكلة فنية متكررة بالعداد", en: "Meter Technical Issue" },
+  "OPERATOR_ABSENCE": { ar: "غياب أو تبديل مشغلي المحطة", en: "Operator Absence" },
+  "URGENT_MAINTENANCE": { ar: "صيانة طارئة للمحطة", en: "Urgent Maintenance" },
+  "OTHER": { ar: "سبب آخر (مكتوب في الملاحظات)", en: "Other (written in notes)" }
+};
+
 export default function WorkspacePage() {
   const navigate = useNavigate();
   const { 
@@ -76,7 +86,8 @@ export default function WorkspacePage() {
     addDefectiveMeter,
     errorCodes,
     language,
-    t
+    t,
+    stoppages
   } = useApp();
 
   const isRtl = language === "ar";
@@ -253,6 +264,37 @@ export default function WorkspacePage() {
           </div>
         </div>
 
+        {/* ── Active Stoppage Banner ── */}
+        {(() => {
+          const activeStoppage = stoppages?.find(s => s.stage_id === currentStage.stage_id && !s.resumed_at);
+          if (!activeStoppage) return null;
+          return (
+            <div className="alert alert-danger animate-pulse" style={{ 
+              padding: 16, 
+              display: "flex", 
+              alignItems: "center", 
+              gap: 12, 
+              borderColor: "var(--red)", 
+              background: "rgba(239,68,68,0.1)",
+              borderRadius: "var(--radius-lg)",
+              flexDirection: isRtl ? "row" : "row-reverse",
+              boxShadow: "0 4px 6px rgba(0,0,0,0.05)"
+            }}>
+              <AlertCircle size={24} style={{ color: "var(--red)", flexShrink: 0 }} />
+              <div style={{ textAlign: isRtl ? "right" : "left" }}>
+                <strong style={{ fontSize: "1rem", display: "block", color: "var(--red)", marginBottom: 4 }}>
+                  {isRtl ? "تنبيه: محطة العمل متوقفة حالياً!" : "Alert: This Workstation is Currently Stopped!"}
+                </strong>
+                <span style={{ fontSize: "0.85rem", color: "var(--text-secondary)" }}>
+                  {isRtl ? "قام المشرف بإيقاف هذه المرحلة بسبب: " : "Supervisor stopped this stage due to: "}
+                  <strong>{isRtl ? (downtimeReasons[activeStoppage.reason_code]?.ar || activeStoppage.reason_code) : (downtimeReasons[activeStoppage.reason_code]?.en || activeStoppage.reason_code)}</strong>
+                  {activeStoppage.notes && ` (${activeStoppage.notes})`}
+                </span>
+              </div>
+            </div>
+          );
+        })()}
+
         {/* ── Two-column layout ── */}
         <div className="grid-2" style={{ alignItems: "start" }}>
 
@@ -329,9 +371,13 @@ export default function WorkspacePage() {
                     paddingRight: isRtl ? 38 : 12, 
                     paddingLeft: !isRtl ? 38 : 12 
                   }}
-                  placeholder={t("enterFaultCodePlaceholder")}
+                  placeholder={stoppages?.some(s => s.stage_id === currentStage.stage_id && !s.resumed_at) 
+                    ? (isRtl ? "المحطة متوقفة حالياً..." : "Workstation is currently stopped...") 
+                    : t("enterFaultCodePlaceholder")
+                  }
                   value={errorQuery}
                   onChange={e => setErrorQuery(e.target.value)}
+                  disabled={stoppages?.some(s => s.stage_id === currentStage.stage_id && !s.resumed_at)}
                 />
                 {errorQuery && (
                   <button
@@ -393,75 +439,87 @@ export default function WorkspacePage() {
                 </div>
               )}
 
-              <form onSubmit={handleSubmitDefect} style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-                <div className="input-group">
-                  <label className="input-label">{t("serialNumber")}</label>
-                  <input
-                    ref={serialRef}
-                    className="input input-lg"
-                    placeholder={isRtl ? "امسح الباركود أو اكتب السيريال..." : "Scan barcode or type serial..."}
-                    value={serialNumber}
-                    onChange={handleSerialChange}
-                    required
-                    autoFocus
-                    style={{ 
-                      fontFamily: "'IBM Plex Mono', monospace", 
-                      letterSpacing: "0.05em",
-                      borderColor: "var(--border)",
-                      background: "var(--bg-surface)"
-                    }}
-                  />
-                </div>
+              {(() => {
+                const isStopped = stoppages?.some(s => s.stage_id === currentStage.stage_id && !s.resumed_at);
+                return (
+                  <form onSubmit={handleSubmitDefect} style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+                    <div className="input-group">
+                      <label className="input-label">{t("serialNumber")}</label>
+                      <input
+                        ref={serialRef}
+                        className="input input-lg"
+                        placeholder={isStopped 
+                          ? (isRtl ? "محطة العمل متوقفة" : "Workstation stopped") 
+                          : (isRtl ? "امسح الباركود أو اكتب السيريال..." : "Scan barcode or type serial...")
+                        }
+                        value={serialNumber}
+                        onChange={handleSerialChange}
+                        required
+                        autoFocus={!isStopped}
+                        disabled={isStopped}
+                        style={{ 
+                          fontFamily: "'IBM Plex Mono', monospace", 
+                          letterSpacing: "0.05em",
+                          borderColor: "var(--border)",
+                          background: isStopped ? "var(--bg-elevated)" : "var(--bg-surface)",
+                          cursor: isStopped ? "not-allowed" : "text"
+                        }}
+                      />
+                    </div>
 
-                <div className="input-group">
-                  <label className="input-label">{t("faultCodeSelectSearch")}</label>
-                  <div style={{ display: "flex", gap: 8 }}>
-                    <input
-                      className="input"
-                      placeholder={isRtl ? "استخدم خانة البحث أعلاه لاختيار الكود..." : "Use search bar above to select code..."}
-                      value={selectedCode}
-                      readOnly
-                      style={{ fontFamily: "'IBM Plex Mono', monospace", background: "var(--bg-elevated)", cursor: "not-allowed" }}
-                      required
-                    />
-                    {selectedCode && (
-                      <button type="button" className="btn btn-ghost btn-icon" onClick={() => setSelectedCode("")}>
-                        <X size={14} />
-                      </button>
-                    )}
-                  </div>
-                  {!selectedCode && (
-                    <span style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>
-                      {t("faultCodeWarning")}
-                    </span>
-                  )}
-                  {selectedCode && (
-                    <span style={{ fontSize: "0.78rem", color: "var(--green)", fontWeight: 700 }}>
-                      {t("codeSelected")}{selectedCode}
-                    </span>
-                  )}
-                </div>
+                    <div className="input-group">
+                      <label className="input-label">{t("faultCodeSelectSearch")}</label>
+                      <div style={{ display: "flex", gap: 8 }}>
+                        <input
+                          className="input"
+                          placeholder={isRtl ? "استخدم خانة البحث أعلاه لاختيار الكود..." : "Use search bar above to select code..."}
+                          value={selectedCode}
+                          readOnly
+                          style={{ fontFamily: "'IBM Plex Mono', monospace", background: "var(--bg-elevated)", cursor: "not-allowed" }}
+                          required
+                          disabled={isStopped}
+                        />
+                        {selectedCode && !isStopped && (
+                          <button type="button" className="btn btn-ghost btn-icon" onClick={() => setSelectedCode("")}>
+                            <X size={14} />
+                          </button>
+                        )}
+                      </div>
+                      {!selectedCode && (
+                        <span style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>
+                          {t("faultCodeWarning")}
+                        </span>
+                      )}
+                      {selectedCode && (
+                        <span style={{ fontSize: "0.78rem", color: "var(--green)", fontWeight: 700 }}>
+                          {t("codeSelected")}{selectedCode}
+                        </span>
+                      )}
+                    </div>
 
-                <div className="input-group">
-                  <label className="input-label">{t("additionalNotes")}</label>
-                  <textarea
-                    className="input"
-                    placeholder={isRtl ? "وصف إضافي للمشكلة..." : "Additional description of the problem..."}
-                    value={customDesc}
-                    onChange={e => setCustomDesc(e.target.value)}
-                    rows={2}
-                    style={{ resize: "vertical" }}
-                  />
-                </div>
+                    <div className="input-group">
+                      <label className="input-label">{t("additionalNotes")}</label>
+                      <textarea
+                        className="input"
+                        placeholder={isRtl ? "وصف إضافي للمشكلة..." : "Additional description of the problem..."}
+                        value={customDesc}
+                        onChange={e => setCustomDesc(e.target.value)}
+                        rows={2}
+                        disabled={isStopped}
+                        style={{ resize: "vertical", cursor: isStopped ? "not-allowed" : "text" }}
+                      />
+                    </div>
 
-                <button
-                  type="submit"
-                  className="btn btn-danger btn-full"
-                  disabled={!serialNumber.trim() || isSubmitting}
-                >
-                  <AlertTriangle size={16} /> {isSubmitting ? (isRtl ? "جاري التسجيل..." : "Registering...") : t("registerDefectiveMeterBtn")}
-                </button>
-              </form>
+                    <button
+                      type="submit"
+                      className="btn btn-danger btn-full"
+                      disabled={!serialNumber.trim() || isSubmitting || isStopped}
+                    >
+                      <AlertTriangle size={16} /> {isSubmitting ? (isRtl ? "جاري التسجيل..." : "Registering...") : t("registerDefectiveMeterBtn")}
+                    </button>
+                  </form>
+                );
+              })()}
             </div>
           </div>
         </div>

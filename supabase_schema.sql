@@ -292,3 +292,49 @@ ALTER TABLE defect_logs ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Enable all read access for defect_logs" ON defect_logs FOR SELECT USING (true);
 CREATE POLICY "Enable all write access for defect_logs" ON defect_logs FOR ALL USING (true);
 
+
+-- =========================================================================
+--  NEW ADDITIONS FOR SMART METER DOWN TIME & RAW MATERIAL CONSUMPTION
+-- =========================================================================
+
+-- Production Stoppages (Downtime)
+CREATE TABLE production_stoppages (
+    id VARCHAR(100) PRIMARY KEY,
+    stage_id VARCHAR(50) REFERENCES production_stages(stage_id) ON DELETE CASCADE,
+    supervisor_id VARCHAR(50) REFERENCES users(employee_id) ON DELETE SET NULL,
+    stopped_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+    resumed_at TIMESTAMP WITH TIME ZONE,
+    reason_code VARCHAR(100) NOT NULL,
+    notes TEXT,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+ALTER TABLE production_stoppages ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Enable all read access for production_stoppages" ON production_stoppages FOR SELECT USING (true);
+CREATE POLICY "Enable all write access for production_stoppages" ON production_stoppages FOR ALL USING (true);
+
+-- Material Consumption (Meters and SIM Cards)
+CREATE TABLE material_consumption (
+    id VARCHAR(100) PRIMARY KEY,
+    material_id VARCHAR(50) REFERENCES equipment_stock(id) ON DELETE CASCADE,
+    material_type VARCHAR(100) NOT NULL, -- مثل: أحادي الطور، STC، Zain، إلخ.
+    stage_id VARCHAR(50) REFERENCES production_stages(stage_id) ON DELETE CASCADE,
+    quantity INT NOT NULL DEFAULT 1,
+    withdrawn_by VARCHAR(50) REFERENCES users(employee_id) ON DELETE SET NULL,
+    withdrawal_date DATE NOT NULL DEFAULT CURRENT_DATE,
+    notes TEXT,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+ALTER TABLE material_consumption ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Enable all read access for material_consumption" ON material_consumption FOR SELECT USING (true);
+CREATE POLICY "Enable all write access for material_consumption" ON material_consumption FOR ALL USING (true);
+
+-- Insert raw materials seed data into equipment_stock (Meters & SIMs)
+INSERT INTO equipment_stock (id, name, category, unit, current_stock, min_stock) VALUES
+('METER-01', 'عداد كهرباء (Meter)', 'عدادات', 'قطعة', 500, 50),
+('SIM-01', 'شريحة اتصال (SIM Card)', 'شرائح', 'قطعة', 1000, 100)
+ON CONFLICT (id) DO UPDATE SET current_stock = EXCLUDED.current_stock;
+
+
+

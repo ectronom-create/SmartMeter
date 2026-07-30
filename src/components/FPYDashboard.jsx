@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useMemo } from "react";
 import * as XLSX from "xlsx";
 import { Chart, registerables } from "chart.js";
-import { Upload, BarChart2, History, TrendingUp, Trash2 } from "lucide-react";
+import { Upload, BarChart2, History, TrendingUp, Trash2, Clock, AlertTriangle } from "lucide-react";
 import { supabase } from "../supabaseClient";
 import { useApp } from "../context/AppContext";
 
@@ -170,13 +170,104 @@ function parseFPYExcel(arrayBuffer) {
 // ===================== STYLES =====================
 
 export default function FPYDashboard() {
-  const { language, currentUser } = useApp();
+  const { language, currentUser, stoppages, production_stages } = useApp();
   const isRtl = language === "ar";
 
   const [activeTab, setActiveTab] = useState("dashboard");
   const [reports, setReports] = useState([]);
   const [currentReport, setCurrentReport] = useState(null);
   const [target, setTarget] = useState(320);
+
+  // Downtime charts refs & state
+  const downtimeChartRef = useRef(null);
+  const downtimeChartInstance = useRef(null);
+
+  const downtimeReasons = {
+    "BENCH_BREAKDOWN": { ar: "عطل البنش / صيانة", en: "Bench Breakdown / Maintenance" },
+    "SFC_OFFLINE": { ar: "عطل شبكة / اتصال", en: "Network / IT Offline" },
+    "MATERIAL_SHORTAGE": { ar: "نقص المواد (عدادات / شرائح)", en: "Material Shortage (Meters/SIM)" },
+    "OPERATOR_ABSENCE": { ar: "غياب المشغل", en: "Operator Absence" },
+    "OTHER": { ar: "أخرى (مكتوبة في الملاحظات)", en: "Other (written in notes)" }
+  };
+
+  const downtimeData = useMemo(() => {
+    const stageMap = {};
+    if (production_stages) {
+      production_stages.filter(s => s.stage_id !== "GLOBAL" && s.stage_id !== "SUPERVISION").forEach(s => {
+        stageMap[s.stage_id] = {
+          name: isRtl ? s.short_name : s.stage_name.split("(")[0].trim(),
+          color: s.color,
+          minutes: 0,
+          count: 0
+        };
+      });
+    }
+
+    (stoppages || []).forEach(stop => {
+      if (stageMap[stop.stage_id]) {
+        stageMap[stop.stage_id].count += 1;
+        const start = new Date(stop.stopped_at).getTime();
+        const end = stop.resumed_at ? new Date(stop.resumed_at).getTime() : Date.now();
+        const diffMinutes = Math.floor((end - start) / 60000);
+        stageMap[stop.stage_id].minutes += Math.max(0, diffMinutes);
+      }
+    });
+
+    return Object.values(stageMap);
+  }, [stoppages, production_stages, isRtl]);
+
+  useEffect(() => {
+    if (activeTab === "downtime" && downtimeChartRef.current) {
+      if (downtimeChartInstance.current) {
+        downtimeChartInstance.current.destroy();
+      }
+
+      const ctx = downtimeChartRef.current.getContext("2d");
+      
+      const labels = downtimeData.map(d => d.name);
+      const dataMinutes = downtimeData.map(d => d.minutes);
+      const colors = downtimeData.map(d => d.color);
+
+      downtimeChartInstance.current = new Chart(ctx, {
+        type: "bar",
+        data: {
+          labels: labels,
+          datasets: [
+            {
+              label: isRtl ? "دقائق التوقف" : "Downtime (minutes)",
+              data: dataMinutes,
+              backgroundColor: colors.map(c => c + "99"),
+              borderColor: colors,
+              borderWidth: 1.5,
+              borderRadius: 6
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { display: false }
+          },
+          scales: {
+            y: {
+              beginAtZero: true,
+              title: {
+                display: true,
+                text: isRtl ? "الزمن (بالدقائق)" : "Duration (minutes)",
+                font: { size: 11, weight: "bold" }
+              }
+            }
+          }
+        }
+      });
+    }
+    return () => {
+      if (downtimeChartInstance.current) {
+        downtimeChartInstance.current.destroy();
+      }
+    };
+  }, [activeTab, downtimeData, isRtl]);
 
   // Perso Production Filter States
   const [productionFilter, setProductionFilter] = useState("week"); // "today", "week", "month", "custom"
@@ -499,7 +590,8 @@ export default function FPYDashboard() {
           <p style={{ fontSize: "0.85rem", color: "var(--text-muted)" }}>تحليل أداء خطوط الإنتاج من ملفات Excel وحفظها سحابياً</p>
         </div>
         <div style={{ display: "flex", gap: 8 }}>
-          <button className={`btn ${activeTab === "dashboard" ? "btn-primary" : "btn-ghost"}`} onClick={() => setActiveTab("dashboard")}><BarChart2 size={16} /> لوحة التحكم</button>
+          <button className={`btn ${activeTab === "dashboard" ? "btn-primary" : "btn-ghost"}`} onClick={() => setActiveTab("dashboard")}><BarChart2 size={16} /> {isRtl ? "الإنتاج و FPY" : "Yield & FPY"}</button>
+          <button className={`btn ${activeTab === "downtime" ? "btn-primary" : "btn-ghost"}`} onClick={() => setActiveTab("downtime")}><Clock size={16} /> {isRtl ? "تحليل التوقفات" : "Downtime"}</button>
           {currentUser?.role === "admin" && (
             <>
               <button className={`btn ${activeTab === "upload" ? "btn-primary" : "btn-ghost"}`} onClick={() => setActiveTab("upload")}><Upload size={16} /> رفع تقرير</button>
@@ -939,6 +1031,149 @@ export default function FPYDashboard() {
               </div>
             </div>
           )}
+        </div>
+      )}
+
+      {/* DOWNTIME TAB */}
+      {activeTab === "downtime" && (
+        <div className="animate-fade" style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+          {/* Summary Cards */}
+          <div className="grid-3">
+            <div className="stat-card" style={{ borderLeft: "4px solid var(--red)" }}>
+              <div className="stat-icon" style={{ background: "rgba(239,68,68,0.1)" }}><AlertTriangle size={20} color="var(--red)" /></div>
+              <div>
+                <div className="stat-value" style={{ color: "var(--red)" }}>
+                  {(stoppages || []).filter(s => !s.resumed_at).length}
+                </div>
+                <div className="stat-label">{isRtl ? "محطات متوقفة حالياً" : "Currently Stopped Stages"}</div>
+              </div>
+            </div>
+
+            <div className="stat-card" style={{ borderLeft: "4px solid var(--amber)" }}>
+              <div className="stat-icon" style={{ background: "rgba(245,158,11,0.1)" }}><Clock size={20} color="var(--amber)" /></div>
+              <div>
+                <div className="stat-value">
+                  {(stoppages || []).length}
+                </div>
+                <div className="stat-label">{isRtl ? "إجمالي بلاغات التوقف" : "Total Stoppage Logs"}</div>
+              </div>
+            </div>
+
+            <div className="stat-card" style={{ borderLeft: "4px solid var(--accent)" }}>
+              <div className="stat-icon" style={{ background: "var(--accent-glow)" }}><BarChart2 size={20} color="var(--accent)" /></div>
+              <div>
+                <div className="stat-value">
+                  {(() => {
+                    const totalMins = (stoppages || []).reduce((sum, s) => {
+                      const start = new Date(s.stopped_at).getTime();
+                      const end = s.resumed_at ? new Date(s.resumed_at).getTime() : Date.now();
+                      return sum + Math.max(0, Math.floor((end - start) / 60000));
+                    }, 0);
+                    if (totalMins < 60) return `${totalMins} ${isRtl ? "دقيقة" : "mins"}`;
+                    return `${(totalMins / 60).toFixed(1)} ${isRtl ? "ساعة" : "hours"}`;
+                  })()}
+                </div>
+                <div className="stat-label">{isRtl ? "إجمالي زمن التوقف" : "Total Downtime Duration"}</div>
+              </div>
+            </div>
+          </div>
+
+          {/* Downtime Chart */}
+          <div className="card">
+            <div style={{ fontWeight: 800, marginBottom: 20, fontSize: "1rem", color: "var(--text-primary)", textAlign: isRtl ? "right" : "left" }}>
+              {isRtl ? "إجمالي دقائق التوقف لكل محطة عمل" : "Total Stoppage Duration by Workstation (Minutes)"}
+            </div>
+            <div style={{ position: "relative", height: 300 }}>
+              <canvas ref={downtimeChartRef}></canvas>
+            </div>
+          </div>
+
+          {/* Downtime History Log Table */}
+          <div className="card" style={{ padding: 0, overflow: "hidden" }}>
+            <div style={{ padding: "18px 24px", borderBottom: "1px solid var(--border-subtle)", display: "flex", justifyContent: "space-between", alignItems: "center", flexDirection: isRtl ? "row" : "row-reverse" }}>
+              <h3 style={{ margin: 0, fontSize: "1.05rem", fontWeight: 800 }}>{isRtl ? "سجل التوقفات التاريخي" : "Downtime Stoppages Audit Log"}</h3>
+            </div>
+            <div className="table-wrapper" style={{ border: "none" }}>
+              <table>
+                <thead>
+                  <tr>
+                    <th style={{ textAlign: isRtl ? "right" : "left" }}>{isRtl ? "المحطة" : "Stage"}</th>
+                    <th style={{ textAlign: isRtl ? "right" : "left" }}>{isRtl ? "المشرف" : "Supervisor"}</th>
+                    <th style={{ textAlign: isRtl ? "right" : "left" }}>{isRtl ? "وقت البدء" : "Stopped At"}</th>
+                    <th style={{ textAlign: isRtl ? "right" : "left" }}>{isRtl ? "وقت الاستئناف" : "Resumed At"}</th>
+                    <th style={{ textAlign: isRtl ? "right" : "left" }}>{isRtl ? "المدة" : "Duration"}</th>
+                    <th style={{ textAlign: isRtl ? "right" : "left" }}>{isRtl ? "السبب" : "Reason"}</th>
+                    <th style={{ textAlign: isRtl ? "right" : "left" }}>{isRtl ? "ملاحظات" : "Notes"}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {(stoppages || []).length === 0 ? (
+                    <tr>
+                      <td colSpan="7" style={{ textAlign: "center", padding: 40, color: "var(--text-muted)" }}>
+                        {isRtl ? "لا توجد سجلات توقفات مسجلة حالياً" : "No downtime records logged yet"}
+                      </td>
+                    </tr>
+                  ) : (
+                    (stoppages || []).map(stop => {
+                      const stage = production_stages.find(s => s.stage_id === stop.stage_id);
+                      const stageName = stage ? (isRtl ? stage.stage_name : stage.short_name) : stop.stage_id;
+                      const start = new Date(stop.stopped_at);
+                      const end = stop.resumed_at ? new Date(stop.resumed_at) : null;
+                      
+                      let durationStr = isRtl ? "قيد الانتظار ⏱️" : "Pending ⏱️";
+                      if (end) {
+                        const diffMins = Math.floor((end.getTime() - start.getTime()) / 60000);
+                        if (diffMins < 60) {
+                          durationStr = `${diffMins} ${isRtl ? "د" : "m"}`;
+                        } else {
+                          const h = Math.floor(diffMins / 60);
+                          const m = diffMins % 60;
+                          durationStr = `${h}${isRtl ? "س" : "h"} ${m}${isRtl ? "د" : "m"}`;
+                        }
+                      }
+
+                      const reasonText = downtimeReasons[stop.reason_code]?.[language] || stop.reason_code;
+
+                      return (
+                        <tr key={stop.id}>
+                          <td>
+                            <span 
+                              className="badge" 
+                              style={{ 
+                                background: (stage?.color || "#6366f1") + "22", 
+                                color: stage?.color || "#6366f1",
+                                border: `1px solid ${(stage?.color || "#6366f1")}44`
+                              }}
+                            >
+                              {stage?.icon} {stageName}
+                            </span>
+                          </td>
+                          <td style={{ fontSize: "0.85rem", fontWeight: 600 }}>{stop.supervisor_id}</td>
+                          <td style={{ fontSize: "0.82rem", whiteSpace: "nowrap" }}>
+                            {start.toLocaleDateString(isRtl ? "ar-SA" : "en-US")} {start.toLocaleTimeString(isRtl ? "ar-SA" : "en-US", { hour: "2-digit", minute: "2-digit" })}
+                          </td>
+                          <td style={{ fontSize: "0.82rem", whiteSpace: "nowrap" }}>
+                            {end ? (
+                              `${end.toLocaleDateString(isRtl ? "ar-SA" : "en-US")} ${end.toLocaleTimeString(isRtl ? "ar-SA" : "en-US", { hour: "2-digit", minute: "2-digit" })}`
+                            ) : (
+                              <span style={{ color: "var(--red)", fontWeight: 700 }}>{isRtl ? "مستمر 🔴" : "Ongoing 🔴"}</span>
+                            )}
+                          </td>
+                          <td style={{ fontWeight: 700, color: end ? "var(--text-primary)" : "var(--red)" }}>{durationStr}</td>
+                          <td>
+                            <span className={`badge ${stop.resumed_at ? "badge-gray" : "badge-red"}`}>
+                              {reasonText}
+                            </span>
+                          </td>
+                          <td style={{ fontSize: "0.82rem", color: "var(--text-muted)" }}>{stop.notes || "—"}</td>
+                        </tr>
+                      );
+                    })
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
         </div>
       )}
     </div>

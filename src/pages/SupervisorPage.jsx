@@ -20,12 +20,22 @@ const getStageNameTranslated = (stageId) => {
   return names[stageId] || stageId;
 };
 
+const downtimeReasons = {
+  "BENCH_BREAKDOWN": { ar: "عطل البنش / صيانة", en: "Bench Breakdown / Maintenance" },
+  "SFC_OFFLINE": { ar: "عطل شبكة / اتصال", en: "Network / IT Offline" },
+  "MATERIAL_SHORTAGE": { ar: "نقص المواد (عدادات / شرائح)", en: "Material Shortage (Meters/SIM)" },
+  "OPERATOR_ABSENCE": { ar: "غياب المشغل", en: "Operator Absence" },
+  "OTHER": { ar: "أخرى (مكتوبة في الملاحظات)", en: "Other (written in notes)" }
+};
+
 export default function SupervisorPage() {
   const navigate = useNavigate();
   const { 
     schedules, production_stages, getScheduleWithDetails, 
     defectiveMeters, updateMeterStatus, getTodayString, currentShift,
-    language, t
+    language, t,
+    stoppages, reportStoppage, resumeProduction,
+    materialConsumption, consumeMaterial, equipmentStock
   } = useApp();
 
   const [searchQuery, setSearchQuery] = useState("");
@@ -33,6 +43,61 @@ export default function SupervisorPage() {
   const [showEduModal, setShowEduModal] = useState(false);
   const isRtl = language === "ar";
   const today = getTodayString();
+
+  // Downtime states
+  const [stopStageId, setStopStageId] = useState("");
+  const [stopReason, setStopReason] = useState("");
+  const [stopNotes, setStopNotes] = useState("");
+  const [showStopModal, setShowStopModal] = useState(false);
+
+  // Material states
+  const [matId, setMatId] = useState("");
+  const [matType, setMatType] = useState("");
+  const [matQty, setMatQty] = useState("");
+  const [matNotes, setMatNotes] = useState("");
+  const [matSuccessMsg, setMatSuccessMsg] = useState("");
+
+  const handleReportStoppage = async (e) => {
+    e.preventDefault();
+    if (!stopStageId || !stopReason) return;
+    const res = await reportStoppage(stopStageId, stopReason, stopNotes);
+    if (res.success) {
+      setShowStopModal(false);
+      setStopStageId("");
+      setStopReason("");
+      setStopNotes("");
+    } else {
+      alert(res.message);
+    }
+  };
+
+  const handleConsumeMaterial = async (e) => {
+    e.preventDefault();
+    if (!matId || !matType || !matQty) return;
+    const res = await consumeMaterial(matId, matType, "STG-01", parseInt(matQty), matNotes);
+    if (res.success) {
+      setMatSuccessMsg(isRtl ? "تم سحب المواد وتحديث المستودع بنجاح!" : "Materials withdrawn and stock updated!");
+      setMatId("");
+      setMatType("");
+      setMatQty("");
+      setMatNotes("");
+      setTimeout(() => setMatSuccessMsg(""), 3000);
+    } else {
+      alert(res.message);
+    }
+  };
+
+  const getElapsedMinutes = (stoppedAt) => {
+    const diff = Date.now() - new Date(stoppedAt).getTime();
+    const minutes = Math.floor(diff / 60000);
+    if (minutes < 1) return isRtl ? "الآن" : "Just now";
+    if (minutes < 60) return isRtl ? `منذ ${minutes} دقيقة` : `${minutes}m ago`;
+    const hours = Math.floor(minutes / 60);
+    const remainingMins = minutes % 60;
+    return isRtl 
+      ? `منذ ${hours} س و ${remainingMins} د` 
+      : `${hours}h ${remainingMins}m ago`;
+  };
 
   // Filter current shift schedules
   const activeAssignments = schedules.filter(s => 
@@ -209,30 +274,74 @@ export default function SupervisorPage() {
 
         <div className="grid-2" style={{ alignItems: "start" }}>
           
-          {/* Active Line Monitoring */}
+          {/* Downtime Manager Card */}
           <div className="card animate-fade">
             <div className="card-header">
-              <Layers size={18} style={{ color: "var(--accent)" }} />
-              <h3 style={{ margin: 0 }}>{isRtl ? "توزيع الموظفين الحالي (Live)" : "Current Operator Distribution (Live)"}</h3>
+              <Clock size={18} style={{ color: "var(--red)" }} />
+              <h3 style={{ margin: 0 }}>{isRtl ? "إدارة توقفات الإنتاج (Downtime)" : "Production Downtime Manager"}</h3>
             </div>
-            <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-              {production_stages.filter(s => s.stage_id !== "GLOBAL").map(stage => {
-                const workers = activeAssignments.filter(a => a.stage_id === stage.stage_id);
+            
+            <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+              {production_stages.filter(s => s.stage_id !== "GLOBAL" && s.stage_id !== "SUPERVISION").map(stage => {
+                // Find if this stage has an active stoppage (resumed_at is null)
+                const activeStop = (stoppages || []).find(s => s.stage_id === stage.stage_id && !s.resumed_at);
+                
                 return (
-                  <div key={stage.stage_id} className="stage-assignment-row">
-                    <div className="stage-assignment-icon">{stage.icon}</div>
-                    <div className="stage-assignment-info">
-                       <div className="stage-assignment-name">{stage.stage_name.match(/\(([^)]+)\)/)?.[1] || stage.stage_name}</div>
-                      <div className="stage-assignment-workers">
-                        {workers.map(w => (
-                          <span key={w.employee_id} className={`badge ${w.is_team_leader ? "badge-amber" : "badge-gray"}`} style={{ fontSize: "0.7rem" }}>
-                            {w.is_team_leader && "⭐ "}{w.employee?.full_name.split(" ")[0]}
-                          </span>
-                        ))}
-                        {workers.length === 0 && <span style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>{isRtl ? "لا يوجد موظفين" : "No operators assigned"}</span>}
+                  <div key={stage.stage_id} style={{ 
+                    display: "flex", 
+                    justifyContent: "space-between", 
+                    alignItems: "center", 
+                    padding: 12, 
+                    borderRadius: 12, 
+                    border: `1px solid ${activeStop ? "var(--red)" : "var(--border-subtle)"}`, 
+                    background: activeStop ? "rgba(239, 68, 68, 0.05)" : "var(--bg-elevated)",
+                    flexDirection: isRtl ? "row" : "row-reverse"
+                  }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 10, flexDirection: isRtl ? "row" : "row-reverse" }}>
+                      <span style={{ fontSize: "1.4rem" }}>{stage.icon}</span>
+                      <div style={{ textAlign: isRtl ? "right" : "left" }}>
+                        <div style={{ fontWeight: 700, fontSize: "0.92rem", display: "flex", alignItems: "center", gap: 6, flexDirection: isRtl ? "row" : "row-reverse" }}>
+                          <span>{isRtl ? stage.short_name : stage.stage_name.split("(")[0]}</span>
+                          <span style={{ 
+                            width: 8, height: 8, borderRadius: "50%", 
+                            background: activeStop ? "var(--red)" : "var(--green)", 
+                            display: "inline-block",
+                            animation: activeStop ? "pulse 1.2s infinite" : "none"
+                          }} />
+                        </div>
+                        {activeStop ? (
+                          <div style={{ fontSize: "0.78rem", color: "var(--red)", fontWeight: 600, marginTop: 2 }}>
+                            🔴 {downtimeReasons[activeStop.reason_code]?.[language] || activeStop.reason_code} ({getElapsedMinutes(activeStop.stopped_at)})
+                          </div>
+                        ) : (
+                          <div style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>
+                            🟢 {isRtl ? "يعمل بشكل طبيعي" : "Running normally"}
+                          </div>
+                        )}
                       </div>
                     </div>
-                    <span className="badge badge-blue">{workers.length}</span>
+                    <div>
+                      {activeStop ? (
+                        <button 
+                          className="btn btn-sm" 
+                          style={{ background: "var(--green)", color: "white", fontSize: "0.8rem", padding: "6px 12px" }}
+                          onClick={() => resumeProduction(activeStop.id)}
+                        >
+                          {isRtl ? "استئناف العمل ✅" : "Resume Work ✅"}
+                        </button>
+                      ) : (
+                        <button 
+                          className="btn btn-sm btn-secondary"
+                          style={{ fontSize: "0.8rem", padding: "6px 12px" }}
+                          onClick={() => {
+                            setStopStageId(stage.stage_id);
+                            setShowStopModal(true);
+                          }}
+                        >
+                          ⚠️ {isRtl ? "تسجيل توقف" : "Stop Stage"}
+                        </button>
+                      )}
+                    </div>
                   </div>
                 );
               })}
@@ -351,6 +460,195 @@ export default function SupervisorPage() {
           </div>
 
         </div>
+
+        {/* ======================= NEW ROW: MONITORING & MATERIAL CONSUMPTION ======================= */}
+        <div className="grid-2" style={{ alignItems: "start" }}>
+          
+          {/* Active Line Monitoring */}
+          <div className="card animate-fade">
+            <div className="card-header">
+              <Layers size={18} style={{ color: "var(--accent)" }} />
+              <h3 style={{ margin: 0 }}>{isRtl ? "توزيع الموظفين الحالي (Live)" : "Current Operator Distribution (Live)"}</h3>
+            </div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+              {production_stages.filter(s => s.stage_id !== "GLOBAL").map(stage => {
+                const workers = activeAssignments.filter(a => a.stage_id === stage.stage_id);
+                return (
+                  <div key={stage.stage_id} className="stage-assignment-row">
+                    <div className="stage-assignment-icon">{stage.icon}</div>
+                    <div className="stage-assignment-info">
+                       <div className="stage-assignment-name">{stage.stage_name.match(/\(([^)]+)\)/)?.[1] || stage.stage_name}</div>
+                      <div className="stage-assignment-workers">
+                        {workers.map(w => (
+                          <span key={w.employee_id} className={`badge ${w.is_team_leader ? "badge-amber" : "badge-gray"}`} style={{ fontSize: "0.7rem" }}>
+                            {w.is_team_leader && "⭐ "}{w.employee?.full_name.split(" ")[0]}
+                          </span>
+                        ))}
+                        {workers.length === 0 && <span style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>{isRtl ? "لا يوجد موظفين" : "No operators assigned"}</span>}
+                      </div>
+                    </div>
+                    <span className="badge badge-blue">{workers.length}</span>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Cut Meter Withdrawal Card */}
+          <div className="card animate-fade">
+            <div className="card-header">
+              <Layers size={18} style={{ color: "var(--accent)" }} />
+              <h3 style={{ margin: 0 }}>{isRtl ? "سحب المواد للإنتاج (عدادات وشرائح)" : "Material Consumption (Meters & SIMs)"}</h3>
+            </div>
+            
+            {matSuccessMsg && (
+              <div className="alert alert-success" style={{ marginBottom: 12 }}>
+                ✓ {matSuccessMsg}
+              </div>
+            )}
+            
+            <form onSubmit={handleConsumeMaterial} style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+              <div className="input-group">
+                <label className="input-label" style={{ textAlign: isRtl ? "right" : "left" }}>{isRtl ? "اختر المادة" : "Select Material"}</label>
+                <select 
+                  className="input" 
+                  value={matId} 
+                  onChange={e => {
+                    setMatId(e.target.value);
+                    setMatType(""); // Reset type when material changes
+                  }} 
+                  required
+                >
+                  <option value="">-- {isRtl ? "اختر مادة من المستودع" : "Select from stock"} --</option>
+                  {(equipmentStock || []).filter(e => e.category === "عدادات" || e.category === "شرائح").map(item => (
+                    <option key={item.id} value={item.id} disabled={item.current_stock <= 0}>
+                      {item.name} ({item.current_stock} {isRtl ? "متوفر" : "available"})
+                    </option>
+                  ))}
+                  {(equipmentStock || []).filter(e => e.category === "عدادات" || e.category === "شرائح").length === 0 && (
+                    <option disabled>{isRtl ? "لا توجد عدادات أو شرائح في المستودع. قم بتهيئتها من صفحة الأصول" : "No meters/SIMs. Configure in Assets page"}</option>
+                  )}
+                </select>
+              </div>
+
+              <div className="grid-2">
+                <div className="input-group">
+                  <label className="input-label" style={{ textAlign: isRtl ? "right" : "left" }}>{isRtl ? "النوع" : "Type"}</label>
+                  {matId === 'METER-01' ? (
+                    <select className="input" value={matType} onChange={e => setMatType(e.target.value)} required>
+                      <option value="">-- {isRtl ? "اختر نوع العداد" : "Select Meter Type"} --</option>
+                      <option value="Single Phase">{isRtl ? "أحادي الطور (Single Phase)" : "Single Phase"}</option>
+                      <option value="Three Phase">{isRtl ? "ثلاثي الطور (Three Phase)" : "Three Phase"}</option>
+                    </select>
+                  ) : matId === 'SIM-01' ? (
+                    <select className="input" value={matType} onChange={e => setMatType(e.target.value)} required>
+                      <option value="">-- {isRtl ? "اختر شركة الاتصال" : "Select Carrier"} --</option>
+                      <option value="Omantel">{isRtl ? "عمانتل (Omantel)" : "Omantel"}</option>
+                      <option value="Ooredoo">{isRtl ? "أوريدو (Ooredoo)" : "Ooredoo"}</option>
+                    </select>
+                  ) : (
+                    <input className="input" placeholder={isRtl ? "حدد المادة أولاً" : "Select material first"} disabled value="" />
+                  )}
+                </div>
+
+                <div className="input-group">
+                  <label className="input-label" style={{ textAlign: isRtl ? "right" : "left" }}>{isRtl ? "الكمية (بالقطعة)" : "Quantity (pieces)"}</label>
+                  <input 
+                    type="number" 
+                    className="input" 
+                    min="1" 
+                    value={matQty} 
+                    onChange={e => setMatQty(e.target.value)} 
+                    placeholder="50" 
+                    required 
+                  />
+                </div>
+              </div>
+
+              <div className="input-group">
+                <div className="alert alert-info" style={{ margin: "4px 0 0 0", padding: "10px 12px" }}>
+                  <span style={{ fontSize: "0.82rem", display: "flex", alignItems: "center", gap: 6 }}>
+                    📌 {isRtl ? "الوجهة المستلمة تلقائياً: محطة التجميع (Assembly)" : "Automatically assigned to: Assembly Workstation"}
+                  </span>
+                </div>
+              </div>
+
+              <div className="input-group">
+                <label className="input-label" style={{ textAlign: isRtl ? "right" : "left" }}>{isRtl ? "ملاحظات السحب" : "Withdrawal Notes"}</label>
+                <input 
+                  type="text" 
+                  className="input" 
+                  value={matNotes} 
+                  onChange={e => setMatNotes(e.target.value)} 
+                  placeholder={isRtl ? "مثال: شحنة عدادات أحادية الطور لمحطة التجميع" : "e.g., Single phase meters batch for assembly stage"} 
+                />
+              </div>
+
+              <button type="submit" className="btn btn-primary" style={{ width: "100%", marginTop: 6, justifyContent: "center" }}>
+                {isRtl ? "سحب المواد من المستودع ⚡" : "Withdraw Materials ⚡"}
+              </button>
+            </form>
+          </div>
+        </div>
+
+        {/* Modal: Report Stoppage */}
+        {showStopModal && (
+          <div className="modal-overlay">
+            <div className="modal-content animate-scale" style={{ maxWidth: 450 }}>
+              <div className="modal-header" style={{ flexDirection: isRtl ? "row" : "row-reverse" }}>
+                <h3 style={{ margin: 0 }}>⚠️ {isRtl ? "تسجيل توقف خط إنتاج" : "Record Production Stoppage"}</h3>
+                <button className="btn-close" onClick={() => setShowStopModal(false)}>✕</button>
+              </div>
+              <form onSubmit={handleReportStoppage} style={{ padding: 24, display: "flex", flexDirection: "column", gap: 16 }}>
+                <div className="input-group">
+                  <label className="input-label" style={{ textAlign: isRtl ? "right" : "left" }}>{isRtl ? "المحطة المتوقفة" : "Stopped Station"}</label>
+                  <input 
+                    className="input" 
+                    value={production_stages.find(s => s.stage_id === stopStageId)?.stage_name || stopStageId} 
+                    disabled 
+                  />
+                </div>
+
+                <div className="input-group">
+                  <label className="input-label" style={{ textAlign: isRtl ? "right" : "left" }}>{isRtl ? "سبب التوقف" : "Reason for Stoppage"}</label>
+                  <select 
+                    className="input" 
+                    value={stopReason} 
+                    onChange={e => setStopReason(e.target.value)} 
+                    required
+                  >
+                    <option value="">-- {isRtl ? "اختر سبب التوقف" : "Select reason"} --</option>
+                    {Object.entries(downtimeReasons).map(([code, t]) => (
+                      <option key={code} value={code}>
+                        {isRtl ? t.ar : t.en}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="input-group">
+                  <label className="input-label" style={{ textAlign: isRtl ? "right" : "left" }}>{isRtl ? "تفاصيل إضافية / ملاحظات" : "Additional details / Notes"}</label>
+                  <textarea 
+                    className="input" 
+                    value={stopNotes} 
+                    onChange={e => setStopNotes(e.target.value)} 
+                    placeholder={isRtl ? "اكتب تفاصيل إضافية لتسهيل الصيانة..." : "Write additional details for technicians..."}
+                    rows="3"
+                  />
+                </div>
+
+                <div style={{ display: "flex", gap: 12, marginTop: 8, flexDirection: isRtl ? "row" : "row-reverse" }}>
+                  <button type="submit" className="btn btn-primary" style={{ flex: 1, background: "var(--red)" }}>
+                    {isRtl ? "تأكيد تسجيل التوقف" : "Confirm Stoppage"}
+                  </button>
+                  <button type="button" className="btn btn-secondary" style={{ flex: 1 }} onClick={() => setShowStopModal(false)}>
+                    {isRtl ? "إلغاء" : "Cancel"}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
 
       </div>
 
