@@ -5,21 +5,8 @@ import { supabase } from "../supabaseClient";
 import { TranslateText, TranslateSteps } from "./KnowledgeBasePage";
 import {
   Play, Calendar, Star, Clock, ChevronLeft,
-  AlertTriangle, CheckCircle, BookOpen, BarChart2, Wrench, Info
+  AlertTriangle, BookOpen, BarChart2, Wrench, Info
 } from "lucide-react";
-
-
-const DAY_NAMES = ["الأحد","الاثنين","الثلاثاء","الأربعاء","الخميس","الجمعة","السبت"];
-const MONTH_AR  = ["يناير","فبراير","مارس","أبريل","مايو","يونيو","يوليو","أغسطس","سبتمبر","أكتوبر","نوفمبر","ديسمبر"];
-
-function formatDate(dateStr) {
-  const d = new Date(dateStr + "T00:00:00");
-  const today = new Date(); today.setHours(0,0,0,0);
-  const diff = Math.round((d - today) / 86400000);
-  const dayName = DAY_NAMES[d.getDay()];
-  const label = diff === 0 ? "اليوم" : diff === 1 ? "غداً" : diff === 2 ? "بعد غد" : dayName;
-  return { label, full: `${d.getDate()} ${MONTH_AR[d.getMonth()]}` };
-}
 
 export default function EmployeeDashboard() {
   const navigate = useNavigate();

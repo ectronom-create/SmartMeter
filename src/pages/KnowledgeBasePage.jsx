@@ -250,7 +250,7 @@ function ErrorCard({ err, stage, isOpen, onToggle, isRtl }) {
 
 export default function KnowledgeBasePage() {
   const navigate = useNavigate();
-  const { errorCodes, productionStages, getStageById, language, currentUser, addErrorCodesBulk } = useApp();
+  const { errorCodes, productionStages, getStageById, language, currentUser, addErrorCodesBulk, t } = useApp();
   const [searchQuery, setSearchQuery] = useState("");
   const [openCode, setOpenCode] = useState(null);
   const [importStatus, setImportStatus] = useState(null);
@@ -772,7 +772,6 @@ export async function translateTextCore(text, targetLang) {
 
 export function TranslateText({ text, targetLang, fallback = "" }) {
   const [translated, setTranslated] = useState(text || fallback);
-  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     let active = true;
@@ -781,11 +780,9 @@ export function TranslateText({ text, targetLang, fallback = "" }) {
         setTranslated(fallback);
         return;
       }
-      setLoading(true);
       const resText = await translateTextCore(text, targetLang);
       if (active) {
         setTranslated(resText);
-        setLoading(false);
       }
     };
     run();

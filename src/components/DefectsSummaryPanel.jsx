@@ -1,17 +1,13 @@
-import React, { useState, useMemo } from "react";
+import { useState, useMemo } from "react";
 import { useApp } from "../context/AppContext";
 import { translateError } from "../pages/KnowledgeBasePage";
 import { 
-  BarChart2, 
   Layers, 
-  ClipboardList, 
   Filter, 
   Download, 
   Search, 
   Activity, 
-  Hash, 
   Radio, 
-  FileText, 
   AlertTriangle,
   Clock,
   CheckCircle

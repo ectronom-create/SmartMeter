@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useApp } from "../context/AppContext";
-import { Check, X, ShieldAlert, Award, FileText, ArrowRight, Save, Trash2, Edit3, ClipboardList } from "lucide-react";
+import { Check, Award, ArrowRight, Save, ClipboardList } from "lucide-react";
 import { supabase } from "../supabaseClient";
 
 const STAGES = [

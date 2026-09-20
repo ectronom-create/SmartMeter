@@ -13,6 +13,7 @@ import { supabase } from "../supabaseClient";
 import * as XLSX from "xlsx";
 import CountdownTimer from "../components/CountdownTimer";
 import DefectsSummaryPanel from "../components/DefectsSummaryPanel";
+import SerialRegistrationPanel from "../components/SerialRegistrationPanel";
 
 
 const STAGE_COLORS = { 
@@ -174,8 +175,8 @@ function DefectsPanel() {
     m.serial_number.includes(reviewSearch.trim().toUpperCase())
   );
 
-  const handleStatusChange = (id, status, fromModal = false) => {
-    updateMeterStatus(id, status);
+  const handleStatusChange = async (id, status, fromModal = false) => {
+    await updateMeterStatus(id, status);
     if (fromModal) {
       setConfirmingId(null);
       setNewStatus("");
@@ -1011,7 +1012,7 @@ function ErrorCodesPanel() {
     setModal({ show: true, editMode: true, data: e });
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     const data = {
       code: formData.code,
@@ -1023,9 +1024,9 @@ function ErrorCodesPanel() {
     };
 
     if (modal.editMode) {
-      updateErrorCode(modal.data.code, modal.data.stage_id, data);
+      await updateErrorCode(modal.data.code, modal.data.stage_id, data);
     } else {
-      addErrorCode(data);
+      await addErrorCode(data);
     }
     setModal({ show: false, editMode: false, data: null });
   };
@@ -1661,6 +1662,7 @@ const getSidebarPanels = (isRtl, t) => [
   { id:"defects_summary", label: isRtl ? "تقرير الأعطال المجمع" : "Defects Summary Report", icon:FileText, section: isRtl ? "الإنتاج" : "Production" },
   { id:"errorcodes", label: isRtl ? "دليل الأعطال" : "Fault Codes Guide",      icon:BookOpen,     section: isRtl ? "الإنتاج" : "Production" },
   { id:"sop_reports", label: isRtl ? "بداية الإنتاج (SOP)" : "Start of Production (SOP)", icon:ClipboardList, section: isRtl ? "الإنتاج" : "Production" },
+  { id:"serial_registration", label: isRtl ? "تسجيل سيريال البليت" : "Serial Registration", icon:Package, section: isRtl ? "الإنتاج" : "Production" },
   { id:"maintenance", label: t("maintenance"),       icon:Wrench,       section: isRtl ? "الإنتاج" : "Production" },
 ];
 
@@ -1717,6 +1719,7 @@ export default function AdminPage() {
       case "defects_summary": return <DefectsSummaryPanel />;
       case "errorcodes": return <ErrorCodesPanel />;
       case "sop_reports": return <SOPReportsPanel />;
+      case "serial_registration": return <SerialRegistrationPanel />;
       case "maintenance": return <MaintenancePage />;
       default:           return <OverviewPanel />;
     }

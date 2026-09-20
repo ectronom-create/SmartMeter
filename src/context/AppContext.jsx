@@ -172,7 +172,9 @@ export function AppProvider({ children }) {
           try {
             const cached = localStorage.getItem("SmartMeter_DefectLogs");
             if (cached) setDefectLogs(JSON.parse(cached));
-          } catch (e) {}
+          } catch (e) {
+            console.warn("Failed to parse cached defect logs:", e);
+          }
         }
 
       } catch (err) {
@@ -319,7 +321,9 @@ export function AppProvider({ children }) {
               const parsed = JSON.parse(saved);
               parsed.user = dbUser;
               localStorage.setItem("SmartMeter_UserSession", JSON.stringify(parsed));
-            } catch (e) {}
+            } catch (e) {
+              console.warn("Failed to update user session in localStorage:", e);
+            }
           }
         }
       }
@@ -393,7 +397,9 @@ export function AppProvider({ children }) {
               const parsed = JSON.parse(saved);
               parsed.user = updated;
               localStorage.setItem("SmartMeter_UserSession", JSON.stringify(parsed));
-            } catch (e) {}
+            } catch (e) {
+              console.warn("Failed to update user session on password change:", e);
+            }
           }
           return updated;
         }
@@ -722,8 +728,10 @@ export function AppProvider({ children }) {
       const { error } = await supabase.from("production_stages").insert([newStage]);
       if (error) throw error;
       setProductionStages(prev => [...prev, newStage]);
+      return { success: true };
     } catch (err) {
       console.error("Supabase stage add error:", err);
+      return { success: false, message: err.message || "Failed to add stage" };
     }
   }, []);
 
@@ -732,8 +740,10 @@ export function AppProvider({ children }) {
       const { error } = await supabase.from("production_stages").update(updatedData).eq("stage_id", stage_id);
       if (error) throw error;
       setProductionStages(prev => prev.map(s => s.stage_id === stage_id ? { ...s, ...updatedData } : s));
+      return { success: true };
     } catch (err) {
       console.error("Supabase stage update error:", err);
+      return { success: false, message: err.message || "Failed to update stage" };
     }
   }, []);
 
@@ -743,8 +753,10 @@ export function AppProvider({ children }) {
       if (error) throw error;
       setProductionStages(prev => prev.filter(s => s.stage_id !== stage_id));
       setSchedules(prev => prev.filter(s => s.stage_id !== stage_id));
+      return { success: true };
     } catch (err) {
       console.error("Supabase stage delete error:", err);
+      return { success: false, message: err.message || "Failed to delete stage" };
     }
   }, []);
 
@@ -1089,9 +1101,7 @@ export function AppProvider({ children }) {
       return { success: true, box: data || newBox };
     } catch (err) {
       console.error("Supabase box add error:", err);
-      // Local fallback
-      setBoxes(prev => [...prev, newBox]);
-      return { success: true, box: newBox };
+      return { success: false, message: err.message || "Failed to add box to database." };
     }
   }, []);
 
@@ -1103,8 +1113,7 @@ export function AppProvider({ children }) {
       return { success: true };
     } catch (err) {
       console.error("Supabase box update error:", err);
-      setBoxes(prev => prev.map(b => b.id === id ? { ...b, ...updatedFields } : b));
-      return { success: true };
+      return { success: false, message: err.message || "Failed to update box in database." };
     }
   }, []);
 
@@ -1118,9 +1127,7 @@ export function AppProvider({ children }) {
       return { success: true };
     } catch (err) {
       console.error("Supabase box delete error:", err);
-      setBoxes(prev => prev.filter(b => b.id !== id));
-      setDefectiveMeters(prev => prev.map(m => m.box_id === id ? { ...m, box_id: null } : m));
-      return { success: true };
+      return { success: false, message: err.message || "Failed to delete box from database." };
     }
   }, []);
 
@@ -1148,8 +1155,7 @@ export function AppProvider({ children }) {
       return { success: true };
     } catch (err) {
       console.error("Supabase assign meter to box error:", err);
-      setDefectiveMeters(prev => prev.map(m => m.id === meterId ? { ...m, box_id: boxId } : m));
-      return { success: true };
+      return { success: false, message: err.message || "Failed to assign meter to box in database." };
     }
   }, [boxes, defectiveMeters, language]);
 
@@ -1371,10 +1377,6 @@ export function AppProvider({ children }) {
     employee: getUserById(sch.employee_id),
   }), [getStageById, getShiftById, getUserById]);
 
-  // Disable automatic deletion of resolved meters to keep history intact
-  useEffect(() => {
-    // Keep resolved meters history in database as per user request
-  }, []);
 
   const reportStoppage = useCallback(async (stageId, reasonCode, notes) => {
     const newStoppage = {

@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useApp } from "../context/AppContext";
-import { Plus, Edit2, Trash2, X, Check, Layers, Type, Hash, Palette, Info, AlertCircle, HelpCircle } from "lucide-react";
+import { Plus, Edit2, Trash2, X, Check, Layers, Info, AlertCircle } from "lucide-react";
 
 function StageModal({ stage, onClose }) {
   const { addStage, updateStage, productionStages, language } = useApp();
@@ -24,6 +24,8 @@ function StageModal({ stage, onClose }) {
   const [newProb, setNewProb] = useState({ problem: "", solution: "" });
   const [newFunc, setNewFunc] = useState("");
   const [done, setDone] = useState(false);
+  const [errorMsg, setErrorMsg] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handle = (e) => setForm(p => ({ ...p, [e.target.name]: e.target.value }));
 
@@ -39,15 +41,18 @@ function StageModal({ stage, onClose }) {
     setNewProb({ problem: "", solution: "" });
   };
 
-  const submit = (e) => {
+  const submit = async (e) => {
     e.preventDefault();
-    if (isEdit) {
-      updateStage(stage.stage_id, form);
+    setIsSubmitting(true);
+    setErrorMsg("");
+    const res = isEdit ? await updateStage(stage.stage_id, form) : await addStage(form);
+    setIsSubmitting(false);
+    if (res && res.success) {
+      setDone(true);
+      setTimeout(onClose, 1200);
     } else {
-      addStage(form);
+      setErrorMsg(res?.message || (isRtl ? "حدث خطأ أثناء الحفظ" : "An error occurred while saving"));
     }
-    setDone(true);
-    setTimeout(onClose, 1200);
   };
 
   return (
@@ -58,6 +63,12 @@ function StageModal({ stage, onClose }) {
           <h3 style={{ margin: 0 }}>{isEdit ? (isRtl ? "تعديل مرحلة الإنتاج" : "Edit Workstation Stage") : (isRtl ? "إضافة مرحلة جديدة" : "Add New Workstation Stage")}</h3>
           <button className="btn btn-ghost btn-icon btn-sm" onClick={onClose} style={{ marginRight: isRtl ? "auto" : "none", marginLeft: !isRtl ? "auto" : "none" }}><X size={15} /></button>
         </div>
+
+        {errorMsg && (
+          <div className="alert alert-danger" style={{ marginBottom: 16 }}>
+            <AlertCircle size={15} /> {errorMsg}
+          </div>
+        )}
 
         {done ? (
           <div className="alert alert-success"><Check size={15} /> {isRtl ? "تم الحفظ بنجاح!" : "Changes saved successfully!"}</div>
@@ -176,8 +187,8 @@ function StageModal({ stage, onClose }) {
               </div>
             </div>
 
-            <button type="submit" className="btn btn-primary btn-full" style={{ marginTop: 10 }}>
-              {isEdit ? (isRtl ? "تحديث المرحلة" : "Update Stage") : (isRtl ? "إضافة المرحلة" : "Create Stage")}
+            <button type="submit" className="btn btn-primary btn-full" style={{ marginTop: 10 }} disabled={isSubmitting}>
+              {isSubmitting ? (isRtl ? "جاري الحفظ..." : "Saving...") : (isEdit ? (isRtl ? "تحديث المرحلة" : "Update Stage") : (isRtl ? "إضافة المرحلة" : "Create Stage"))}
             </button>
           </form>
         )}

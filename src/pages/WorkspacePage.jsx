@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useApp } from "../context/AppContext";
 import {
   ArrowRight, Search, X, AlertTriangle, CheckCircle,
-  Plus, Book, ChevronDown, ChevronUp, Zap, AlertCircle, Info
+  Plus, Book, ChevronDown, ChevronUp, AlertCircle, Info
 } from "lucide-react";
 
 import { translateError, TranslateText, TranslateSteps } from "./KnowledgeBasePage";

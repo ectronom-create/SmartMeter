@@ -1,6 +1,6 @@
 import { useState, useMemo } from "react";
 import { useApp } from "../context/AppContext";
-import { UserPlus, Edit2, Trash2, Shield, X, Check, Search } from "lucide-react";
+import { UserPlus, Edit2, Trash2, Shield, X, Check, Search, AlertCircle } from "lucide-react";
 
 const getRoles = (isRtl) => [
   { value: "operator",   label: isRtl ? "مشغّل" : "Operator",   badge: "badge-blue" },
@@ -19,6 +19,7 @@ const PANELS_LIST = [
   { id: "defects_summary", labelAr: "تقرير الأعطال المجمع", labelEn: "Defects Summary" },
   { id: "errorcodes", labelAr: "دليل الأعطال", labelEn: "Fault Codes Guide" },
   { id: "sop_reports", labelAr: "بداية الإنتاج (SOP)", labelEn: "Start of Production (SOP)" },
+  { id: "serial_registration", labelAr: "تسجيل سيريال البليت", labelEn: "Serial Registration" },
   { id: "maintenance", labelAr: "الصيانة", labelEn: "Maintenance" }
 ];
 
@@ -161,7 +162,8 @@ function EditUserModal({ user, onClose }) {
   const roleLabel = { 
     admin: isRtl ? "أدمن" : "Admin", 
     supervisor: isRtl ? "مشرف" : "Supervisor", 
-    operator: isRtl ? "مشغّل" : "Operator" 
+    operator: isRtl ? "مشغّل" : "Operator",
+    quality_management: isRtl ? "إدارة الجودة" : "Quality Management"
   };
 
   const [form, setForm] = useState({
@@ -186,6 +188,8 @@ function EditUserModal({ user, onClose }) {
         })()
   });
   const [done, setDone] = useState(false);
+  const [errorMsg, setErrorMsg] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handle = (e) => {
     const name = e.target.name;
@@ -195,6 +199,8 @@ function EditUserModal({ user, onClose }) {
 
   const submit = async (e) => {
     e.preventDefault();
+    setIsSubmitting(true);
+    setErrorMsg("");
     const result = await updateUser(user.employee_id, {
       full_name: form.full_name.trim(),
       role: form.role,
@@ -204,9 +210,12 @@ function EditUserModal({ user, onClose }) {
       must_change_password: form.must_change_password,
       allowed_panels: form.role === "admin" ? form.allowed_panels : []
     });
+    setIsSubmitting(false);
     if (result && result.success) {
       setDone(true);
       setTimeout(onClose, 1200);
+    } else {
+      setErrorMsg(result?.message || (isRtl ? "حدث خطأ أثناء تحديث البيانات" : "Failed to update user"));
     }
   };
 
@@ -218,6 +227,12 @@ function EditUserModal({ user, onClose }) {
           <h3 style={{ margin: 0 }}>{isRtl ? "تعديل بيانات الموظف" : "Edit Operator Details"}</h3>
           <button type="button" className="btn btn-ghost btn-icon btn-sm" onClick={onClose} style={{ marginRight: isRtl ? "auto" : "none", marginLeft: !isRtl ? "auto" : "none" }}><X size={15} /></button>
         </div>
+
+        {errorMsg && (
+          <div className="alert alert-danger" style={{ marginBottom: 14 }}>
+            <AlertCircle size={15} /> {errorMsg}
+          </div>
+        )}
 
         {done ? (
           <div className="alert alert-success"><Check size={15} /> {isRtl ? "تم تحديث البيانات بنجاح!" : "Operator updated successfully!"}</div>

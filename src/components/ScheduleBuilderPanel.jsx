@@ -1,6 +1,6 @@
 import { useState, useMemo } from "react";
 import { useApp } from "../context/AppContext";
-import { Play, Save, RefreshCw, Star, Trash2, ChevronRight, Check, Info } from "lucide-react";
+import { Play, Save, RefreshCw, Star, ChevronRight, Check, Info } from "lucide-react";
 
 const getSteps = (isRtl) => [
   isRtl ? "إعداد الشفت" : "Shift Settings", 
@@ -57,7 +57,6 @@ export default function ScheduleBuilderPanel() {
   const [numDays, setNumDays]           = useState(7);
   const [rotationOffset, setRotation]   = useState(1);
   const [shiftSupervisor, setSupervisor] = useState("");
-  const [supervisorStage, setSupervisorStage] = useState("");
 
   // Step 1 state
   const [assignments, setAssignments]   = useState({});

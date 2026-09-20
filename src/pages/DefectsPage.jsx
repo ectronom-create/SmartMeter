@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect, useRef } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useApp } from "../context/AppContext";
 import { useNavigate, useLocation } from "react-router-dom";
 import { ArrowRight, CheckCircle, Clock, AlertTriangle, X, Plus, AlertCircle, Search } from "lucide-react";
@@ -311,9 +311,6 @@ export default function DefectsPage() {
     }
   }, [location]);
 
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [filterStatus, defectsSearch, filterStartDate, filterEndDate]);
 
   const pendingMeters = useMemo(() => {
     const list = defectiveMeters.filter(m => m.status === "pending");
@@ -790,7 +787,6 @@ export default function DefectsPage() {
         type: "success",
         text: isRtl ? "تم إنشاء الصندوق بنجاح!" : "Box created successfully!"
       });
-      setNewBoxName("");
       setNewBoxSize("24");
       setCustomSize("");
       setNewBoxCategory("Assembly");

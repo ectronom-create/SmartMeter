@@ -1,6 +1,6 @@
 import { useNavigate, useLocation } from "react-router-dom";
 import { useApp } from "../context/AppContext";
-import { LogOut, Shield, LayoutDashboard, BookOpen, Package, BarChart2, Wrench, Home } from "lucide-react";
+import { LogOut, Shield, LayoutDashboard, BarChart2, Wrench, Home } from "lucide-react";
 
 
 

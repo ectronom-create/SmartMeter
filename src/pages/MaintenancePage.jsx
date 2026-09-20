@@ -2,8 +2,8 @@ import { useState, useEffect, useMemo } from "react";
 import { useApp } from "../context/AppContext";
 import { supabase } from "../supabaseClient";
 import { 
-  Wrench, Calendar, User, Clock, CheckCircle, Plus, AlertCircle, 
-  Send, RefreshCw, ChevronLeft, Trash2, Mail, Users, ArrowRight, Search 
+  Wrench, Calendar, CheckCircle, Plus, AlertCircle, 
+  Send, RefreshCw, Trash2, Mail, Users, ArrowRight, Search 
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
@@ -204,7 +204,7 @@ export default function MaintenancePage() {
   }, [loading, schedule, users, isUsingFallback, isRtl, emailSettings]);
 
   // Sync local changes to localstorage if in fallback mode
-  const saveScheduleState = async (newSchedule) => {
+  const saveScheduleState = (newSchedule) => {
     setSchedule(newSchedule);
     if (isUsingFallback) {
       localStorage.setItem("Ectron_Maintenance_Schedule", JSON.stringify(newSchedule));
@@ -434,9 +434,6 @@ export default function MaintenancePage() {
         console.error("Supabase update error:", err);
       }
     }
-
-    // Standard mailto fallback trigger to show it "opens" or simulates
-    console.log("SIMULATED EMAIL SENDING:", newLog);
   };
 
   // Clear success/error banners after 4 seconds
@@ -804,7 +801,9 @@ export default function MaintenancePage() {
                       }}>
                         <div style={{ display: "flex", justifyContent: "space-between", color: "var(--text-secondary)", fontWeight: 700 }}>
                           <span>To: {log.recipient_name}</span>
-                          <span className="badge badge-green" style={{ fontSize: "0.6rem", padding: "1px 6px" }}>Sent</span>
+                          <span className={`badge ${log.status === "delivered" ? "badge-green" : log.status === "simulated" ? "badge-blue" : "badge-red"}`} style={{ fontSize: "0.6rem", padding: "1px 6px" }}>
+                            {log.status === "delivered" ? "Sent" : log.status === "simulated" ? "Simulated" : "Failed"}
+                          </span>
                         </div>
                         <div style={{ color: "var(--text-muted)", fontSize: "0.7rem" }}>{log.recipient_email}</div>
                         <div style={{ fontWeight: 600, color: "var(--accent)", marginTop: 2 }}>{log.subject}</div>

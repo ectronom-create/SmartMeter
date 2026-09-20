@@ -2,13 +2,9 @@ import { useState } from "react";
 import { useApp } from "../context/AppContext";
 import { 
   Package, 
-  User, 
   History, 
   PlusCircle, 
-  AlertTriangle, 
-  CheckCircle, 
   Search, 
-  ArrowDown, 
   ArrowUp, 
   ClipboardList,
   Trash2
@@ -95,43 +91,47 @@ export function AssetsPanel() {
   const [searchTerm, setSearchTerm] = useState("");
   const [handoutSearch, setHandoutSearch] = useState("");
 
-  const handleHandout = (e) => {
+  const handleHandout = async (e) => {
     e.preventDefault();
     const selectedUser = users.find(u => u.employee_id === handoutForm.employee_id);
-    const result = handoutEquipment({
+    const result = await handoutEquipment({
       ...handoutForm,
       employee_name: selectedUser?.full_name || handoutForm.employee_id
     });
 
-    if (result.success) {
+    if (result && result.success) {
       setShowHandoutModal(false);
       setHandoutForm({ equipment_id: "", employee_id: "", quantity: 1, notes: "" });
       alert(isRtl ? "تم تسليم العهدة بنجاح" : "PPE Handout registered successfully!");
     } else {
-      alert(result.message);
+      alert(result?.message || (isRtl ? "فشل تسليم العهدة" : "Failed to register handout"));
     }
   };
 
-  const handleAddAsset = (e) => {
+  const handleAddAsset = async (e) => {
     e.preventDefault();
-    addEquipmentStock(newAssetForm);
-    setShowAddModal(false);
-    setNewAssetForm({ name: "", category: "حماية", unit: "زوج", current_stock: 0, min_stock: 5 });
+    const res = await addEquipmentStock(newAssetForm);
+    if (res) {
+      setShowAddModal(false);
+      setNewAssetForm({ name: "", category: "حماية", unit: "زوج", current_stock: 0, min_stock: 5 });
+    } else {
+      alert(isRtl ? "فشل إضافة الصنف الجديد" : "Failed to add new asset");
+    }
   };
 
-  const handleRestock = (e) => {
+  const handleRestock = async (e) => {
     e.preventDefault();
-    restockEquipment(showRestockModal.id, parseInt(restockQty));
+    await restockEquipment(showRestockModal.id, parseInt(restockQty));
     setShowRestockModal(null);
     setRestockQty(1);
   };
 
-  const handleDeleteAsset = (id) => {
+  const handleDeleteAsset = async (id) => {
     const confirmMsg = isRtl 
       ? "هل أنت متأكد من رغبتك في حذف هذا الأصل؟" 
       : "Are you sure you want to delete this asset?";
     if (window.confirm(confirmMsg)) {
-      deleteEquipmentItem(id);
+      await deleteEquipmentItem(id);
     }
   };
 
