@@ -210,9 +210,9 @@ export default function SerialRegistrationPanel() {
     setAlert(null);
 
     try {
-      // 1. Frontend duplicate check
+      // 1. Frontend duplicate check (instant local cache check)
       const localDuplicate = allRecords.find(
-        (r) => r.serial_number && r.serial_number.toUpperCase() === serialNumber
+        (r) => r.serial_number && r.serial_number.trim().toUpperCase() === serialNumber
       );
 
       if (localDuplicate) {
@@ -224,18 +224,18 @@ export default function SerialRegistrationPanel() {
         return;
       }
 
-      // 2. Database duplicate check
-      const { data: existing, error: checkError } = await supabase
+      // 2. Database duplicate check (server check)
+      const { data: existingRows, error: checkError } = await supabase
         .from("registered_serials")
         .select("id, serial_number")
-        .eq("serial_number", serialNumber)
-        .maybeSingle();
+        .ilike("serial_number", serialNumber)
+        .limit(1);
 
-      if (checkError && checkError.code !== "PGRST116") {
-        throw checkError;
+      if (checkError) {
+        console.warn("Could not perform pre-check duplicate query, falling back to DB constraint:", checkError);
       }
 
-      if (existing) {
+      if (existingRows && existingRows.length > 0) {
         showAlert("warning", isRtl 
           ? `رقم السيريال مسجل مسبقاً في قاعدة البيانات (${serialNumber})` 
           : `This serial number is already registered (${serialNumber}).`);
